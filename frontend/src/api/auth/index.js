@@ -1,76 +1,45 @@
 import request from '@/utils/request'
 
 const apiMap = {
-  // 权限管理
-  manage: {
-    add: addAuth,
-    update: updateAuth,
-    del: deleteAuths,
-    query: listAuths,
-    queryById: getAuthDetail
-  },
-  // 权限选项
-  options: {
-    getMenus: listMenuOptions,
-    getAuth: listAuthOptions
-  }
+  // 认证相关
+  login: loginAPI,
+  logout: logoutAPI,
+  refreshToken: refreshTokenAPI,
+  getUserInfo: getUserInfoAPI
 }
+
 export default apiMap
 
-// 获取角色列表
-function listAuths(params) {
+// 登录接口
+function loginAPI(data) {
   return request({
-    url: '/user/menu/listMenu',
-    method: 'get',
-    params: params
-  })
-}
-// 获取菜单子集列表
-function listMenuOptions() {
-  return request({
-    url: '/user/menu/listMenuOptions',
-    method: 'get'
-  })
-}
-// 获取权限列表（包含菜单及按钮）
-function listAuthOptions() {
-  return request({
-    url: '/user/menu/listAuthOptions',
-    method: 'get'
-  })
-}
-// 添加权限
-function addAuth(form) {
-  return request({
-    url: '/user/menu/addMenu',
-    method: 'post',
-    data: form
-  })
-}
-// 修改权限
-function updateAuth(menu_id, form) {
-  return request({
-    url: '/user/menu/editMenu?menu_id=' + menu_id,
-    method: 'post',
-    data: form
+    url: '/auth/login',
+    method: 'POST',
+    data
   })
 }
 
-function deleteAuths(menu_id) {
+// 退出登录
+function logoutAPI() {
   return request({
-    url: '/user/menu/delMenu',
-    method: 'post',
-    data: menu_id
+    url: '/auth/logout',
+    method: 'POST'
   })
 }
 
-// 根据id获取角色数据
-function getAuthDetail(menu_id) {
+// 刷新token
+function refreshTokenAPI(refreshToken) {
   return request({
-    url: '/user/menu/getMenu',
-    method: 'get',
-    params: {
-      menu_id: menu_id
-    }
+    url: '/auth/refresh',
+    method: 'POST',
+    data: { refreshToken }
+  })
+}
+
+// 获取用户信息
+function getUserInfoAPI() {
+  return request({
+    url: '/auth/userinfo',
+    method: 'GET'
   })
 }

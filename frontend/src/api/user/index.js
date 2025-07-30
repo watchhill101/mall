@@ -1,111 +1,98 @@
-// 导入axios实例
 import request from '@/utils/request'
-// 导入获取refreshToken的方法
-import { getRefreshToken } from '@/utils/auth'
+
 const apiMap = {
-  // 登录
+  // 登录相关
   login: {
-    get: getCheckCode,
-    login: userLogin,
-    refresh: refreshToken
-  },
-  // 用户管理
-  manage: {
-    add: addUser,
-    update: updateUser,
-    del: delUser,
-    query: listUser,
-    queryById: getUserById,
-    reset: updatePwd // 重置密码
+    login: loginAPI,
+    get: getVerifyCodeAPI
   },
   // 用户中心
   center: {
-    get: getUserInfo,
-    update: updateUserInfo
+    get: getUserInfoAPI,
+    update: updateUserInfoAPI
+  },
+  // 用户管理
+  manage: {
+    reset: resetPasswordAPI,
+    query: queryUsersAPI,
+    add: addUserAPI,
+    update: updateUserAPI,
+    delete: deleteUserAPI
   }
 }
+
 export default apiMap
 
-// 获取图形验证码
-function getCheckCode(uuid) {
+// 登录接口
+function loginAPI(data) {
   return request({
-    url: '/user/checkCode?uuid=' + uuid,
-    method: 'get'
-  })
-}
-// 刷新过期token
-function refreshToken() {
-  return request({
-    url: '/user/refreshToken',
-    method: 'post',
-    data: { refreshToken: getRefreshToken() }
-  })
-}
-// 添加用户登录请求
-function userLogin(form) {
-  return request({
-    url: '/user/login',
-    method: 'post',
-    data: form
-  })
-}
-function listUser(params) {
-  return request({
-    url: '/user/list',
-    method: 'get',
-    params: params
+    url: '/auth/login',
+    method: 'POST',
+    data
   })
 }
 
-function addUser(form) {
+// 获取验证码
+function getVerifyCodeAPI(uuid) {
   return request({
-    url: '/user/addUser',
-    method: 'post',
-    data: form
+    url: `/auth/verify-code/${uuid || ''}`,
+    method: 'GET'
   })
 }
 
-function updateUser(form) {
+// 获取用户信息
+function getUserInfoAPI(userId) {
   return request({
-    url: '/user/editUser/' + form.user_id,
-    method: 'post',
-    data: form
+    url: `/auth/userinfo${userId ? `/${userId}` : ''}`,
+    method: 'GET'
   })
 }
 
-function delUser(ids) {
+// 更新用户信息
+function updateUserInfoAPI(data) {
   return request({
-    url: '/user/delUser',
-    method: 'post',
-    data: ids
+    url: '/auth/update-profile',
+    method: 'PUT',
+    data
   })
 }
 
-function updatePwd(form) {
+// 重置密码
+function resetPasswordAPI(data) {
   return request({
-    url: `/user/editPwd`,
-    method: 'post',
-    data: form
-  })
-}
-// 根据id获取用户数据
-function getUserById(user_id) {
-  return request({
-    url: `/user/queryUserInfo/${user_id}`,
-    method: 'get'
+    url: '/auth/reset-password',
+    method: 'POST',
+    data
   })
 }
 
-function getUserInfo() {
-  return request({
-    url: '/user/myInfo/userinfo',
-    method: 'get'
+// 查询用户列表（管理功能，暂时返回空数据）
+function queryUsersAPI(params) {
+  return Promise.resolve({
+    data: {
+      list: [],
+      total: 0
+    }
   })
 }
-function updateUserInfo(userinfo) {
-  return request({
-    url: '/user/myInfo/updateUserinfo',
-    method: 'post',
-    data: userinfo
+
+// 添加用户（管理功能，暂时返回成功）
+function addUserAPI(data) {
+  return Promise.resolve({
+    data: { success: true }
+  })
+}
+
+// 更新用户（管理功能，暂时返回成功）
+function updateUserAPI(data) {
+  return Promise.resolve({
+    data: { success: true }
+  })
+}
+
+// 删除用户（管理功能，暂时返回成功）
+function deleteUserAPI(id) {
+  return Promise.resolve({
+    data: { success: true }
   })
 }

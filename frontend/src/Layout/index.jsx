@@ -168,7 +168,7 @@ const LayoutApp = () => {
           <span className="layout-logo">
             <DashboardFilled />
           </span>
-          {!collapsed && <span>react-antd5-admin</span>}
+          {!collapsed && <span>后台管理系统</span>}
         </div>
         <Switch
           className="sider-switch"

@@ -1,7 +1,6 @@
 import Axios from 'axios'
 import { getToken } from '../utils/auth'
 import { message } from 'antd'
-import { setToken, setRefreshToken } from '../utils/auth'
 
 const BASE_URL = process.env.NODE_ENV === 'production' ? '/api' : '/api' //请求接口url 如果不配置 则默认访问链接地址
 const TIME_OUT = 20000 // 接口超时时间
@@ -33,11 +32,6 @@ instance.interceptors.request.use(
 )
 
 export function setResponseInterceptor(store, login, logout) {
-  console.log("获取token",store.getState().user.refreshToken)
-  // 是否正在刷新的标记
-  let isRefreshing = false
-  // 重试队列，每一项将是一个待执行的函数形式
-  let requests = []
   // 添加响应拦截器
   instance.interceptors.response.use(
     (response) => {
@@ -52,78 +46,37 @@ export function setResponseInterceptor(store, login, logout) {
         }
         return response
       } else {
-        // 如果接口请求失败
-        if (response.data.code !== 0) {
-          let errMsg = response.data.message || '系统错误'
-          // token过期
-          if (response.data.code === 401) {
-            const config = response.config
-            // token失效,判断请求状态
-            if (!isRefreshing) {
-              isRefreshing = true
-              // 刷新token
-              return Axios({
-                url: `${BASE_URL}/user/refreshToken`,
-                method: 'POST',
-                data: { refreshToken: store.getState().user.refreshToken }
-              })
-                .then((res) => {
-                  // 刷新token成功，更新最新token
-                  const { token, refreshToken } = res.data.data
-                  store.dispatch(login({ token, refreshToken }))
-                  setToken(token)
-                  setRefreshToken(refreshToken)
-                  //已经刷新了token，将所有队列中的请求进行重试
-                  requests.forEach((cb) => {
-                    cb(token)
-                  })
-                  // 重试完了别忘了清空这个队列
-                  requests = []
-                  return instance({
-                    ...config,
-                    headers: {
-                      ...config.headers,
-                      Authorization: token
-                    }
-                  })
-                })
-                .catch((e) => {
-                  store.dispatch(logout())
-                  // 重置token失败，跳转登录页
-                  console.log(e.message)
-                  window.location.href = '/login'
-                })
-                .finally(() => {
-                  isRefreshing = false
-                })
-            } else {
-              // 返回未执行 resolve 的 Promise
-              return new Promise((resolve) => {
-                // 用函数形式将 resolve 存入，等待刷新后再执行
-                requests.push((token) => {
-                  config.baseURL = '/api'
-                  config.headers && (config.headers['Authorization'] = token)
-                  resolve(
-                    instance({
-                      ...config,
-                      headers: {
-                        ...config.headers,
-                        Authorization: token
-                      }
-                    })
-                  )
-                })
-              })
-            }
+        // 简化响应处理，直接返回数据
+        if (response.data && response.data.code !== undefined) {
+          if (response.data.code === 0) {
+            return response.data
           } else {
+            const errMsg = response.data.message || '请求失败'
             message.error(errMsg)
+            return Promise.reject(errMsg)
           }
-          return Promise.reject(errMsg)
         }
-        return response.data
+        return response.data || response
       }
     },
     (error) => {
+      console.error('请求错误:', error)
+      if (error.code === 'ECONNABORTED') {
+        message.error('请求超时，请检查网络连接')
+      } else if (error.response) {
+        const status = error.response.status
+        if (status === 404) {
+          message.error('请求的资源不存在')
+        } else if (status === 500) {
+          message.error('服务器内部错误')
+        } else if (status === 504) {
+          message.error('网关超时，请检查后端服务')
+        } else {
+          message.error(`请求失败: ${status}`)
+        }
+      } else {
+        message.error('网络错误，请检查连接')
+      }
       return Promise.reject(error)
     }
   )

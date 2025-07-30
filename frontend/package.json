@@ -1,6 +1,7 @@
 {
-  "name": "react-antd5-admin",
-  "version": "0.1.0",
+  "name": "mall-admin-template",
+  "version": "1.0.0",
+  "description": "基于 React + Ant Design 的管理系统模板",
   "private": true,
   "dependencies": {
     "@ant-design/plots": "^1.2.6",

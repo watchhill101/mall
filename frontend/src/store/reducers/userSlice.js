@@ -1,10 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit'
 // 导入token、refreshToken操作方法
 import { getRefreshToken, getToken, setRefreshToken, setToken, removeToken, removeRefreshToken } from '@/utils/auth'
-// 导入api
-import userApi from '@/api/user'
-// 导入加载用户路由的方法
-import { generateRoutes } from './permissionSlice'
 
 /**
  * 创建一个用户状态切片
@@ -20,7 +16,11 @@ const userSlice = createSlice({
     return {
       token,
       refreshToken,
-      userinfo: { avatar: null }
+      userinfo: { 
+        avatar: null,
+        username: '',
+        email: ''
+      }
     }
   },
   // 状态操作方法
@@ -39,7 +39,11 @@ const userSlice = createSlice({
     logout(state, action) {
       state.token = null
       state.refreshToken = null
-      state.userinfo = { avatar: null }
+      state.userinfo = { 
+        avatar: null,
+        username: '',
+        email: ''
+      }
       // 移除存储中的信息
       removeToken()
       removeRefreshToken()
@@ -48,17 +52,42 @@ const userSlice = createSlice({
 })
 // 导出经过redux包装的action对象
 export const { login, setUserinfo, logout } = userSlice.actions
-// 登录异步方法
+// 登录方法（简化版）
 export const loginAsync = (payload) => async (dispatch) => {
-  const { data } = await userApi.login.login(payload)
-  dispatch(login(data))
-  const userinfo = await dispatch(getUserInfoAsync())
-  dispatch(generateRoutes(userinfo.menus))
+  try {
+    // 这里您可以实现自己的登录逻辑
+    console.log('登录参数:', payload)
+    
+    // 模拟登录成功
+    const mockLoginData = {
+      token: 'your-token-here',
+      refreshToken: 'your-refresh-token-here'
+    }
+    
+    dispatch(login(mockLoginData))
+    return mockLoginData
+  } catch (error) {
+    console.error('登录失败:', error)
+    throw error
+  }
 }
+
+// 获取用户信息方法（简化版）
 export const getUserInfoAsync = () => async (dispatch) => {
-  const { data } = await userApi.center.get()
-  dispatch(setUserinfo({ ...data, avatar: data.avatar ? process.env.React_APP_IMG_API + '/' + data.avatar : null }))
-  return data
+  try {
+    // 这里您可以实现自己的获取用户信息逻辑
+    const mockUserInfo = {
+      username: 'Admin',
+      email: 'admin@example.com',
+      avatar: null
+    }
+    
+    dispatch(setUserinfo(mockUserInfo))
+    return mockUserInfo
+  } catch (error) {
+    console.error('获取用户信息失败:', error)
+    return null
+  }
 }
 // 导出切片对象
 export default userSlice
