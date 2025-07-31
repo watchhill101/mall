@@ -1,10 +1,11 @@
 import React from 'react'
 import { Button, Result } from 'antd'
 import { useNavigate } from 'react-router-dom'
+
 export default function NotFound() {
   const navigate = useNavigate()
   const backHome = () => {
-    navigate('/', { replace: true })
+    navigate('/home', { replace: true })
   }
   return (
     <Result
