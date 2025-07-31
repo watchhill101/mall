@@ -1,30 +1,73 @@
-import React, { createElement, useId, useState } from 'react'
-import { Card, Form, Button, Input, Space, Select, Row, Col, DatePicker } from 'antd'
-import { PlusCircleOutlined } from '@ant-design/icons'
+import React, { createElement, useId, useState } from 'react';
+import {
+  Card,
+  Form,
+  Button,
+  Input,
+  Space,
+  Select,
+  Row,
+  Col,
+  DatePicker,
+  Cascader,
+  Radio,
+} from 'antd';
+import { PlusCircleOutlined } from '@ant-design/icons';
 
 const SearchBar = ({ name, formItemList, getSearchParams }) => {
   // form 表单实例
-  const [searchForm] = Form.useForm()
-  const [advancedSearch, setAdvancedSearch] = useState(false)
-  const uniqueId = useId()
+  const [searchForm] = Form.useForm();
+  const [advancedSearch, setAdvancedSearch] = useState(false);
+  const uniqueId = useId();
   const onFinish = (values) => {
-    getSearchParams(values)
-  }
+    getSearchParams(values);
+  };
   const onReset = () => {
-    searchForm.resetFields()
-    getSearchParams({})
-  }
+    searchForm.resetFields();
+    getSearchParams({});
+  };
   // 表单输入式组件
   const formComponents = {
     select: ({ type, selectvalues = [], callback = () => {}, ...restProps }) =>
       createElement(
         Select,
         { onChange: (v) => callback(v), ...restProps },
-        selectvalues.map((v) => createElement(Select.Option, { key: v.value, value: v.value }, v.label))
+        selectvalues.map((v) =>
+          createElement(
+            Select.Option,
+            { key: v.value, value: v.value },
+            v.label
+          )
+        )
       ),
     input: ({ type, ...restProps }) => <Input {...restProps} />,
-    datePicker: ({ type, ...restProps }) => <DatePicker format="YYYY-MM-DD" {...restProps} />
-  }
+    datePicker: ({ type, ...restProps }) => (
+      <DatePicker format="YYYY-MM-DD" {...restProps} />
+    ),
+    Cascader: ({ type, options, onChange, ...restProps }) => {
+      // 自定义选项渲染函数
+      const renderRadioOption = (node) => {
+        return (
+          <Radio.Group value={node.value}>
+            <Radio value={node.value}>{node.label}</Radio>
+          </Radio.Group>
+        );
+      };
+      return (
+        <Cascader
+          {...restProps}
+          options={options}
+          onChange={onChange}
+          fieldNames={{
+            label: 'label',
+            value: 'value',
+            children: 'children',
+          }}
+          // optionRender={renderRadioOption}
+        />
+      );
+    },
+  };
   return (
     <Card>
       <Form
@@ -33,21 +76,24 @@ const SearchBar = ({ name, formItemList, getSearchParams }) => {
         labelCol={{ span: 6 }}
         wrapperCol={{ span: 18 }}
         layout="inline"
-        onFinish={onFinish}>
+        onFinish={onFinish}
+      >
         <Row justify="start" gutter={[20, 20]} style={{ width: '100%' }}>
           {formItemList &&
             formItemList.slice(0, 3).map((item, index) => {
               // 取出输入类组件的类型，无则默认input
-              const { type = 'input' } = item.valueCompProps
+              const { type = 'input' } = item.valueCompProps;
               // 依据类型返回对应的组件
-              const C = formComponents[type]
+              const C = formComponents[type];
               // 输出不用的type属性以便传入输入类组件
-              delete item.valueCompProps.type
+              delete item.valueCompProps.type;
               return (
                 <Col span={6} key={index}>
-                  <Form.Item {...item.formItemProps}>{C(item.valueCompProps)}</Form.Item>
+                  <Form.Item {...item.formItemProps}>
+                    {C(item.valueCompProps)}
+                  </Form.Item>
                 </Col>
-              )
+              );
             })}
           {formItemList && (
             <Col span={6}>
@@ -61,7 +107,8 @@ const SearchBar = ({ name, formItemList, getSearchParams }) => {
                     <Button
                       type="link"
                       icon={<PlusCircleOutlined />}
-                      onClick={() => setAdvancedSearch((value) => !value)}>
+                      onClick={() => setAdvancedSearch((value) => !value)}
+                    >
                       高级搜索
                     </Button>
                   )}
@@ -72,18 +119,20 @@ const SearchBar = ({ name, formItemList, getSearchParams }) => {
           {advancedSearch &&
             formItemList.length > 3 &&
             formItemList.slice(3).map((item, index) => {
-              const { type = 'input' } = item.valueCompProps
-              const C = formComponents[type]
+              const { type = 'input' } = item.valueCompProps;
+              const C = formComponents[type];
               return (
                 <Col span={6} key={3 + index}>
-                  <Form.Item {...item.formItemProps}>{C(item.valueCompProps)}</Form.Item>
+                  <Form.Item {...item.formItemProps}>
+                    {C(item.valueCompProps)}
+                  </Form.Item>
                 </Col>
-              )
+              );
             })}
         </Row>
       </Form>
     </Card>
-  )
-}
+  );
+};
 
-export default SearchBar
+export default SearchBar;
