@@ -60,12 +60,44 @@ const LayoutApp = () => {
   // 获取当前路径数组片段
   const pathSnippets = pathname.split('/').filter((i) => i)
   const [subMenuKeys, setSubMenuKeys] = useState(pathSnippets.slice(0, -1).map((item) => '/' + item))
+  
+  // 处理菜单选中状态 - 确保根路径也能正确选中首页
+  const currentSelectedKey = useMemo(() => {
+    if (pathname === '/' || pathname === '/home') {
+      return '/home'
+    }
+    return pathname
+  }, [pathname])
   const menuItems = useMemo(() => {
     return [
       getItem(
         <Link to="/home">首页</Link>,
         '/home',
         <SvgIcon name="component" width="14" height="14" color="#ccc"></SvgIcon>
+      ),
+      // 添加商城菜单 - 使用统一的图标格式
+      getItem(
+        <Link to="/shops">商家</Link>,
+        '/shops',
+        <SvgIcon name="shop" width="14" height="14" color="#ccc"></SvgIcon>
+      ),
+      // 添加商品菜单
+      getItem(
+        <Link to="/goods">商品</Link>,
+        '/goods',
+        <SvgIcon name="goods" width="14" height="14" color="#ccc"></SvgIcon>
+      ),
+      // 添加订单菜单
+      getItem(
+        <Link to="/orders">订单</Link>,
+        '/orders',
+        <SvgIcon name="orders" width="14" height="14" color="#ccc"></SvgIcon>
+      ),
+      // 添加用户菜单
+      getItem(
+        <Link to="/users">用户</Link>,
+        '/users',
+        <SvgIcon name="users" width="14" height="14" color="#ccc"></SvgIcon>
       )
     ].concat(getTreeMenu(permissionRoutes))
   }, [permissionRoutes])
@@ -77,7 +109,7 @@ const LayoutApp = () => {
   const handleMenuClick = ({ key }) => {
     // 菜单无子项，跳转
     if (formatRoutes.find((item) => item.menuPath === key)) navigate(key)
-      console.log(key,'获取点击路径')
+    console.log(key, '获取点击路径')
   }
   /** 面包屑 */
   const breadcrumbNameMap = useMemo(() => getBreadcrumbNameMap(permissionRoutes), [permissionRoutes])
@@ -105,8 +137,18 @@ const LayoutApp = () => {
   )
   // 格式化路由数组
   const Home = lazy(() => import('@/pages/Home'))
+  const Shops = lazy(() => import('@/pages/Shops'))
+  const Goods = lazy(() => import('@/pages/Goods'))
+  const Orders = lazy(() => import('@/pages/Orders'))
+  const Users = lazy(() => import('@/pages/Users'))
   const formatRoutes = useMemo(() => {
-    return [{ title: '首页', menuPath: '/home', element: <Home /> }].concat(getMenus(permissionRoutes))
+    return [
+      { title: '首页', menuPath: '/home', element: <Home /> },
+      { title: '商家', menuPath: '/shops', element: <Shops /> },
+      { title: '商品', menuPath: '/goods', element: <Goods /> },
+      { title: '订单', menuPath: '/orders', element: <Orders /> },
+      { title: '用户', menuPath: '/users', element: <Users /> }
+    ].concat(getMenus(permissionRoutes))
   }, [permissionRoutes])
   // 用户头像
   const avatar = useSelector((state) => state.user.userinfo.avatar)
@@ -160,7 +202,7 @@ const LayoutApp = () => {
   }
   // debugger
 
-  console.log(menuItems,'获取菜单')
+  console.log(menuItems, '获取菜单')
   return (
     <Layout className="layout">
       <Sider trigger={null} collapsible collapsed={collapsed} theme={themeVari}>
@@ -180,7 +222,7 @@ const LayoutApp = () => {
         <Menu
           theme={themeVari}
           mode="inline"
-          selectedKeys={[pathname]}
+          selectedKeys={[currentSelectedKey]}
           openKeys={subMenuKeys}
           onOpenChange={handleMenuOpen}
           items={menuItems}
