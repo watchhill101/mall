@@ -7,6 +7,7 @@ var logger = require("morgan");
 
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
+var authRouter = require("./routes/auth");
 //导入中间件
 var cors = require("cors");
 app.use(cors());
@@ -20,15 +21,13 @@ app.use(bodyParser.json());
 
 //导入配置文件
 var config = require("./config/index");
-//解析token
-var JWT = require("express-jwt")
-//使用JWT中间件
-app.use(
-  JWT({
-    secret:config.jwtSecretKey, // 解析token的密钥
-  }).unless({path: [
-    // 不需要token的接口
-  ]}))
+//导入JWT中间件
+const {
+  jwtAuth,
+  optionalJwtAuth,
+  verifyTokenType,
+  verifyTokenType,
+} = require("./utils/ejwt");
 // view engine setup
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "jade");
@@ -38,9 +37,16 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
-
+// 路由配置
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
+app.use("/auth", authRouter);
+// 需要认证的路由 - 使用express-jwt
+app.use("/api/protected", jwtAuth, verifyTokenType); // 需要强制验证的路由
+app.use("/api/optional", optionalJwtAuth); // 可选验证的路由
+
+// JWT错误处理中间件
+app.use(jwtErrorHandler);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

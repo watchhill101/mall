@@ -15,7 +15,7 @@ const secondaryNavigationSchema = new mongoose.Schema({
 const SecondaryNavigation = mongoose.model(
   "secondaryNavigation",
   secondaryNavigationSchema,
-  "secondaryNavigations"
+  "secondaryNavigation"
 );
 
 module.exports = SecondaryNavigation;
