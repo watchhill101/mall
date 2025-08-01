@@ -1,56 +1,142 @@
 const mongoose = require("mongoose");
 
-//商品模型
+// 商品模型
 const productSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true }, //商品名称
-    description: { type: String }, //商品描述
-    category: { type: String, required: true }, //商品分类
-    specifications: [{
-      name: { type: String, required: true }, //规格名称
-      value: { type: String, required: true }, //规格值
-      price: { type: Number, required: true }, //规格价格
-    }], //商品规格
-    merchant: { type: mongoose.Schema.Types.ObjectId, ref: "merchant", required: true }, //关联商家
+    productId: { 
+      type: String, 
+      required: true, 
+      unique: true 
+    }, // 商品ID
     
-    // 商品图片
-    images: [{ type: String }], //商品图片URL数组
+    productName: { 
+      type: String, 
+      required: true 
+    }, // 商品名称
     
-    // 库存信息
-    stockQuantity: { type: Number, default: 0 }, //库存数量
-    minStockLevel: { type: Number, default: 10 }, //最低库存警戒线
+    productCategory: { 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: "ProductCategory", 
+      required: true 
+    }, // 商品分类
     
-    // 价格信息
-    originalPrice: { type: Number, required: true }, //原价
-    currentPrice: { type: Number, required: true }, //现价
-    costPrice: { type: Number }, //成本价
-    
-    // 商品状态
-    status: {
+    businessType: {
       type: String,
-      default: "active",
-      enum: ["active", "inactive", "outOfStock", "discontinued"]
+      required: true,
+      enum: ["retail", "wholesale", "manufacturer", "distributor"]
+    }, // 业务类型
+    
+    merchant: { 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: "Merchant", 
+      required: true 
+    }, // 所属商家
+    
+    productInfo: {
+      description: { type: String }, // 商品描述
+      specifications: { type: String }, // 规格型号
+      brand: { type: String }, // 品牌
+      model: { type: String }, // 型号
+      unit: { type: String, default: "件" }, // 单位
+      images: [{ type: String }] // 商品图片数组
     },
     
-    // 销售统计
-    totalSales: { type: Number, default: 0 }, //总销量
-    totalRevenue: { type: Number, default: 0 }, //总收入
+    pricing: {
+      salePrice: { 
+        min: { type: Number, required: true },
+        max: { type: Number }
+      }, // 销售价格范围
+      marketPrice: { 
+        type: Number 
+      }, // 市场售价
+      cost: { 
+        type: Number 
+      } // 成本价
+    },
     
-    // SEO信息
-    tags: [{ type: String }], //商品标签
-    keywords: [{ type: String }], //关键词
+    inventory: {
+      currentStock: { 
+        type: Number, 
+        required: true, 
+        default: 0 
+      }, // 当前库存
+      totalStock: { 
+        type: Number, 
+        default: 0 
+      }, // 总库存
+      reservedStock: { 
+        type: Number, 
+        default: 0 
+      } // 预留库存
+    },
+    
+    status: {
+      type: String,
+      required: true,
+      enum: ["pending", "approved", "rejected", "onSale", "offSale", "deleted"],
+      default: "pending"
+    }, // 商品状态：待审核、已通过、已拒绝、在售、下架、已删除
+    
+    auditInfo: {
+      auditReason: { type: String }, // 审核原因
+      auditor: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: "User" 
+      }, // 审核人
+      auditTime: { type: Date } // 审核时间
+    },
+    
+    isExternal: { 
+      type: Boolean, 
+      default: false 
+    }, // 是否为外部商品
+    
+    externalInfo: {
+      sourceSystem: { type: String }, // 来源系统
+      externalId: { type: String }, // 外部ID
+      syncTime: { type: Date } // 同步时间
+    },
+    
+    salesData: {
+      totalSales: { 
+        type: Number, 
+        default: 0 
+      }, // 总销量
+      monthlyStock: { 
+        type: Number, 
+        default: 0 
+      } // 月库存
+    },
+    
+    warehouseInfo: {
+      warehouse: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: "Warehouse" 
+      }, // 所属仓库
+      location: { type: String } // 存放位置
+    },
+    
+    lastUpdateBy: { 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: "User" 
+    }, // 最后更新人
+    
+    createBy: { 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: "User", 
+      required: true 
+    } // 创建人
   },
   {
-    timestamps: true,
-    versionKey: false,
+    timestamps: true // 自动添加createdAt和updatedAt字段
   }
 );
 
-// 添加索引
-productSchema.index({ name: 1 });
+// 索引
+productSchema.index({ productId: 1 });
 productSchema.index({ merchant: 1 });
-productSchema.index({ category: 1 });
+productSchema.index({ productCategory: 1 });
 productSchema.index({ status: 1 });
+productSchema.index({ "inventory.currentStock": 1 });
 
-const Product = mongoose.model("Product", productSchema, "product");
-module.exports = Product;
+module.exports = mongoose.model("Product", productSchema);
