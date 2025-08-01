@@ -26,7 +26,7 @@ const WithdrawAccount = require("./merchant/withdrawAccount");
 const AccountDetail = require("./merchant/accountDetail");
 const MerchantWithdraw = require("./merchant/merchantWithdraw");
 const Product = require("./goods/product");
-const SettlementOrder = require("./merchant/settlementOrder");
+const SettlementOrder = rquire("./merchant/settlementOrder");
 const Bill = require("./merchant/bill");
 const MerchantApplication = require("./merchant/merchantApplication");
 
