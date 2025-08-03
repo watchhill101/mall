@@ -1,46 +1,58 @@
-.login-container {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.login {
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  left: 0;
+  top: 0;
+  background: center/cover no-repeat
+    url("../../assets/images/login/login-background.jpg");
+}
+
+.loginCard {
+  /* 为 Card 组件添加样式 */
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  width: 500px;
+  height: 360px;
+  padding: 20px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 2px #eee;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+}
+
+.loginContent {
+  /* 为内容区域添加样式 */
+  text-align: center;
   padding: 20px;
 }
 
-.login-card {
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-  
-  .ant-card-head {
-    text-align: center;
-    border-bottom: 1px solid #f0f0f0;
-    
-    .ant-card-head-title {
-      font-size: 20px;
-      font-weight: 600;
-      color: #333;
-    }
-  }
+.loginText {
+  font-size: 26px;
+  color: #333;
+  margin-bottom: 40px;
 }
 
-.login-content {
-  text-align: center;
-  padding: 20px 0;
-  color: #666;
-  
-  p {
-    margin: 10px 0;
-    line-height: 1.6;
-  }
+.loginForm {
+  width: 100%;
+  padding-right: 100px;
 }
 
-@media (max-width: 768px) {
-  .login-container {
-    padding: 10px;
-  }
-  
-  .login-card {
-    width: 100% !important;
-    max-width: 400px;
-  }
+.loginCaptcha {
+  width: 100px;
+  height: 32px;
+  cursor: pointer;
+}
+
+.loginTip {
+  position: absolute;
+  right: 80px;
+  bottom: 72px;
+  font-size: 12px;
+  line-height: 20px;
+  color: #4a4949;
 }

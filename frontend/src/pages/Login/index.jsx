@@ -1,22 +1,30 @@
-import React from 'react'
-import { Card } from 'antd'
-import './Login.module.scss'
+import React from "react";
+import { Card } from "antd";
+import styles from "./Login.module.scss";
+import SvgIcon from "../../components/SvgIcon";
+import { getNameList } from "../../assets/Icon";
+import LoginMine from "@/components/Login/login";
 
 const Login = () => {
-  return (
-    <div className="login-container">
-      <Card 
-        title="用户登录" 
-        className="login-card"
-        style={{ width: 400, margin: '100px auto' }}
-      >
-        <div className="login-content">
-          <p>请在此处实现您的登录功能</p>
-          <p>这里是一个空白的登录页面模板</p>
-        </div>
-      </Card>
-    </div>
-  )
-}
+  const iconNames = getNameList();
+  console.log("可用图标:", iconNames); // 调试信息
+  console.log("第一个图标:", iconNames[0]); // 调试信息
 
-export default Login
+  return (
+    <div className={styles.login}>
+      <div className={styles.loginContainer}>
+        <Card
+          title="用户登录"
+          className={styles.loginCard}
+          style={{ width: 400, margin: "0" }}
+        >
+          <div className={styles.loginContent}>
+            <LoginMine />
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+export default Login;
