@@ -4,6 +4,86 @@
   min-height: 100vh;
   color: #333;
 
+  // 动画定义
+  @keyframes fadeInScale {
+    from {
+      opacity: 0;
+      transform: translateY(-10px) scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  // 销售总额圆环图样式
+  .sales-overview-chart {
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    // 关闭按钮样式
+    .anticon-close {
+      transition: all 0.2s ease;
+      
+      &:hover {
+        backgroundColor: rgba(255, 255, 255, 0.3) !important;
+        transform: scale(1.1);
+      }
+    }
+
+    // 响应式设计 - Fixed定位
+    @media (max-width: 1200px) {
+      left: 30px !important;
+      width: 280px !important;
+      height: 200px !important;
+      top: 190px !important;
+    }
+
+    @media (max-width: 768px) {
+      width: 260px !important;
+      height: 180px !important;
+      top: 170px !important;
+      left: 20px !important;
+    }
+
+    @media (max-width: 480px) {
+      width: 220px !important;
+      height: 160px !important;
+      top: 150px !important;
+      left: 10px !important;
+    }
+
+    // 侧边栏收起时的适配
+    .ant-layout-sider-collapsed ~ * & {
+      left: 120px !important;
+    }
+  }
+
+  // 全局动画类
+  .fadeInScale {
+    animation: fadeInScale 0.3s ease-out;
+  }
+
+  .fadeIn {
+    animation: fadeIn 0.3s ease-out;
+  }
+
   .chart-card {
     background: #fff;
     border: 1px solid #e8e8e8;
