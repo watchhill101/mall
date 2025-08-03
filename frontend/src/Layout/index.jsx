@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo, useCallback, lazy } from 'react'
+import React, { useState, useRef, useMemo, useCallback, lazy } from 'react';
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -6,68 +6,82 @@ import {
   DownOutlined,
   UserOutlined,
   UndoOutlined,
-  LogoutOutlined
-} from '@ant-design/icons'
-import { Layout, Menu, Button, theme, Switch, Dropdown, Space, Popconfirm, Breadcrumb } from 'antd'
-import { useDispatch, useSelector } from 'react-redux'
-import { logout } from '@/store/reducers/userSlice'
-import { useNavigate, Link, useLocation, Outlet } from 'react-router-dom'
+  LogoutOutlined,
+} from '@ant-design/icons';
+import {
+  Layout,
+  Menu,
+  Button,
+  theme,
+  Switch,
+  Dropdown,
+  Space,
+  Popconfirm,
+  Breadcrumb,
+} from 'antd';
+import { useDispatch, useSelector } from 'react-redux';
+import { logout } from '@/store/reducers/userSlice';
+import { useNavigate, Link, useLocation, Outlet } from 'react-router-dom';
 // 导入css（未模块化）
-import './Layout.scss'
+import './Layout.scss';
 // 导入自定义组件
-import TabsView from './components/TabsView'
-import CustomModal from '@/components/CustomModal'
-import UserCenterForm from './components/UserCenterForm'
-import ResetPwdForm from './components/ResetPwdForm'
-import SvgIcon from '@/components/SvgIcon'
+import TabsView from './components/TabsView';
+import CustomModal from '@/components/CustomModal';
+import UserCenterForm from './components/UserCenterForm';
+import ResetPwdForm from './components/ResetPwdForm';
+import SvgIcon from '@/components/SvgIcon';
 // 导入工具类方法
-import { getBreadcrumbNameMap, getItem, getTreeMenu } from '@/utils/common'
+import { getBreadcrumbNameMap, getItem, getTreeMenu } from '@/utils/common';
 
-const { Header, Sider, Content } = Layout
+const { Header, Sider, Content } = Layout;
 // 提取底层路由方法
 const getMenus = (routes) => {
-  let menus = []
+  let menus = [];
   function getMenuItem(route) {
     route.forEach((item) => {
-      if (item.children && item.children.length) getMenuItem(item.children)
+      if (item.children && item.children.length) getMenuItem(item.children);
       else {
         // 排除默认路由
-        if (item.path) menus.push(item)
+        if (item.path) menus.push(item);
       }
-    })
+    });
   }
-  getMenuItem(routes)
-  return menus
-}
+  getMenuItem(routes);
+  return menus;
+};
 const LayoutApp = () => {
   /** 通用hook */
-  const dispatch = useDispatch()
-  const navigate = useNavigate()
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   // 侧边栏伸缩
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(false);
   const {
-    token: { colorBgContainer }
-  } = theme.useToken()
+    token: { colorBgContainer },
+  } = theme.useToken();
   // 侧边栏主题模式
-  const [themeVari, setThemeVari] = useState('dark')
+  const [themeVari, setThemeVari] = useState('dark');
   // 切换侧边栏主题颜色
   const changeTheme = (value) => {
-    setThemeVari(value ? 'light' : 'dark')
-  }
+    setThemeVari(value ? 'light' : 'dark');
+  };
   /** 侧边栏菜单 */
-  const { pathname } = useLocation()
-  const permissionRoutes = useSelector((state) => state.permission.permissionRoutes)
+  const { pathname } = useLocation();
+  const permissionRoutes = useSelector(
+    (state) => state.permission.permissionRoutes
+  );
   // 获取当前路径数组片段
-  const pathSnippets = pathname.split('/').filter((i) => i)
-  const [subMenuKeys, setSubMenuKeys] = useState(pathSnippets.slice(0, -1).map((item) => '/' + item))
-  
+  const pathSnippets = pathname.split('/').filter((i) => i);
+  const [subMenuKeys, setSubMenuKeys] = useState(
+    pathSnippets.slice(0, -1).map((item) => '/' + item)
+  );
+
   // 处理菜单选中状态 - 确保根路径也能正确选中首页
   const currentSelectedKey = useMemo(() => {
     if (pathname === '/' || pathname === '/home') {
-      return '/home'
+      return '/home';
     }
-    return pathname
-  }, [pathname])
+    return pathname;
+  }, [pathname]);
   const menuItems = useMemo(() => {
     return [
       getItem(
@@ -84,7 +98,7 @@ const LayoutApp = () => {
       // 添加商品菜单
       getItem(
         <Link to="/goods">商品</Link>,
-        '/goods',
+        '/goods/ListOfCommodities',
         <SvgIcon name="goods" width="14" height="14" color="#ccc"></SvgIcon>
       ),
       // 添加订单菜单
@@ -98,60 +112,63 @@ const LayoutApp = () => {
         <Link to="/users">用户</Link>,
         '/users',
         <SvgIcon name="users" width="14" height="14" color="#ccc"></SvgIcon>
-      )
-    ].concat(getTreeMenu(permissionRoutes))
-  }, [permissionRoutes])
+      ),
+    ].concat(getTreeMenu(permissionRoutes));
+  }, [permissionRoutes]);
   // 设置菜单展开收缩
   const handleMenuOpen = (openKeys) => {
-    setSubMenuKeys(openKeys)
-  }
+    setSubMenuKeys(openKeys);
+  };
   // 点击菜单
   const handleMenuClick = ({ key }) => {
     // 菜单无子项，跳转
-    if (formatRoutes.find((item) => item.menuPath === key)) navigate(key)
-    console.log(key, '获取点击路径')
-  }
+    if (formatRoutes.find((item) => item.menuPath === key)) navigate(key);
+    console.log(key, '获取点击路径');
+  };
   /** 面包屑 */
-  const breadcrumbNameMap = useMemo(() => getBreadcrumbNameMap(permissionRoutes), [permissionRoutes])
+  const breadcrumbNameMap = useMemo(
+    () => getBreadcrumbNameMap(permissionRoutes),
+    [permissionRoutes]
+  );
   const breadcrumbItems = pathSnippets.map((_, index) => {
-    const url = `/${pathSnippets.slice(0, index + 1).join('/')}`
+    const url = `/${pathSnippets.slice(0, index + 1).join('/')}`;
     // 如果是最后一项，即当前页面路由，渲染文本不可点击跳转
     if (index + 1 === pathSnippets.length)
       return {
         key: url,
-        title: breadcrumbNameMap[url]
-      }
+        title: breadcrumbNameMap[url],
+      };
     // 其余用link标签可点击跳转（注意：上级路由默认跳转到其定义的重定向路由，例如/system跳转至/system/user）
     return {
       key: url,
-      title: <Link to={url}>{breadcrumbNameMap[url]}</Link>
-    }
-  })
+      title: <Link to={url}>{breadcrumbNameMap[url]}</Link>,
+    };
+  });
   /** tabs栏 */
   // 选择选项卡以后，跳转对应路由
   const selectTab = useCallback(
     (key) => {
-      navigate(key)
+      navigate(key);
     },
     [navigate]
-  )
+  );
   // 格式化路由数组
-  const Home = lazy(() => import('@/pages/Home'))
-  const Shops = lazy(() => import('@/pages/Shops'))
-  const Goods = lazy(() => import('@/pages/Goods'))
-  const Orders = lazy(() => import('@/pages/Orders'))
-  const Users = lazy(() => import('@/pages/Users'))
+  const Home = lazy(() => import('@/pages/Home'));
+  const Shops = lazy(() => import('@/pages/Shops'));
+  const Goods = lazy(() => import('@/pages/Goods'));
+  const Orders = lazy(() => import('@/pages/Orders'));
+  const Users = lazy(() => import('@/pages/Users'));
   const formatRoutes = useMemo(() => {
     return [
       { title: '首页', menuPath: '/home', element: <Home /> },
       { title: '商家', menuPath: '/shops', element: <Shops /> },
       { title: '商品', menuPath: '/goods', element: <Goods /> },
       { title: '订单', menuPath: '/orders', element: <Orders /> },
-      { title: '用户', menuPath: '/users', element: <Users /> }
-    ].concat(getMenus(permissionRoutes))
-  }, [permissionRoutes])
+      { title: '用户', menuPath: '/users', element: <Users /> },
+    ].concat(getMenus(permissionRoutes));
+  }, [permissionRoutes]);
   // 用户头像
-  const avatar = useSelector((state) => state.user.userinfo.avatar)
+  const avatar = useSelector((state) => state.user.userinfo.avatar);
   /** 下拉菜单 */
   // 下拉菜单项数组
   const dropdownMenuItems = [
@@ -161,7 +178,7 @@ const LayoutApp = () => {
         <div onClick={() => toggleCenterStatus(true)}>
           <UserOutlined /> 个人中心
         </div>
-      )
+      ),
     },
     {
       key: '2',
@@ -170,43 +187,52 @@ const LayoutApp = () => {
           onConfirm={() => toggleResetStatus(true)}
           title="是否确认重置密码？"
           okText="重置"
-          cancelText="取消">
+          cancelText="取消"
+        >
           <UndoOutlined /> 重置密码
         </Popconfirm>
-      )
+      ),
     },
     {
       key: '3',
       label: (
-        <Popconfirm onConfirm={() => handleLogout()} title="是否确认退出？" okText="退出" cancelText="取消">
+        <Popconfirm
+          onConfirm={() => handleLogout()}
+          title="是否确认退出？"
+          okText="退出"
+          cancelText="取消"
+        >
           <LogoutOutlined /> 退出登录
         </Popconfirm>
-      )
-    }
-  ]
+      ),
+    },
+  ];
   /** 个人中心 */
-  const userCenterRef = useRef()
+  const userCenterRef = useRef();
   const toggleCenterStatus = (status) => {
-    userCenterRef.current.toggleShowStatus(status)
-  }
+    userCenterRef.current.toggleShowStatus(status);
+  };
   /** 重置密码 */
-  const resetPwdRef = useRef()
+  const resetPwdRef = useRef();
   const toggleResetStatus = (status) => {
-    resetPwdRef.current.toggleShowStatus(status)
-  }
+    resetPwdRef.current.toggleShowStatus(status);
+  };
 
   // 退出登录
   const handleLogout = () => {
-    dispatch(logout())
-    navigate('/login')
-  }
+    dispatch(logout());
+    navigate('/login');
+  };
   // debugger
 
-  console.log(menuItems, '获取菜单')
+  console.log(menuItems, '获取菜单');
   return (
     <Layout className="layout">
       <Sider trigger={null} collapsible collapsed={collapsed} theme={themeVari}>
-        <div className="layout-logo-vertical" style={{ color: themeVari === 'dark' ? '#fff' : '#000' }}>
+        <div
+          className="layout-logo-vertical"
+          style={{ color: themeVari === 'dark' ? '#fff' : '#000' }}
+        >
           <span className="layout-logo">
             <DashboardFilled />
           </span>
@@ -217,7 +243,9 @@ const LayoutApp = () => {
           checkedChildren="☀"
           unCheckedChildren="🌙"
           onChange={changeTheme}
-          style={{ transform: collapsed ? 'translateX(15px)' : 'translateX(75px)' }}
+          style={{
+            transform: collapsed ? 'translateX(15px)' : 'translateX(75px)',
+          }}
         />
         <Menu
           theme={themeVari}
@@ -234,8 +262,9 @@ const LayoutApp = () => {
           style={{
             padding: 0,
             background: colorBgContainer,
-            display: 'flex'
-          }}>
+            display: 'flex',
+          }}
+        >
           <Button
             type="text"
             icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
@@ -243,17 +272,23 @@ const LayoutApp = () => {
             style={{
               fontSize: '16px',
               width: 64,
-              height: 64
+              height: 64,
             }}
           />
           <div className="header-breadcrumb">
             <Breadcrumb items={breadcrumbItems} />
           </div>
           <div className="header-right">
-            <Dropdown menu={{ items: dropdownMenuItems }} placement="bottomRight">
+            <Dropdown
+              menu={{ items: dropdownMenuItems }}
+              placement="bottomRight"
+            >
               <Space>
                 <img
-                  src={avatar || require('@/assets/images/avatar/default_avatar.jpg')}
+                  src={
+                    avatar ||
+                    require('@/assets/images/avatar/default_avatar.jpg')
+                  }
                   className="user-icon"
                   alt="avatar"
                 />
@@ -265,11 +300,16 @@ const LayoutApp = () => {
         <Content
           style={{
             // padding: 24,
-            minHeight: 280
+            minHeight: 280,
             // background: colorBgContainer
-          }}>
-          <TabsView pathname={pathname} formatRoutes={formatRoutes} selectTab={selectTab} />
-          {/* <Outlet></Outlet> */}
+          }}
+        >
+          <TabsView
+            pathname={pathname}
+            formatRoutes={formatRoutes}
+            selectTab={selectTab}
+          />
+          <Outlet></Outlet>
         </Content>
       </Layout>
       <CustomModal title="个人中心" ref={userCenterRef}>
@@ -279,6 +319,6 @@ const LayoutApp = () => {
         <ResetPwdForm toggleResetStatus={toggleResetStatus} />
       </CustomModal>
     </Layout>
-  )
-}
-export default LayoutApp
+  );
+};
+export default LayoutApp;

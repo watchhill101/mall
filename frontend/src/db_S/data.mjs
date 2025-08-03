@@ -5,6 +5,7 @@ export const data = Mock.mock({
     'list|1-100': [{
         // 属性 id 是一个自增数，起始值为 1，每次增 1
         'id|+1': 1,
+        "src": "@image('200x200', '#50B347', '#FFF', 'Mock.js')",
         'ProductName': '@ctitle',
         'ProductCategory': '@cname',
         'SellingPrice': '@integer(100, 1000)',
@@ -14,7 +15,23 @@ export const data = Mock.mock({
         'LastUpdateTime': '@date("yyyy-MM-dd hh:mm:ss")',
     }]
 })
+// 商品分类模拟数据
+export const ProductClassificationData = Mock.mock({
+    'list|1-100': [{
+        'id|+1': 1,
+        'BusinessType': '@pick(["零售","家政"])',
+        'ClassificationID': '@integer(100, 1000)',
+        'CategoryName': "@cname",
+        "ParentCategory": "@cname",
+        "ClassificationRank": "@pick(['一级','二级'])",
+        "ClassificationIcon": "@image('100x100', '#50B347', '#FFF', 'Mock.js')",
+        "ClassificationImg": "@image('200x200', '#50B347', '#FFF', 'Mock.js')",
+        "AfterSalesDays": "@integer(7, 14)",
+        "ClassificationAndSorting": "@integer(1, 100)",
+        "status": "@pick(['正常','禁用'])",
+    }]
 
+})
 
 
 

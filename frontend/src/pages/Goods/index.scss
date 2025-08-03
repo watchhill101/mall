@@ -1,23 +1,15 @@
-.Goods {
-  .OperationButton {
-    // margin-top: 5px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    .OperationButton-left {
-      Button {
-        margin-right: 15px;
-      }
+.GoodsNav {
+  display: flex;
+  height: 100vh;
+  .menu {
+    height: 100vh;
+    margin-right: 20px;
+    Menu {
+      height: 100vh;
     }
-    .OperationButton-right {
-      //   border: 1px solid red;
-      width: 300px;
-      ul {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        list-style: none;
-      }
-    }
+  }
+  .main-goods {
+    width: 100%;
+    background-color: #ffff;
   }
 }
