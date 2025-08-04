@@ -2,18 +2,55 @@ const express = require("express");
 const router = express.Router();
 const User = require("../moudle/user/user");
 const JwtUtil = require("../utils/jwt");
+const CaptchaUtil = require("../utils/captcha");
 const { jwtAuth, getCurrentUser } = require("../utils/ejwt");
 
 /**
  * 用户登录
  */
 router.post("/login", async (req, res) => {
+  console.log("🔐 收到登录请求:", req.body);
+  
   try {
-    const { loginAccount, password } = req.body;
+    const { loginAccount, password, captcha, sessionId } = req.body;
 
+    // 参数验证
+    if (!loginAccount || !password) {
+      console.log("❌ 缺少登录参数");
+      return res.status(400).json({
+        code: 400,
+        message: "请提供用户名和密码",
+        data: null,
+      });
+    }
+
+    // 验证码验证
+    if (!captcha || !sessionId) {
+      console.log("❌ 缺少验证码参数");
+      return res.status(400).json({
+        code: 400,
+        message: "请提供验证码",
+        data: null,
+      });
+    }
+
+    console.log("🔍 验证图片验证码:", sessionId, captcha);
+    const isCaptchaValid = await CaptchaUtil.verifyCaptcha(sessionId, captcha);
+    if (!isCaptchaValid) {
+      console.log("❌ 验证码错误");
+      return res.status(400).json({
+        code: 400,
+        message: "验证码错误或已过期",
+        data: null,
+      });
+    }
+    console.log("✅ 验证码验证通过");
+
+    console.log("🔍 查找用户:", loginAccount);
     // 查找用户
     const user = await User.findOne({ loginAccount });
     if (!user) {
+      console.log("❌ 用户不存在:", loginAccount);
       return res.status(401).json({
         code: 401,
         message: "用户名或密码错误",
@@ -21,9 +58,13 @@ router.post("/login", async (req, res) => {
       });
     }
 
+    console.log("✅ 找到用户:", user.loginAccount);
+    
     // 验证密码
+    console.log("🔑 验证密码...");
     const isPasswordValid = await user.comparePassword(password);
     if (!isPasswordValid) {
+      console.log("❌ 密码错误");
       return res.status(401).json({
         code: 401,
         message: "用户名或密码错误",
@@ -31,10 +72,14 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    // 生成token对
-    const tokens = JwtUtil.generateTokenPair(user);
+    console.log("✅ 密码验证成功");
 
-    res.json({
+    // 生成token对
+    console.log("🎫 生成Token...");
+    const tokens = JwtUtil.generateTokenPair(user);
+    console.log("✅ Token生成成功");
+
+    const response = {
       code: 200,
       message: "登录成功",
       data: {
@@ -46,12 +91,15 @@ router.post("/login", async (req, res) => {
         },
         ...tokens,
       },
-    });
+    };
+
+    console.log("📤 发送登录响应");
+    res.json(response);
   } catch (error) {
-    console.error("Login error:", error);
+    console.error("❌ 登录错误:", error);
     res.status(500).json({
       code: 500,
-      message: "登录失败",
+      message: "登录失败: " + error.message,
       data: null,
     });
   }

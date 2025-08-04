@@ -261,7 +261,7 @@ const workOrderSchema = new mongoose.Schema(
 );
 
 // 索引
-workOrderSchema.index({ workOrderId: 1 });
+// workOrderSchema.index({ workOrderId: 1 }); // 移除重复索引，workOrderId 已经通过 unique: true 自动创建
 workOrderSchema.index({ merchant: 1 });
 workOrderSchema.index({ status: 1 });
 workOrderSchema.index({ workType: 1 });

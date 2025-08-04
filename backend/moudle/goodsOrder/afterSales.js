@@ -153,7 +153,7 @@ const afterSalesSchema = new mongoose.Schema(
 );
 
 // 索引
-afterSalesSchema.index({ afterSalesId: 1 });
+// afterSalesSchema.index({ afterSalesId: 1 }); // 移除重复索引，afterSalesId 已经通过 unique: true 自动创建
 afterSalesSchema.index({ order: 1 });
 afterSalesSchema.index({ merchant: 1 });
 afterSalesSchema.index({ status: 1 });

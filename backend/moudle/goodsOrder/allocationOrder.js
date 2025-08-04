@@ -214,7 +214,7 @@ const allocationOrderSchema = new mongoose.Schema(
 );
 
 // 索引
-allocationOrderSchema.index({ allocationOrderId: 1 });
+// allocationOrderSchema.index({ allocationOrderId: 1 }); // 移除重复索引，allocationOrderId 已经通过 unique: true 自动创建
 allocationOrderSchema.index({ merchant: 1 });
 allocationOrderSchema.index({ status: 1 });
 allocationOrderSchema.index({ allocationType: 1 });

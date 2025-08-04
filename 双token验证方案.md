@@ -938,9 +938,312 @@ static async verifyRefreshToken(token, userId) {
 }
 ```
 
+## 常见问题与解决方案
+
+### 问题1：网络请求超时 (ECONNABORTED)
+
+**现象：**
+```
+AxiosError: timeout of 20000ms exceeded
+code: 'ECONNABORTED'
+```
+
+**原因分析：**
+1. **重复的 body parser 配置**：同时使用了 `body-parser` 和 Express 内置解析器
+2. **错误的路由中间件配置**：将 JWT 中间件错误地应用到登录路由
+3. **数据库模型未正确导入**：导致路由处理时找不到模型
+
+**解决方案：**
+
+#### 1. 修复 body parser 冲突
+```javascript
+// ❌ 错误的配置 - 重复配置
+var bodyParser = require("body-parser");
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
+// ✅ 正确的配置 - 只使用 Express 内置解析器
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+```
+
+#### 2. 修复路由中间件配置
+```javascript
+// ❌ 错误的配置 - JWT中间件应用到登录路由
+app.use("/auth", authRouter);
+app.use("/auth/login", optionalJwtAuth); // 这行会拦截登录请求！
+
+// ✅ 正确的配置 - 登录路由不需要JWT验证
+app.use("/auth", authRouter);
+// 只对需要认证的路由应用JWT中间件
+app.use("/api/protected", jwtAuth, verifyTokenType);
+```
+
+#### 3. 确保数据库模型正确导入
+```javascript
+// 在 app.js 中确保数据库连接和模型导入
+require("./moudle/index"); // 导入数据库模型
+```
+
+### 问题2：前端代理配置问题
+
+**现象：**
+前端请求无法到达后端，或者代理转发失败
+
+**解决方案：**
+
+#### 1. 正确的代理配置
+```javascript
+// frontend/src/setupProxy.js
+const { createProxyMiddleware } = require('http-proxy-middleware')
+
+module.exports = function (app) {
+  app.use(
+    '/api',
+    createProxyMiddleware({
+      target: 'http://localhost:3001', // 确保端口正确
+      changeOrigin: true,
+      pathRewrite: {
+        '^/api': '' // 移除 /api 前缀
+      },
+      onError: (err, req, res) => {
+        console.error('代理错误:', err)
+      },
+      onProxyReq: (proxyReq, req, res) => {
+        console.log('代理请求:', req.method, req.url, '->', proxyReq.path)
+      }
+    })
+  )
+}
+```
+
+#### 2. 前端请求配置
+```javascript
+// frontend/src/utils/request.js
+const BASE_URL = '/api' // 使用代理前缀
+const whiteList = ['/auth/login', '/auth/refresh'] // 正确的白名单路径
+
+// 请求拦截器
+instance.interceptors.request.use(
+  (config) => {
+    console.log('📤 发送请求:', config.method?.toUpperCase(), config.url, config.data);
+    
+    if (config.url && !whiteList.includes(config.url)) {
+      let token = getToken()
+      if (token && token.length > 0) {
+        config.headers['Authorization'] = `Bearer ${token}` // 正确的 Bearer 格式
+      }
+    }
+    return config
+  }
+)
+```
+
+### 问题3：后端响应处理问题
+
+**现象：**
+后端收到请求但没有正确响应，或者响应格式不正确
+
+**解决方案：**
+
+#### 1. 添加详细的调试日志
+```javascript
+// backend/routes/auth.js
+router.post("/login", async (req, res) => {
+  console.log("🔐 收到登录请求:", req.body);
+  
+  try {
+    const { loginAccount, password } = req.body;
+
+    // 参数验证
+    if (!loginAccount || !password) {
+      console.log("❌ 缺少登录参数");
+      return res.status(400).json({
+        code: 400,
+        message: "请提供用户名和密码",
+        data: null,
+      });
+    }
+
+    console.log("🔍 查找用户:", loginAccount);
+    const user = await User.findOne({ loginAccount });
+    
+    if (!user) {
+      console.log("❌ 用户不存在:", loginAccount);
+      return res.status(401).json({
+        code: 401,
+        message: "用户名或密码错误",
+        data: null,
+      });
+    }
+
+    console.log("✅ 找到用户:", user.loginAccount);
+    
+    // 验证密码
+    console.log("🔑 验证密码...");
+    const isPasswordValid = await user.comparePassword(password);
+    
+    if (!isPasswordValid) {
+      console.log("❌ 密码错误");
+      return res.status(401).json({
+        code: 401,
+        message: "用户名或密码错误",
+        data: null,
+      });
+    }
+
+    console.log("✅ 密码验证成功");
+    console.log("🎫 生成Token...");
+    
+    const tokens = JwtUtil.generateTokenPair(user);
+    console.log("✅ Token生成成功");
+
+    const response = {
+      code: 200,
+      message: "登录成功",
+      data: {
+        user: {
+          _id: user._id,
+          loginAccount: user.loginAccount,
+          email: user.email,
+          FirstLevelNavigationID: user.FirstLevelNavigationID,
+        },
+        ...tokens,
+      },
+    };
+
+    console.log("📤 发送登录响应");
+    res.json(response);
+    
+  } catch (error) {
+    console.error("❌ 登录错误:", error);
+    res.status(500).json({
+      code: 500,
+      message: "登录失败: " + error.message,
+      data: null,
+    });
+  }
+});
+```
+
+#### 2. 添加请求日志中间件
+```javascript
+// backend/app.js
+app.use((req, res, next) => {
+  console.log(`📥 ${req.method} ${req.path}`, req.body);
+  next();
+});
+```
+
+### 问题4：CORS 配置问题
+
+**解决方案：**
+```javascript
+// backend/app.js
+var cors = require("cors");
+app.use(cors()); // 确保 CORS 中间件被正确应用
+```
+
+### 问题5：环境变量配置问题
+
+**解决方案：**
+
+#### 1. 后端环境变量
+```javascript
+// backend/.env
+NODE_ENV=development
+PORT=3001
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/database
+JWT_SECRET_KEY=your_secure_jwt_secret_key
+JWT_REFRESH_SECRET_KEY=your_secure_refresh_secret_key
+JWT_ACCESS_TOKEN_EXPIRE=900
+JWT_REFRESH_TOKEN_EXPIRE=604800
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+REDIS_PASSWORD=
+```
+
+#### 2. 前端环境变量
+```javascript
+// frontend/.env.development
+REACT_APP_ENV=development
+REACT_APP_PORT=3000
+REACT_APP_API_BASE_URL=http://localhost:3001
+REACT_APP_DISABLE_AUTH=false
+```
+
+### 调试技巧
+
+#### 1. 分层调试
+```javascript
+// 1. 测试后端基本功能
+app.get("/test", (req, res) => {
+  res.json({
+    code: 200,
+    message: "后端服务正常运行",
+    timestamp: new Date().toISOString()
+  });
+});
+
+// 2. 测试数据库连接
+app.get("/test/db", async (req, res) => {
+  try {
+    const userCount = await User.countDocuments();
+    res.json({
+      code: 200,
+      message: "数据库连接正常",
+      data: { userCount }
+      
+    });
+  } catch (error) {
+    res.status(500).json({
+      code: 500,
+      message: "数据库连接失败",
+      error: error.message
+    });
+  }
+});
+```
+
+#### 2. 前端调试
+```javascript
+// 在登录组件中添加详细日志
+const onFinish = async (values) => {
+  console.log('🔐 开始登录:', values);
+  setLoading(true);
+  
+  try {
+    const result = await dispatch(loginAsync({
+      loginAccount: values.username,
+      password: values.password
+    }));
+    
+    console.log('✅ 登录成功:', result);
+    message.success('登录成功！');
+    navigate('/');
+    
+  } catch (error) {
+    console.error('❌ 登录失败:', error);
+    message.error(error.message || '登录失败');
+  } finally {
+    setLoading(false);
+  }
+};
+```
+
 ## 总结
 
 双Token验证方案是现代Web应用中重要的认证机制，能够在保证安全性的同时提供良好的用户体验。
+
+### 关键要点：
+
+1. **配置一致性**：确保前后端配置一致，避免端口、路径不匹配
+2. **中间件顺序**：Express 中间件的执行顺序很重要，避免冲突
+3. **错误处理**：添加详细的日志和错误处理，便于调试
+4. **环境变量**：使用环境变量管理敏感配置
+5. **分层测试**：从基础功能开始逐层测试，快速定位问题
 
 - **对于大多数项目**，推荐使用**express-jwt方案**，因为它提供了更好的开发体验和维护性
 - **对于有特殊需求的项目**，可以考虑**自定义方案**，但需要投入更多的开发和维护成本

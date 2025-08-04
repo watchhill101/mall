@@ -11,22 +11,28 @@ const instance = Axios.create({
 })
 console.log(process.env.NODE_ENV,'获取环境变量')
 // 不需要token的接口白名单
-const whiteList = ['/user/login', '/user/checkCode', '/user/refreshToken']
+const whiteList = ['/auth/login', '/auth/refresh', '/captcha/generate', '/captcha/verify', '/captcha/refresh']
 
 // 添加请求拦截器
 instance.interceptors.request.use(
   (config) => {
+    console.log('📤 发送请求:', config.method?.toUpperCase(), config.url, config.data);
+    
     if (config.url && typeof config.url === 'string') {
       if (!whiteList.includes(config.url)) {
-        let Token = getToken()
-        if (Token && Token.length > 0) {
-          config.headers && (config.headers['Authorization'] = Token)
+        let token = getToken()
+        if (token && token.length > 0) {
+          config.headers && (config.headers['Authorization'] = `Bearer ${token}`)
+          console.log('🔑 添加 Token:', token.substring(0, 20) + '...');
         }
+      } else {
+        console.log('⚪ 白名单接口，跳过 Token 验证');
       }
     }
     return config
   },
   (error) => {
+    console.error('📤 请求拦截器错误:', error);
     return Promise.reject(error)
   }
 )
@@ -46,14 +52,18 @@ export function setResponseInterceptor(store, login, logout) {
         }
         return response
       } else {
-        // 简化响应处理，直接返回数据
+        console.log('📥 收到响应:', response.status, response.data);
+        
+        // 处理后端返回的数据格式
         if (response.data && response.data.code !== undefined) {
-          if (response.data.code === 0) {
+          if (response.data.code === 200) {
+            console.log('✅ 请求成功:', response.data);
             return response.data
           } else {
             const errMsg = response.data.message || '请求失败'
+            console.error('❌ 业务错误:', errMsg);
             message.error(errMsg)
-            return Promise.reject(errMsg)
+            return Promise.reject(new Error(errMsg))
           }
         }
         return response.data || response

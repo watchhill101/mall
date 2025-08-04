@@ -216,7 +216,7 @@ const sortingOrderSchema = new mongoose.Schema(
 );
 
 // 索引
-sortingOrderSchema.index({ sortingOrderId: 1 });
+// sortingOrderSchema.index({ sortingOrderId: 1 }); // 移除重复索引，sortingOrderId 已经通过 unique: true 自动创建
 sortingOrderSchema.index({ merchant: 1 });
 sortingOrderSchema.index({ status: 1 });
 sortingOrderSchema.index({ sortingType: 1 });
