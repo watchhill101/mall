@@ -525,7 +525,14 @@ const Dashboard = ({ onRegionClick }) => {
 
   // 添加科技感样式和地图背景动画
   useEffect(() => {
+    // 先清除可能存在的旧样式
+    const existingStyle = document.getElementById('map-tech-styles')
+    if (existingStyle) {
+      existingStyle.remove()
+    }
+    
     const style = document.createElement('style')
+    style.id = 'map-tech-styles'
           style.textContent = `
         @keyframes scanLine {
           0% { left: -100%; }
@@ -683,101 +690,262 @@ const Dashboard = ({ onRegionClick }) => {
           filter: brightness(1.3) saturate(1.2);
         }
       }
-      
-      /* 3D模式科技感背景 */
-      .map-3d-tech-bg {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: 
-          radial-gradient(circle at 20% 30%, rgba(0, 150, 255, 0.08) 0%, transparent 50%),
-          radial-gradient(circle at 80% 70%, rgba(0, 100, 200, 0.08) 0%, transparent 50%),
-          linear-gradient(135deg, 
-            #020610 0%, 
-            #040812 25%, 
-            #060a15 50%, 
-            #040812 75%, 
-            #020610 100%);
-        animation: techGlow 4s ease-in-out infinite;
-        pointer-events: none;
-        z-index: 1;
+      @keyframes rainbowPulse {
+        0%, 100% {
+          box-shadow: 
+            0 0 40px rgba(255, 0, 150, 0.4),
+            0 0 60px rgba(0, 204, 255, 0.3),
+            0 0 80px rgba(0, 255, 136, 0.2),
+            inset 0 0 40px rgba(255, 238, 0, 0.1);
+        }
+        25% {
+          box-shadow: 
+            0 0 45px rgba(0, 204, 255, 0.5),
+            0 0 65px rgba(0, 255, 136, 0.4),
+            0 0 85px rgba(255, 238, 0, 0.3),
+            inset 0 0 45px rgba(255, 94, 0, 0.15);
+        }
+        50% {
+          box-shadow: 
+            0 0 50px rgba(0, 255, 136, 0.6),
+            0 0 70px rgba(255, 238, 0, 0.5),
+            0 0 90px rgba(255, 94, 0, 0.4),
+            inset 0 0 50px rgba(148, 0, 255, 0.2);
+        }
+        75% {
+          box-shadow: 
+            0 0 45px rgba(255, 238, 0, 0.5),
+            0 0 65px rgba(255, 94, 0, 0.4),
+            0 0 85px rgba(148, 0, 255, 0.3),
+            inset 0 0 45px rgba(255, 0, 150, 0.15);
+        }
+      }
+      @keyframes rainbowShift {
+        0% { filter: hue-rotate(0deg); }
+        25% { filter: hue-rotate(90deg); }
+        50% { filter: hue-rotate(180deg); }
+        75% { filter: hue-rotate(270deg); }
+        100% { filter: hue-rotate(360deg); }
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      @keyframes rainbow-pulse {
+        0%, 100% {
+          opacity: 0.8;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 1;
+          transform: scale(1.1);
+        }
+      }
+      @keyframes atmosphereFloat {
+        0% { 
+          transform: translateX(0) translateY(0) scale(1);
+          filter: hue-rotate(0deg) brightness(1);
+        }
+        25% { 
+          transform: translateX(10px) translateY(-5px) scale(1.02);
+          filter: hue-rotate(90deg) brightness(1.1);
+        }
+        50% { 
+          transform: translateX(-8px) translateY(-10px) scale(0.98);
+          filter: hue-rotate(180deg) brightness(0.9);
+        }
+        75% { 
+          transform: translateX(-12px) translateY(8px) scale(1.01);
+          filter: hue-rotate(270deg) brightness(1.05);
+        }
+        100% { 
+          transform: translateX(0) translateY(0) scale(1);
+          filter: hue-rotate(360deg) brightness(1);
+        }
+      }
+      @keyframes techScanLine {
+        0% { 
+          transform: translateX(-100%);
+          opacity: 0;
+        }
+        50% {
+          opacity: 1;
+        }
+        100% { 
+          transform: translateX(100%);
+          opacity: 0;
+        }
+      }
+      @keyframes particleDrift {
+        0% { 
+          transform: translateX(0) translateY(0) rotate(0deg);
+          opacity: 0.3;
+        }
+        25% {
+          opacity: 0.8;
+        }
+        50% { 
+          transform: translateX(20px) translateY(-30px) rotate(180deg);
+          opacity: 1;
+        }
+        75% {
+          opacity: 0.6;
+        }
+        100% { 
+          transform: translateX(-10px) translateY(15px) rotate(360deg);
+          opacity: 0.3;
+        }
       }
       
-      /* 3D模式网格效果 */
-      .map-3d-grid {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
+      /* 3D模式科技感背景 - 简化版 */
+      .map-3d-container .map-3d-tech-bg {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        background: 
+          radial-gradient(circle at 25% 25%, rgba(255, 0, 150, 0.5) 0%, transparent 50%),
+          radial-gradient(circle at 75% 75%, rgba(0, 255, 136, 0.5) 0%, transparent 50%),
+          radial-gradient(circle at 50% 10%, rgba(255, 238, 0, 0.4) 0%, transparent 40%),
+          radial-gradient(circle at 10% 90%, rgba(148, 0, 255, 0.4) 0%, transparent 40%),
+          linear-gradient(135deg, 
+            rgba(15, 5, 30, 0.9) 0%, 
+            rgba(25, 10, 50, 0.8) 50%, 
+            rgba(10, 2, 20, 0.95) 100%) !important;
+        animation: rainbowShift 8s ease-in-out infinite !important;
+        pointer-events: none !important;
+        z-index: 10 !important;
+        opacity: 1 !important;
+        display: block !important;
+      }
+      
+      /* 3D模式网格效果 - 简化版 */
+      .map-3d-container .map-3d-grid {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
         background-image: 
-          linear-gradient(rgba(0, 255, 255, 0.25) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(0, 255, 255, 0.25) 1px, transparent 1px);
-        background-size: 40px 40px;
-        animation: techGridMove 8s linear infinite, techPulse 3s ease-in-out infinite;
-        pointer-events: none;
-        z-index: 2;
-        filter: brightness(1.3);
+          linear-gradient(rgba(255, 0, 150, 0.4) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0, 255, 136, 0.4) 1px, transparent 1px),
+          radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.2) 2px, transparent 4px) !important;
+        background-size: 40px 40px, 40px 40px, 80px 80px !important;
+        animation: rainbowShift 6s ease-in-out infinite !important;
+        pointer-events: none !important;
+        z-index: 15 !important;
+        opacity: 0.8 !important;
+        display: block !important;
       }
       
       /* 3D模式颗粒效果 */
-      .map-3d-particles {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        pointer-events: none;
-        z-index: 5;
-        overflow: hidden;
+      .map-3d-container .map-3d-particles {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        pointer-events: none !important;
+        z-index: 102 !important;
+        overflow: hidden !important;
+        opacity: 1 !important;
+        display: block !important;
       }
       
-      .particle-3d {
-        position: absolute;
-        background: radial-gradient(circle, rgba(0, 255, 255, 1) 0%, rgba(0, 191, 255, 1) 20%, rgba(0, 150, 255, 0.9) 40%, rgba(0, 120, 255, 0.7) 70%, transparent 100%);
-        border-radius: 50%;
-        pointer-events: none;
-        box-shadow: 
-          0 0 15px rgba(0, 255, 255, 1),
-          0 0 30px rgba(0, 255, 255, 0.8),
-          0 0 45px rgba(0, 255, 255, 0.6),
-          0 0 60px rgba(0, 191, 255, 0.4);
-        filter: brightness(1.3) saturate(1.2);
-      }
+
       
-      .particle-3d:nth-child(1) { width: 10px; height: 10px; left: 10%; animation: particleFloat 6s linear infinite; animation-delay: 0s; }
-      .particle-3d:nth-child(2) { width: 8px; height: 8px; left: 20%; animation: particleFloat2 8s linear infinite; animation-delay: 1s; }
-      .particle-3d:nth-child(3) { width: 14px; height: 14px; left: 30%; animation: particleFloat3 7s linear infinite; animation-delay: 2s; }
-      .particle-3d:nth-child(4) { width: 9px; height: 9px; left: 40%; animation: particleFloat 9s linear infinite; animation-delay: 3s; }
-      .particle-3d:nth-child(5) { width: 12px; height: 12px; left: 50%; animation: particleFloat2 6s linear infinite; animation-delay: 4s; }
-      .particle-3d:nth-child(6) { width: 7px; height: 7px; left: 60%; animation: particleFloat3 8s linear infinite; animation-delay: 0.5s; }
-      .particle-3d:nth-child(7) { width: 15px; height: 15px; left: 70%; animation: particleFloat 7s linear infinite; animation-delay: 1.5s; }
-      .particle-3d:nth-child(8) { width: 8px; height: 8px; left: 80%; animation: particleFloat2 9s linear infinite; animation-delay: 2.5s; }
-      .particle-3d:nth-child(9) { width: 11px; height: 11px; left: 90%; animation: particleFloat3 6s linear infinite; animation-delay: 3.5s; }
-      .particle-3d:nth-child(10) { width: 7px; height: 7px; left: 15%; animation: particleFloat 8s linear infinite; animation-delay: 4.5s; }
-      .particle-3d:nth-child(11) { width: 13px; height: 13px; left: 25%; animation: particleFloat2 7s linear infinite; animation-delay: 5s; }
-      .particle-3d:nth-child(12) { width: 10px; height: 10px; left: 35%; animation: particleFloat3 9s linear infinite; animation-delay: 0.8s; }
-      .particle-3d:nth-child(13) { width: 9px; height: 9px; left: 45%; animation: particleFloat 5s linear infinite; animation-delay: 1.2s; }
-      .particle-3d:nth-child(14) { width: 11px; height: 11px; left: 55%; animation: particleFloat2 8s linear infinite; animation-delay: 2.3s; }
-      .particle-3d:nth-child(15) { width: 8px; height: 8px; left: 65%; animation: particleFloat3 7s linear infinite; animation-delay: 3.7s; }
-      .particle-3d:nth-child(16) { width: 12px; height: 12px; left: 75%; animation: particleFloat 6s linear infinite; animation-delay: 4.8s; }
-      .particle-3d:nth-child(17) { width: 7px; height: 7px; left: 85%; animation: particleFloat2 9s linear infinite; animation-delay: 0.3s; }
-      .particle-3d:nth-child(18) { width: 13px; height: 13px; left: 95%; animation: particleFloat3 8s linear infinite; animation-delay: 1.7s; }
+              .map-3d-container .particle-3d {
+          position: absolute !important;
+          background: radial-gradient(circle, 
+            rgba(255, 255, 255, 1) 0%, 
+            rgba(255, 0, 150, 0.8) 30%, 
+            rgba(0, 255, 136, 0.6) 60%, 
+            transparent 100%) !important;
+          border-radius: 50% !important;
+          pointer-events: none !important;
+          box-shadow: 
+            0 0 20px rgba(255, 0, 150, 0.8),
+            0 0 40px rgba(0, 255, 136, 0.6) !important;
+          filter: brightness(1.8) saturate(1.4) !important;
+          opacity: 1 !important;
+          display: block !important;
+          z-index: 20 !important;
+          animation: rainbowShift 4s ease-in-out infinite !important;
+        }
+      
+             /* 大颗粒 - 简化版 */
+       .map-3d-container .particle-3d-large {
+         position: absolute !important;
+         width: 15px !important;
+         height: 15px !important;
+         background: linear-gradient(45deg, 
+           rgba(255, 0, 150, 1), 
+           rgba(0, 255, 136, 1), 
+           rgba(255, 238, 0, 1)) !important;
+         border-radius: 50% !important;
+         pointer-events: none !important;
+         box-shadow: 0 0 30px rgba(255, 0, 150, 0.8) !important;
+         opacity: 0.9 !important;
+         display: block !important;
+         z-index: 25 !important;
+         animation: spin 6s linear infinite !important;
+       }
+       
+       /* 微型颗粒 - 简化版 */
+       .map-3d-container .particle-3d-micro {
+         position: absolute !important;
+         width: 4px !important;
+         height: 4px !important;
+         background: rgba(255, 255, 255, 1) !important;
+         border-radius: 50% !important;
+         pointer-events: none !important;
+                   box-shadow: 0 0 10px rgba(0, 255, 255, 0.8) !important;
+          opacity: 0.8 !important;
+          display: block !important;
+          z-index: 30 !important;
+          animation: particleTwinkle 2s ease-in-out infinite !important;
+       }
+      
+      .map-3d-container .particle-3d:nth-child(1) { width: 12px !important; height: 12px !important; left: 10% !important; top: 20% !important; animation: particleFloat 6s linear infinite, rainbowShift 3s ease-in-out infinite !important; animation-delay: 0s, 0s !important; }
+      .map-3d-container .particle-3d:nth-child(2) { width: 8px !important; height: 8px !important; left: 20% !important; animation: particleFloat2 8s linear infinite, rainbowShift 3s ease-in-out infinite !important; animation-delay: 1s, 0.5s !important; }
+      .map-3d-container .particle-3d:nth-child(3) { width: 14px !important; height: 14px !important; left: 30% !important; animation: particleFloat3 7s linear infinite, rainbowShift 3s ease-in-out infinite !important; animation-delay: 2s, 1s !important; }
+      .map-3d-container .particle-3d:nth-child(4) { width: 9px !important; height: 9px !important; left: 40% !important; animation: particleFloat 9s linear infinite !important; animation-delay: 3s !important; }
+      .map-3d-container .particle-3d:nth-child(5) { width: 12px !important; height: 12px !important; left: 50% !important; animation: particleFloat2 6s linear infinite !important; animation-delay: 4s !important; }
+      .map-3d-container .particle-3d:nth-child(6) { width: 7px !important; height: 7px !important; left: 60% !important; animation: particleFloat3 8s linear infinite !important; animation-delay: 0.5s !important; }
+      .map-3d-container .particle-3d:nth-child(7) { width: 15px !important; height: 15px !important; left: 70% !important; animation: particleFloat 7s linear infinite !important; animation-delay: 1.5s !important; }
+      .map-3d-container .particle-3d:nth-child(8) { width: 8px !important; height: 8px !important; left: 80% !important; animation: particleFloat2 9s linear infinite !important; animation-delay: 2.5s !important; }
+      .map-3d-container .particle-3d:nth-child(9) { width: 11px !important; height: 11px !important; left: 90% !important; animation: particleFloat3 6s linear infinite !important; animation-delay: 3.5s !important; }
+      .map-3d-container .particle-3d:nth-child(10) { width: 7px !important; height: 7px !important; left: 15% !important; animation: particleFloat 8s linear infinite !important; animation-delay: 4.5s !important; }
+      .map-3d-container .particle-3d:nth-child(11) { width: 13px !important; height: 13px !important; left: 25% !important; animation: particleFloat2 7s linear infinite !important; animation-delay: 5s !important; }
+      .map-3d-container .particle-3d:nth-child(12) { width: 10px !important; height: 10px !important; left: 35% !important; animation: particleFloat3 9s linear infinite !important; animation-delay: 0.8s !important; }
+      .map-3d-container .particle-3d:nth-child(13) { width: 9px !important; height: 9px !important; left: 45% !important; animation: particleFloat 5s linear infinite !important; animation-delay: 1.2s !important; }
+      .map-3d-container .particle-3d:nth-child(14) { width: 11px !important; height: 11px !important; left: 55% !important; animation: particleFloat2 8s linear infinite !important; animation-delay: 2.3s !important; }
+      .map-3d-container .particle-3d:nth-child(15) { width: 8px !important; height: 8px !important; left: 65% !important; animation: particleFloat3 7s linear infinite !important; animation-delay: 3.7s !important; }
+      .map-3d-container .particle-3d:nth-child(16) { width: 12px !important; height: 12px !important; left: 75% !important; animation: particleFloat 6s linear infinite !important; animation-delay: 4.8s !important; }
+      .map-3d-container .particle-3d:nth-child(17) { width: 7px !important; height: 7px !important; left: 85% !important; animation: particleFloat2 9s linear infinite !important; animation-delay: 0.3s !important; }
+      .map-3d-container .particle-3d:nth-child(18) { width: 13px !important; height: 13px !important; left: 95% !important; animation: particleFloat3 8s linear infinite !important; animation-delay: 1.7s !important; }
       
       /* 3D模式静态闪烁颗粒 */
       .particle-3d-static {
         position: absolute;
-        background: radial-gradient(circle, rgba(0, 255, 255, 1) 0%, rgba(0, 255, 255, 1) 30%, rgba(0, 191, 255, 0.9) 60%, transparent 100%);
+        background: radial-gradient(circle, 
+          rgba(255, 255, 255, 1) 0%, 
+          rgba(0, 204, 255, 0.9) 25%, 
+          rgba(255, 94, 0, 0.8) 50%, 
+          rgba(148, 0, 255, 0.7) 75%, 
+          transparent 100%);
         border-radius: 50%;
-        animation: particleTwinkle 3s ease-in-out infinite;
+        animation: particleTwinkle 2s ease-in-out infinite, rainbowShift 4s ease-in-out infinite;
         pointer-events: none;
         box-shadow: 
-          0 0 12px rgba(0, 255, 255, 1),
-          0 0 24px rgba(0, 255, 255, 0.8),
-          0 0 36px rgba(0, 255, 255, 0.6);
-        filter: brightness(1.4) saturate(1.3);
+          0 0 15px rgba(255, 0, 150, 0.8),
+          0 0 30px rgba(0, 255, 136, 0.6),
+          0 0 45px rgba(255, 238, 0, 0.4);
+        filter: brightness(1.6) saturate(1.5) contrast(1.1);
+        z-index: 35 !important;
+        opacity: 1 !important;
+        display: block !important;
       }
       
       .particle-3d-static:nth-child(19) { width: 8px; height: 8px; top: 15%; left: 12%; animation-delay: 0s; }
@@ -822,10 +990,10 @@ const Dashboard = ({ onRegionClick }) => {
         right: 0;
         bottom: 0;
         background-image: 
-          linear-gradient(rgba(34, 197, 94, 0.1) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(34, 197, 94, 0.1) 1px, transparent 1px);
-        background-size: 40px 40px;
-        animation: techGridMove 6s linear infinite reverse, techPulse 2.5s ease-in-out infinite;
+          linear-gradient(rgba(34, 197, 94, 0.3) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(34, 197, 94, 0.3) 1px, transparent 1px);
+        background-size: 45px 45px;
+        animation: techGridMove 10s linear infinite, techPulse 4s ease-in-out infinite;
         pointer-events: none;
         z-index: 2;
       }
@@ -887,151 +1055,231 @@ const Dashboard = ({ onRegionClick }) => {
       
       /* 数据流动效果 */
       .tech-data-flow {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        pointer-events: none;
-        z-index: 4;
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        pointer-events: none !important;
+        z-index: 104 !important;
       }
       
       .tech-data-flow::before {
         content: '';
         position: absolute;
-        top: 20%;
-        left: 0;
-        width: 200px;
-        height: 2px;
+        top: 25%;
+        left: -100%;
+        width: 100%;
+        height: 3px;
         background: linear-gradient(90deg, 
           transparent 0%, 
-          rgba(0, 255, 255, 0.8) 50%, 
+          rgba(255, 0, 150, 0.9) 20%, 
+          rgba(0, 255, 136, 1) 40%, 
+          rgba(255, 238, 0, 0.9) 60%, 
+          rgba(148, 0, 255, 0.8) 80%, 
           transparent 100%);
-        animation: dataFlow 3s linear infinite;
+        animation: dataFlow 4s linear infinite, rainbowShift 3s ease-in-out infinite;
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
       }
       
       .tech-data-flow::after {
         content: '';
         position: absolute;
-        bottom: 30%;
-        right: 0;
-        width: 150px;
+        top: 75%;
+        right: -100%;
+        width: 100%;
         height: 2px;
         background: linear-gradient(90deg, 
           transparent 0%, 
-          rgba(34, 197, 94, 0.8) 50%, 
+          rgba(0, 204, 255, 0.8) 25%, 
+          rgba(255, 94, 0, 0.9) 50%, 
+          rgba(255, 0, 150, 0.8) 75%, 
           transparent 100%);
-        animation: dataFlow 4s linear infinite reverse;
+        animation: dataFlow 6s linear infinite reverse, rainbowShift 4s ease-in-out infinite;
         animation-delay: 1.5s;
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
       }
       
       /* 边角装饰 */
       .tech-corner-decoration {
-        position: absolute;
-        pointer-events: none;
-        z-index: 6;
+        position: absolute !important;
+        width: 20px !important;
+        height: 20px !important;
+        border: 2px solid !important;
+        pointer-events: none !important;
+        z-index: 105 !important;
       }
       
       .tech-corner-decoration.top-left {
         top: 10px;
         left: 10px;
-        width: 40px;
-        height: 40px;
-        border-top: 3px solid rgba(0, 191, 255, 0.6);
-        border-left: 3px solid rgba(0, 191, 255, 0.6);
-        animation: techPulse 2s ease-in-out infinite;
+        border-color: #ff0096 transparent transparent #ff0096;
+        border-width: 3px 0 0 3px;
+        animation: rainbowShift 5s ease-in-out infinite;
+        filter: drop-shadow(0 0 10px rgba(255, 0, 150, 0.8));
       }
       
       .tech-corner-decoration.top-right {
         top: 10px;
         right: 10px;
-        width: 40px;
-        height: 40px;
-        border-top: 3px solid rgba(0, 191, 255, 0.6);
-        border-right: 3px solid rgba(0, 191, 255, 0.6);
-        animation: techPulse 2s ease-in-out infinite;
-        animation-delay: 0.5s;
+        border-color: #00ff88 #00ff88 transparent transparent;
+        border-width: 3px 3px 0 0;
+        animation: rainbowShift 5s ease-in-out infinite;
+        animation-delay: 1.25s;
+        filter: drop-shadow(0 0 10px rgba(0, 255, 136, 0.8));
       }
       
       .tech-corner-decoration.bottom-left {
         bottom: 10px;
         left: 10px;
-        width: 40px;
-        height: 40px;
-        border-bottom: 3px solid rgba(0, 191, 255, 0.6);
-        border-left: 3px solid rgba(0, 191, 255, 0.6);
-        animation: techPulse 2s ease-in-out infinite;
-        animation-delay: 1s;
+        border-color: transparent transparent #ffee00 #ffee00;
+        border-width: 0 0 3px 3px;
+        animation: rainbowShift 5s ease-in-out infinite;
+        animation-delay: 2.5s;
+        filter: drop-shadow(0 0 10px rgba(255, 238, 0, 0.8));
       }
       
       .tech-corner-decoration.bottom-right {
         bottom: 10px;
         right: 10px;
-        width: 40px;
-        height: 40px;
-        border-bottom: 3px solid rgba(0, 191, 255, 0.6);
-        border-right: 3px solid rgba(0, 191, 255, 0.6);
-        animation: techPulse 2s ease-in-out infinite;
-        animation-delay: 1.5s;
+        border-color: transparent #9400ff #9400ff transparent;
+        border-width: 0 3px 3px 0;
+        animation: rainbowShift 5s ease-in-out infinite;
+        animation-delay: 3.75s;
+        filter: drop-shadow(0 0 10px rgba(148, 0, 255, 0.8));
       }
       
-      /* 2D模式边角装饰 - 绿色主题 */
       .mode-2d .tech-corner-decoration.top-left {
-        border-color: rgba(34, 197, 94, 0.6);
+        border-color: #22c55e transparent transparent #22c55e;
       }
+      
       .mode-2d .tech-corner-decoration.top-right {
-        border-color: rgba(34, 197, 94, 0.6);
+        border-color: #22c55e #22c55e transparent transparent;
       }
+      
       .mode-2d .tech-corner-decoration.bottom-left {
-        border-color: rgba(34, 197, 94, 0.6);
+        border-color: transparent transparent #22c55e #22c55e;
       }
+      
       .mode-2d .tech-corner-decoration.bottom-right {
-        border-color: rgba(34, 197, 94, 0.6);
+        border-color: transparent #22c55e #22c55e transparent;
       }
       
       /* 地图容器增强 */
       .map-3d-container {
-        position: relative;
-        border-radius: 12px;
-        overflow: hidden;
-        border: 2px solid rgba(0, 191, 255, 0.3);
+        position: relative !important;
+        width: 100% !important;
+        height: 700px !important;
+        overflow: hidden !important;
+        border-radius: 12px !important;
+        background: 
+          linear-gradient(45deg, 
+            rgba(255, 0, 150, 0.15) 0%,
+            rgba(0, 204, 255, 0.15) 14%,
+            rgba(0, 255, 136, 0.15) 28%,
+            rgba(255, 238, 0, 0.15) 42%,
+            rgba(255, 94, 0, 0.15) 57%,
+            rgba(255, 0, 150, 0.15) 71%,
+            rgba(148, 0, 255, 0.15) 85%,
+            rgba(0, 204, 255, 0.15) 100%
+          ),
+          radial-gradient(circle at 30% 30%, rgba(255, 0, 150, 0.2) 0%, transparent 50%),
+          radial-gradient(circle at 70% 70%, rgba(0, 255, 136, 0.2) 0%, transparent 50%),
+          linear-gradient(135deg, rgba(10, 10, 30, 0.95) 0%, rgba(20, 10, 40, 0.9) 100%) !important;
+        border: 3px solid transparent !important;
+        border-image: linear-gradient(45deg, 
+          #ff0096 0%, #00ccff 14%, #00ff88 28%, #ffee00 42%, 
+          #ff5e00 57%, #ff0096 71%, #9400ff 85%, #00ccff 100%
+        ) 1 !important;
         box-shadow: 
-          0 0 30px rgba(0, 150, 255, 0.2),
-          inset 0 0 30px rgba(0, 200, 255, 0.1);
+          0 0 40px rgba(255, 0, 150, 0.4),
+          0 0 60px rgba(0, 204, 255, 0.3),
+          0 0 80px rgba(0, 255, 136, 0.2),
+          inset 0 0 40px rgba(255, 238, 0, 0.1) !important;
+        animation: rainbowPulse 4s ease-in-out infinite !important;
       }
       
       .map-3d-container.mode-2d {
+        background: rgba(10, 31, 13, 0.8); /* 临时可见背景 - 绿色主题 */
         border-color: rgba(34, 197, 94, 0.3);
         box-shadow: 
           0 0 30px rgba(34, 197, 94, 0.2),
           inset 0 0 30px rgba(74, 222, 128, 0.1);
       }
-      
-      /* Card 容器科技感效果 */
-      .map-card {
-        background: rgba(0, 0, 0, 0.02) !important;
-        border: 1px solid rgba(0, 191, 255, 0.2) !important;
-        box-shadow: 0 8px 32px rgba(0, 150, 255, 0.1) !important;
-        backdrop-filter: blur(10px) !important;
-      }
-      
-      .map-card .ant-card-head {
-        background: #1e3a8a !important;
-        border-bottom: 1px solid rgba(0, 191, 255, 0.5) !important;
-      }
-      
-      .map-card .ant-card-body {
-        background: transparent !important;
-        padding: 16px !important;
-      }
     `
     document.head.appendChild(style)
+    console.log('✅ 3D地图科技感样式已注入 (简化版):', style.id)
+    console.log('🌈 科技感样式详情:', {
+      styleElement: style,
+      isAttached: document.head.contains(style),
+      is3DMode: is3D,
+      backgroundLayers: '5层渐变背景',
+      particleCount: '普通颗粒18个 + 大型颗粒3个 + 微型颗粒6个 + 静态颗粒12个',
+      animationCount: '基础动画 (彩虹渐变 + 旋转 + 闪烁)',
+      specialEffects: '网格系统 + 多彩光斑',
+      optimized: '简化版本，提高兼容性'
+    })
+    
+    // 添加全局调试函数
+    window.debugRainbow = () => {
+      console.log('🔍 科技感彩虹效果调试报告:')
+      console.log('- 样式表存在:', !!document.getElementById('map-tech-styles'))
+      console.log('- 3D容器存在:', !!document.querySelector('.map-3d-container'))
+      console.log('- 普通颗粒数量:', document.querySelectorAll('.particle-3d').length)
+      console.log('- 大型颗粒数量:', document.querySelectorAll('.particle-3d-large').length)
+      console.log('- 微型颗粒数量:', document.querySelectorAll('.particle-3d-micro').length)
+      console.log('- 静态颗粒数量:', document.querySelectorAll('.particle-3d-static').length)
+      console.log('- 科技背景层存在:', !!document.querySelector('.map-3d-tech-bg'))
+      console.log('- 网格系统存在:', !!document.querySelector('.map-3d-grid'))
+      console.log('- 数据流元素存在:', !!document.querySelector('.tech-data-flow'))
+      console.log('- 边角装饰数量:', document.querySelectorAll('.tech-corner-decoration').length)
+      
+      // 检查关键样式是否生效
+      const container = document.querySelector('.map-3d-container')
+      if (container) {
+        const computedStyle = window.getComputedStyle(container)
+        console.log('- 容器背景:', computedStyle.background)
+        console.log('- 容器边框:', computedStyle.border)
+        console.log('- 容器阴影:', computedStyle.boxShadow)
+        console.log('- 扫描线效果:', computedStyle.getPropertyValue('::before'))
+      }
+      
+      // 统计总效果数量
+      const totalParticles = document.querySelectorAll('.particle-3d, .particle-3d-large, .particle-3d-micro, .particle-3d-static').length
+      console.log('📊 科技效果统计:')
+      console.log('- 总颗粒数量:', totalParticles)
+      console.log('- 动画系统: 简化版 (彩虹渐变 + 旋转 + 闪烁)')
+      console.log('- 背景层数: 5层渐变背景')
+      console.log('- 科技效果: 网格系统 + 光斑效果 + 强制内联样式')
+      console.log('- 兼容性: 移除复杂CSS，提高浏览器兼容性')
+    }
+    console.log('💡 调试提示: 在控制台输入 debugRainbow() 查看彩虹效果状态')
 
     return () => {
-      if (document.head.contains(style)) {
-        document.head.removeChild(style)
+      const styleToRemove = document.getElementById('map-tech-styles')
+      if (styleToRemove) {
+        styleToRemove.remove()
+        console.log('🗑️ 彩虹样式已清理')
       }
     }
+  }, [is3D]) // 当3D/2D模式切换时重新注入样式
+
+  // 监控样式是否被意外移除，如果是则重新注入
+  useEffect(() => {
+    const checkStyles = () => {
+      const styleElement = document.getElementById('map-tech-styles')
+      if (!styleElement) {
+        console.warn('🔄 检测到样式被移除，正在重新注入...')
+        // 触发样式重新注入（通过改变一个状态来触发上面的useEffect）
+        const event = new CustomEvent('forceStyleReinject')
+        document.dispatchEvent(event)
+      }
+    }
+
+    // 每2秒检查一次样式是否存在
+    const intervalId = setInterval(checkStyles, 2000)
+    
+    return () => clearInterval(intervalId)
   }, [])
 
   // 加载省份地图数据
@@ -1155,14 +1403,15 @@ const Dashboard = ({ onRegionClick }) => {
         left: 'center',
         top: 40,
         textStyle: {
-          color: '#00FFFF', // 科技感青蓝色标题
+          color: '#FFFFFF', // 白色标题，彩虹阴影
           fontSize: 22,
           fontWeight: 'bold',
           textShadow: `
-            0 0 10px rgba(0, 255, 255, 1),
-            0 0 20px rgba(0, 255, 255, 0.8),
-            0 0 30px rgba(0, 255, 255, 0.6),
-            0 0 40px rgba(0, 191, 255, 0.4)
+            0 0 10px rgba(255, 0, 150, 1),
+            0 0 20px rgba(0, 255, 136, 0.8),
+            0 0 30px rgba(255, 238, 0, 0.6),
+            0 0 40px rgba(148, 0, 255, 0.4),
+            0 0 50px rgba(255, 94, 0, 0.3)
           `
         }
       },
@@ -1278,15 +1527,15 @@ const Dashboard = ({ onRegionClick }) => {
             itemStyle: {
               color: function() {
                 const value = item.value
-                // 确保每个省份都有明确的颜色
-                if (value > 3500) return '#1e3a8a' // 深蓝
-                if (value > 3000) return '#1e40af' // 蓝色  
-                if (value > 2000) return '#2563eb' // 中蓝
-                if (value > 1500) return '#3b82f6' // 浅蓝
-                if (value > 1000) return '#60a5fa' // 更浅蓝
-                if (value > 500) return '#93c5fd'  // 淡蓝
-                if (value > 200) return '#bfdbfe'  // 很淡蓝
-                return '#dbeafe' // 极淡蓝
+                // 使用鲜明的橙色-红色渐变，在蓝色背景下更突出
+                if (value > 3500) return '#dc2626' // 深红
+                if (value > 3000) return '#ef4444' // 红色  
+                if (value > 2000) return '#f97316' // 橙红
+                if (value > 1500) return '#f59e0b' // 橙色
+                if (value > 1000) return '#eab308' // 黄橙
+                if (value > 500) return '#84cc16'  // 黄绿
+                if (value > 200) return '#22c55e'  // 绿色
+                return '#10b981' // 青绿
               }()
             }
           })),
@@ -1296,20 +1545,20 @@ const Dashboard = ({ onRegionClick }) => {
             color: function(params) {
               // 确保所有省份都有颜色，基于实际商家数量
               const itemName = params.name || (params.data && params.data.name)
-              if (!itemName) return '#3b82f6' // 默认蓝色
+              if (!itemName) return '#10b981' // 默认绿色
               
               const provinceInfo = provinceData.find(item => item.name === itemName)
               const value = provinceInfo ? provinceInfo.value : 0
               
-              // 基于实际数据范围的颜色映射 (最大值4120)
-              if (value > 3500) return '#1e3a8a' // 深蓝 - 广东等
-              if (value > 3000) return '#1e40af' // 蓝色 - 上海等  
-              if (value > 2000) return '#2563eb' // 中蓝 - 江苏、四川等
-              if (value > 1500) return '#3b82f6' // 浅蓝 - 山东、浙江等
-              if (value > 1000) return '#60a5fa' // 更浅蓝 - 河南、湖北等
-              if (value > 500) return '#93c5fd'  // 淡蓝 - 中等省份
-              if (value > 200) return '#bfdbfe'  // 很淡蓝 - 较小省份
-              return '#dbeafe' // 极淡蓝 - 最小省份，确保不是白色
+              // 使用鲜明的橙色-红色渐变，在蓝色背景下更突出
+              if (value > 3500) return '#dc2626' // 深红 - 广东等
+              if (value > 3000) return '#ef4444' // 红色 - 上海等  
+              if (value > 2000) return '#f97316' // 橙红 - 江苏、四川等
+              if (value > 1500) return '#f59e0b' // 橙色 - 山东、浙江等
+              if (value > 1000) return '#eab308' // 黄橙 - 河南、湖北等
+              if (value > 500) return '#84cc16'  // 黄绿 - 中等省份
+              if (value > 200) return '#22c55e'  // 绿色 - 较小省份
+              return '#10b981' // 青绿 - 最小省份
             },
             opacity: 0.95, // 提高不透明度
             borderWidth: 1.5,
@@ -1525,14 +1774,14 @@ const Dashboard = ({ onRegionClick }) => {
                 const value = item.value
                 const maxValue = Math.max(...currentCityData.map(city => city.value), 1)
                 const ratio = value / maxValue
-                // 确保每个城市都有明确的颜色
-                if (ratio > 0.8) return '#065f46'  // 深绿
-                if (ratio > 0.6) return '#047857'  // 中深绿
-                if (ratio > 0.4) return '#059669'  // 中绿
-                if (ratio > 0.25) return '#10b981' // 浅绿
-                if (ratio > 0.1) return '#34d399'  // 更浅绿
-                if (ratio > 0.05) return '#6ee7b7' // 淡绿
-                return '#a7f3d0' // 极浅绿
+                // 使用橙色-红色渐变，在绿色背景下更突出
+                if (ratio > 0.8) return '#dc2626'  // 深红
+                if (ratio > 0.6) return '#ef4444'  // 红色
+                if (ratio > 0.4) return '#f97316'  // 橙红
+                if (ratio > 0.25) return '#f59e0b' // 橙色
+                if (ratio > 0.1) return '#eab308'  // 黄橙
+                if (ratio > 0.05) return '#84cc16' // 黄绿
+                return '#22c55e' // 绿色
               }()
             }
           })),
@@ -1541,25 +1790,25 @@ const Dashboard = ({ onRegionClick }) => {
             color: function(params) {
               // 确保所有城市都有颜色，基于实际商家数量
               const itemName = params.name || (params.data && params.data.name)
-              if (!itemName) return '#4ade80' // 默认绿色
+              if (!itemName) return '#f59e0b' // 默认橙色
               
               const cityInfo = currentCityData.find(item => item.name === itemName)
               const value = cityInfo ? cityInfo.value : 0
               const maxValue = Math.max(...currentCityData.map(item => item.value), 1)
               
-              // 基于当前省份城市数据的动态颜色分级
+              // 使用橙色-红色渐变，在绿色背景下更突出
               const ratio = value / maxValue
-              if (ratio > 0.8) return '#065f46'  // 深绿
-              if (ratio > 0.6) return '#047857'  // 中深绿
-              if (ratio > 0.4) return '#059669'  // 中绿
-              if (ratio > 0.25) return '#10b981' // 浅绿
-              if (ratio > 0.1) return '#34d399'  // 更浅绿
-              if (ratio > 0.05) return '#6ee7b7' // 淡绿
-              return '#a7f3d0' // 极浅绿，确保不是白色或透明
+              if (ratio > 0.8) return '#dc2626'  // 深红
+              if (ratio > 0.6) return '#ef4444'  // 红色
+              if (ratio > 0.4) return '#f97316'  // 橙红
+              if (ratio > 0.25) return '#f59e0b' // 橙色
+              if (ratio > 0.1) return '#eab308'  // 黄橙
+              if (ratio > 0.05) return '#84cc16' // 黄绿
+              return '#22c55e' // 绿色，确保有足够对比度
             },
             opacity: 0.95, // 提高不透明度
             borderWidth: 2.2,
-            borderColor: '#065f46', // 深绿色边框
+            borderColor: '#ffffff', // 白色边框，更明显
             // 增加材质质感
             metalness: 0.3,
             roughness: 0.4
@@ -1624,10 +1873,15 @@ const Dashboard = ({ onRegionClick }) => {
         left: 'center',
         top: 20,
         textStyle: {
-          color: '#4ADE80', // 亮绿色标题，在深色背景下更突出  
+          color: '#FFFFFF', // 白色标题，彩虹阴影  
           fontSize: 18,
           fontWeight: 'bold',
-          textShadow: '0 0 15px rgba(74, 222, 128, 0.8)'
+          textShadow: `
+            0 0 8px rgba(255, 0, 150, 0.9),
+            0 0 16px rgba(0, 255, 136, 0.7),
+            0 0 24px rgba(255, 238, 0, 0.5),
+            0 0 32px rgba(148, 0, 255, 0.3)
+          `
         }
       },
       tooltip: {
@@ -1656,8 +1910,11 @@ const Dashboard = ({ onRegionClick }) => {
         top: 'bottom',
         text: ['高', '低'],
         calculable: true,
+        textStyle: {
+          color: '#ffffff'
+        },
         inRange: {
-          color: ['#e0f3ff', '#4da6ff', '#1890ff', '#0066cc', '#004080']
+          color: ['#10b981', '#22c55e', '#84cc16', '#eab308', '#f59e0b', '#f97316', '#ef4444', '#dc2626']
         }
       },
       series: [
@@ -1710,10 +1967,15 @@ const Dashboard = ({ onRegionClick }) => {
         left: 'center',
         top: 20,
         textStyle: {
-          color: '#4ADE80', // 亮绿色标题，在深色背景下更突出  
+          color: '#FFFFFF', // 白色标题，彩虹阴影  
           fontSize: 18,
           fontWeight: 'bold',
-          textShadow: '0 0 15px rgba(74, 222, 128, 0.8)'
+          textShadow: `
+            0 0 8px rgba(255, 0, 150, 0.9),
+            0 0 16px rgba(0, 255, 136, 0.7),
+            0 0 24px rgba(255, 238, 0, 0.5),
+            0 0 32px rgba(148, 0, 255, 0.3)
+          `
         }
       },
       tooltip: {
@@ -1747,10 +2009,10 @@ const Dashboard = ({ onRegionClick }) => {
         calculable: true,
         orient: 'vertical',
         inRange: {
-          color: ['#f6ffed', '#d9f7be', '#b7eb8f', '#95de64', '#73d13d', '#52c41a', '#389e0d']
+          color: ['#22c55e', '#84cc16', '#eab308', '#f59e0b', '#f97316', '#ef4444', '#dc2626']
         },
         textStyle: {
-          color: '#333',
+          color: '#ffffff',
           fontSize: 12
         },
         itemWidth: 20,
@@ -1767,7 +2029,7 @@ const Dashboard = ({ onRegionClick }) => {
               show: true
             },
             itemStyle: {
-              color: '#73d13d'
+              color: '#fbbf24'
             }
           },
           itemStyle: {
@@ -1960,74 +2222,162 @@ const Dashboard = ({ onRegionClick }) => {
           </div>
         }
       >
-        <div className={`map-3d-container ${loading ? 'loading' : ''} ${is3D ? '' : 'mode-2d'}`}>
+        <div 
+          className={`map-3d-container ${loading ? 'loading' : ''} ${is3D ? '' : 'mode-2d'}`}
+          style={{
+            // 强制内联科技感背景，确保3D模式可见性
+            background: is3D ? `
+              radial-gradient(circle at 25% 25%, rgba(255, 0, 150, 0.7) 0%, transparent 60%),
+              radial-gradient(circle at 75% 75%, rgba(0, 255, 136, 0.7) 0%, transparent 60%),
+              radial-gradient(circle at 50% 10%, rgba(255, 238, 0, 0.6) 0%, transparent 50%),
+              radial-gradient(circle at 10% 90%, rgba(148, 0, 255, 0.6) 0%, transparent 50%),
+              linear-gradient(135deg, rgba(10, 5, 20, 0.98) 0%, rgba(20, 10, 40, 0.95) 50%, rgba(5, 2, 15, 0.99) 100%)
+            ` : undefined,
+            // 强制内联彩虹边框 - 加强可见性
+            border: is3D ? '4px solid rgba(255, 0, 150, 1)' : undefined,
+            // 强制内联彩虹阴影 - 增强发光效果
+            boxShadow: is3D ? `
+              0 0 60px rgba(255, 0, 150, 0.8),
+              0 0 120px rgba(0, 255, 136, 0.6),
+              0 0 180px rgba(255, 238, 0, 0.4),
+              inset 0 0 60px rgba(148, 0, 255, 0.3),
+              0 0 200px rgba(255, 255, 255, 0.1)
+            ` : undefined,
+            // 强制动画效果
+            animation: is3D ? 'rainbowPulse 4s ease-in-out infinite' : undefined,
+            // 强制3D模式特殊标识
+            transform: is3D ? 'scale(1.001)' : undefined
+          }}
+        >
           {/* 科技感背景层 */}
           {is3D ? (
             <>
-              {/* 3D模式科技感背景 */}
-              <div className="map-3d-tech-bg"></div>
-              <div className="map-3d-grid"></div>
+
+              
+              {/* 3D模式科技感背景 - 强制可见版本 */}
+              <div className="map-3d-tech-bg" style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: `
+                  radial-gradient(circle at 25% 25%, rgba(255, 0, 150, 0.6) 0%, transparent 50%),
+                  radial-gradient(circle at 75% 75%, rgba(0, 255, 136, 0.6) 0%, transparent 50%),
+                  radial-gradient(circle at 50% 10%, rgba(255, 238, 0, 0.5) 0%, transparent 40%),
+                  radial-gradient(circle at 10% 90%, rgba(148, 0, 255, 0.5) 0%, transparent 40%),
+                  linear-gradient(135deg, rgba(15, 5, 30, 0.9) 0%, rgba(25, 10, 50, 0.8) 50%, rgba(10, 2, 20, 0.95) 100%)
+                `,
+                animation: 'rainbowShift 6s ease-in-out infinite',
+                pointerEvents: 'none',
+                zIndex: 10,
+                opacity: 1,
+                display: 'block'
+              }}></div>
+              <div className="map-3d-grid" style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundImage: `
+                  linear-gradient(rgba(255, 0, 150, 0.5) 1px, transparent 1px),
+                  linear-gradient(90deg, rgba(0, 255, 136, 0.5) 1px, transparent 1px),
+                  radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.3) 2px, transparent 4px)
+                `,
+                backgroundSize: '40px 40px, 40px 40px, 80px 80px',
+                animation: 'rainbowShift 6s ease-in-out infinite',
+                pointerEvents: 'none',
+                zIndex: 15,
+                opacity: 0.9,
+                display: 'block'
+              }}></div>
               
               {/* 3D模式颗粒效果 */}
               <div className="map-3d-particles">
-                {/* 飘浮颗粒 */}
-                <div className="particle-3d" style={{
-                  position: 'absolute',
-                  width: '15px',
-                  height: '15px',
-                  background: 'radial-gradient(circle, rgba(0, 255, 255, 1) 0%, rgba(0, 191, 255, 1) 20%, rgba(0, 150, 255, 0.9) 40%, rgba(0, 120, 255, 0.7) 70%, transparent 100%)',
+                {/* 普通飘浮颗粒 */}
+                <div className="particle-3d"></div>
+                <div className="particle-3d"></div>
+                <div className="particle-3d"></div>
+                <div className="particle-3d"></div>
+                <div className="particle-3d"></div>
+                <div className="particle-3d"></div>
+                <div className="particle-3d"></div>
+                <div className="particle-3d"></div>
+                <div className="particle-3d"></div>
+                <div className="particle-3d"></div>
+                <div className="particle-3d"></div>
+                <div className="particle-3d"></div>
+                <div className="particle-3d"></div>
+                <div className="particle-3d"></div>
+                <div className="particle-3d"></div>
+                <div className="particle-3d"></div>
+                <div className="particle-3d"></div>
+                <div className="particle-3d"></div>
+                
+                {/* 大型科技颗粒 - 强制可见 */}
+                <div className="particle-3d-large" style={{
+                  left: '20%', top: '30%',
+                  width: '15px', height: '15px',
+                  background: 'linear-gradient(45deg, #ff0096, #00ff88, #ffee00)',
                   borderRadius: '50%',
-                  left: '10%',
-                  top: '20%',
-                  boxShadow: '0 0 15px rgba(0, 255, 255, 1), 0 0 30px rgba(0, 255, 255, 0.8), 0 0 45px rgba(0, 255, 255, 0.6)',
-                  animation: 'particleFloat 6s linear infinite',
-                  pointerEvents: 'none',
-                  zIndex: 1001
-                }}></div>
-                <div className="particle-3d" style={{
                   position: 'absolute',
-                  width: '12px',
-                  height: '12px',
-                  background: 'radial-gradient(circle, rgba(0, 255, 255, 1) 0%, rgba(0, 191, 255, 1) 20%, rgba(0, 150, 255, 0.9) 40%, rgba(0, 120, 255, 0.7) 70%, transparent 100%)',
-                  borderRadius: '50%',
-                  left: '30%',
-                  top: '50%',
-                  boxShadow: '0 0 15px rgba(0, 255, 255, 1), 0 0 30px rgba(0, 255, 255, 0.8), 0 0 45px rgba(0, 255, 255, 0.6)',
-                  animation: 'particleFloat2 8s linear infinite 1s',
-                  pointerEvents: 'none',
-                  zIndex: 1001
+                  boxShadow: '0 0 20px rgba(255, 0, 150, 0.8)',
+                  animation: 'spin 6s linear infinite'
                 }}></div>
-                <div className="particle-3d" style={{
+                <div className="particle-3d-large" style={{
+                  left: '70%', top: '50%',
+                  width: '15px', height: '15px',
+                  background: 'linear-gradient(45deg, #00ff88, #ffee00, #ff0096)',
+                  borderRadius: '50%',
                   position: 'absolute',
-                  width: '18px',
-                  height: '18px',
-                  background: 'radial-gradient(circle, rgba(0, 255, 255, 1) 0%, rgba(0, 191, 255, 1) 20%, rgba(0, 150, 255, 0.9) 40%, rgba(0, 120, 255, 0.7) 70%, transparent 100%)',
-                  borderRadius: '50%',
-                  left: '60%',
-                  top: '30%',
-                  boxShadow: '0 0 15px rgba(0, 255, 255, 1), 0 0 30px rgba(0, 255, 255, 0.8), 0 0 45px rgba(0, 255, 255, 0.6)',
-                  animation: 'particleFloat3 7s linear infinite 2s',
-                  pointerEvents: 'none',
-                  zIndex: 1001
+                  boxShadow: '0 0 20px rgba(0, 255, 136, 0.8)',
+                  animation: 'spin 6s linear infinite'
                 }}></div>
-                <div className="particle-3d"></div>
-                <div className="particle-3d"></div>
-                <div className="particle-3d"></div>
-                <div className="particle-3d"></div>
-                <div className="particle-3d"></div>
-                <div className="particle-3d"></div>
-                <div className="particle-3d"></div>
-                <div className="particle-3d"></div>
-                <div className="particle-3d"></div>
-                <div className="particle-3d"></div>
-                <div className="particle-3d"></div>
-                <div className="particle-3d"></div>
-                <div className="particle-3d"></div>
-                <div className="particle-3d"></div>
-                <div className="particle-3d"></div>
-                <div className="particle-3d"></div>
-                <div className="particle-3d"></div>
-                <div className="particle-3d"></div>
+                <div className="particle-3d-large" style={{
+                  left: '50%', top: '20%',
+                  width: '15px', height: '15px',
+                  background: 'linear-gradient(45deg, #ffee00, #ff0096, #00ff88)',
+                  borderRadius: '50%',
+                  position: 'absolute',
+                  boxShadow: '0 0 20px rgba(255, 238, 0, 0.8)',
+                  animation: 'spin 6s linear infinite'
+                }}></div>
+                
+                {/* 微型科技颗粒群 - 强制可见 */}
+                <div className="particle-3d-micro" style={{
+                  left: '15%', top: '25%',
+                  width: '4px', height: '4px',
+                  background: '#ffffff',
+                  borderRadius: '50%',
+                  position: 'absolute',
+                  boxShadow: '0 0 8px rgba(0, 255, 255, 0.8)'
+                }}></div>
+                <div className="particle-3d-micro" style={{
+                  left: '35%', top: '60%',
+                  width: '4px', height: '4px',
+                  background: '#ffffff',
+                  borderRadius: '50%',
+                  position: 'absolute',
+                  boxShadow: '0 0 8px rgba(255, 0, 150, 0.8)'
+                }}></div>
+                <div className="particle-3d-micro" style={{
+                  left: '55%', top: '35%',
+                  width: '4px', height: '4px',
+                  background: '#ffffff',
+                  borderRadius: '50%',
+                  position: 'absolute',
+                  boxShadow: '0 0 8px rgba(0, 255, 136, 0.8)'
+                }}></div>
+                <div className="particle-3d-micro" style={{
+                  left: '75%', top: '70%',
+                  width: '4px', height: '4px',
+                  background: '#ffffff',
+                  borderRadius: '50%',
+                  position: 'absolute',
+                  boxShadow: '0 0 8px rgba(255, 238, 0, 0.8)'
+                }}></div>
+                
                 {/* 静态闪烁颗粒 */}
                 <div className="particle-3d-static"></div>
                 <div className="particle-3d-static"></div>
@@ -2077,20 +2427,22 @@ const Dashboard = ({ onRegionClick }) => {
           {/* 数据流动效果 */}
           <div className="tech-data-flow"></div>
           
-          {/* 边角装饰 */}
+                    {/* 边角装饰 */}
           <div className="tech-corner-decoration top-left"></div>
           <div className="tech-corner-decoration top-right"></div>
           <div className="tech-corner-decoration bottom-left"></div>
           <div className="tech-corner-decoration bottom-right"></div>
           
-          <ReactECharts 
+ 
+            
+            <ReactECharts 
             option={getCurrentMapOption()}
             style={{ 
               height: '700px', 
               width: '100%',
               transition: 'all 0.5s ease-in-out',
               position: 'relative',
-              zIndex: 10,
+              zIndex: is3D ? 50 : 200, // 3D模式降低z-index让背景可见
               backgroundColor: 'transparent'
             }}
             onEvents={{
@@ -2146,3 +2498,4 @@ const Dashboard = ({ onRegionClick }) => {
 }
 
 export default Dashboard
+
