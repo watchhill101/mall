@@ -142,6 +142,235 @@ const regionSalesData = {
       { value: 5.9, name: '常德市', itemStyle: { color: '#f759ab' }, sales: 17627.16 },
       { value: 3.8, name: '其他城市', itemStyle: { color: '#722ed1' }, sales: 11350.88 }
     ]
+  },
+  '天津市': {
+    totalSales: 189456.78,
+    regions: [
+      { value: 28.5, name: '滨海新区', itemStyle: { color: '#1890ff' }, sales: 54005.18 },
+      { value: 22.3, name: '和平区', itemStyle: { color: '#13c2c2' }, sales: 42248.86 },
+      { value: 18.7, name: '河西区', itemStyle: { color: '#52c41a' }, sales: 35418.42 },
+      { value: 15.2, name: '南开区', itemStyle: { color: '#faad14' }, sales: 28797.43 },
+      { value: 8.6, name: '河东区', itemStyle: { color: '#f759ab' }, sales: 16291.28 },
+      { value: 6.7, name: '其他区', itemStyle: { color: '#722ed1' }, sales: 12695.61 }
+    ]
+  },
+  '河北省': {
+    totalSales: 267890.45,
+    regions: [
+      { value: 32.8, name: '石家庄市', itemStyle: { color: '#1890ff' }, sales: 87870.87 },
+      { value: 26.4, name: '唐山市', itemStyle: { color: '#13c2c2' }, sales: 70722.48 },
+      { value: 15.6, name: '保定市', itemStyle: { color: '#52c41a' }, sales: 41790.91 },
+      { value: 12.2, name: '邯郸市', itemStyle: { color: '#faad14' }, sales: 32682.64 },
+      { value: 8.5, name: '沧州市', itemStyle: { color: '#f759ab' }, sales: 22770.69 },
+      { value: 4.5, name: '其他城市', itemStyle: { color: '#722ed1' }, sales: 12052.86 }
+    ]
+  },
+  '山西省': {
+    totalSales: 156789.23,
+    regions: [
+      { value: 42.8, name: '太原市', itemStyle: { color: '#1890ff' }, sales: 67105.79 },
+      { value: 18.5, name: '大同市', itemStyle: { color: '#13c2c2' }, sales: 29005.99 },
+      { value: 15.2, name: '运城市', itemStyle: { color: '#52c41a' }, sales: 23831.96 },
+      { value: 11.8, name: '长治市', itemStyle: { color: '#faad14' }, sales: 18501.13 },
+      { value: 7.3, name: '晋中市', itemStyle: { color: '#f759ab' }, sales: 11445.61 },
+      { value: 4.4, name: '其他城市', itemStyle: { color: '#722ed1' }, sales: 6898.75 }
+    ]
+  },
+  '内蒙古自治区': {
+    totalSales: 98765.43,
+    regions: [
+      { value: 45.6, name: '呼和浩特市', itemStyle: { color: '#1890ff' }, sales: 45037.04 },
+      { value: 32.8, name: '包头市', itemStyle: { color: '#13c2c2' }, sales: 32395.06 },
+      { value: 12.5, name: '赤峰市', itemStyle: { color: '#52c41a' }, sales: 12345.68 },
+      { value: 5.8, name: '通辽市', itemStyle: { color: '#faad14' }, sales: 5728.39 },
+      { value: 2.3, name: '乌海市', itemStyle: { color: '#f759ab' }, sales: 2271.00 },
+      { value: 1.0, name: '其他盟市', itemStyle: { color: '#722ed1' }, sales: 988.26 }
+    ]
+  },
+  '辽宁省': {
+    totalSales: 234567.89,
+    regions: [
+      { value: 38.5, name: '沈阳市', itemStyle: { color: '#1890ff' }, sales: 90308.64 },
+      { value: 32.1, name: '大连市', itemStyle: { color: '#13c2c2' }, sales: 75336.29 },
+      { value: 15.8, name: '鞍山市', itemStyle: { color: '#52c41a' }, sales: 37061.73 },
+      { value: 8.2, name: '抚顺市', itemStyle: { color: '#faad14' }, sales: 19234.57 },
+      { value: 3.6, name: '本溪市', itemStyle: { color: '#f759ab' }, sales: 8444.44 },
+      { value: 1.8, name: '其他城市', itemStyle: { color: '#722ed1' }, sales: 4222.22 }
+    ]
+  },
+  '吉林省': {
+    totalSales: 123456.78,
+    regions: [
+      { value: 52.3, name: '长春市', itemStyle: { color: '#1890ff' }, sales: 64567.80 },
+      { value: 28.7, name: '吉林市', itemStyle: { color: '#13c2c2' }, sales: 35432.20 },
+      { value: 12.5, name: '四平市', itemStyle: { color: '#52c41a' }, sales: 15432.10 },
+      { value: 4.2, name: '辽源市', itemStyle: { color: '#faad14' }, sales: 5185.18 },
+      { value: 1.8, name: '通化市', itemStyle: { color: '#f759ab' }, sales: 2222.22 },
+      { value: 0.5, name: '其他城市', itemStyle: { color: '#722ed1' }, sales: 617.28 }
+    ]
+  },
+  '黑龙江省': {
+    totalSales: 178901.23,
+    regions: [
+      { value: 48.2, name: '哈尔滨市', itemStyle: { color: '#1890ff' }, sales: 86250.39 },
+      { value: 22.8, name: '齐齐哈尔市', itemStyle: { color: '#13c2c2' }, sales: 40789.48 },
+      { value: 15.6, name: '大庆市', itemStyle: { color: '#52c41a' }, sales: 27908.59 },
+      { value: 8.1, name: '佳木斯市', itemStyle: { color: '#faad14' }, sales: 14491.00 },
+      { value: 3.8, name: '牡丹江市', itemStyle: { color: '#f759ab' }, sales: 6798.25 },
+      { value: 1.5, name: '其他城市', itemStyle: { color: '#722ed1' }, sales: 2685.18 }
+    ]
+  },
+  '安徽省': {
+    totalSales: 245678.90,
+    regions: [
+      { value: 42.5, name: '合肥市', itemStyle: { color: '#1890ff' }, sales: 104413.54 },
+      { value: 25.8, name: '芜湖市', itemStyle: { color: '#13c2c2' }, sales: 63385.16 },
+      { value: 14.2, name: '蚌埠市', itemStyle: { color: '#52c41a' }, sales: 34886.40 },
+      { value: 9.6, name: '淮南市', itemStyle: { color: '#faad14' }, sales: 23585.17 },
+      { value: 5.3, name: '马鞍山市', itemStyle: { color: '#f759ab' }, sales: 13020.98 },
+      { value: 2.6, name: '其他城市', itemStyle: { color: '#722ed1' }, sales: 6387.65 }
+    ]
+  },
+  '福建省': {
+    totalSales: 312456.78,
+    regions: [
+      { value: 35.8, name: '福州市', itemStyle: { color: '#1890ff' }, sales: 111859.53 },
+      { value: 32.4, name: '厦门市', itemStyle: { color: '#13c2c2' }, sales: 101235.98 },
+      { value: 18.6, name: '泉州市', itemStyle: { color: '#52c41a' }, sales: 58116.96 },
+      { value: 8.7, name: '漳州市', itemStyle: { color: '#faad14' }, sales: 27183.74 },
+      { value: 2.8, name: '莆田市', itemStyle: { color: '#f759ab' }, sales: 8748.79 },
+      { value: 1.7, name: '其他城市', itemStyle: { color: '#722ed1' }, sales: 5311.78 }
+    ]
+  },
+  '江西省': {
+    totalSales: 198765.43,
+    regions: [
+      { value: 45.2, name: '南昌市', itemStyle: { color: '#1890ff' }, sales: 89842.17 },
+      { value: 22.8, name: '赣州市', itemStyle: { color: '#13c2c2' }, sales: 45318.56 },
+      { value: 15.6, name: '九江市', itemStyle: { color: '#52c41a' }, sales: 31007.41 },
+      { value: 9.2, name: '吉安市', itemStyle: { color: '#faad14' }, sales: 18286.42 },
+      { value: 4.8, name: '宜春市', itemStyle: { color: '#f759ab' }, sales: 9540.74 },
+      { value: 2.4, name: '其他城市', itemStyle: { color: '#722ed1' }, sales: 4770.13 }
+    ]
+  },
+  '广西壮族自治区': {
+    totalSales: 167890.12,
+    regions: [
+      { value: 42.8, name: '南宁市', itemStyle: { color: '#1890ff' }, sales: 71856.97 },
+      { value: 28.5, name: '柳州市', itemStyle: { color: '#13c2c2' }, sales: 47848.68 },
+      { value: 15.2, name: '桂林市', itemStyle: { color: '#52c41a' }, sales: 25519.30 },
+      { value: 8.6, name: '梧州市', itemStyle: { color: '#faad14' }, sales: 14438.55 },
+      { value: 3.2, name: '北海市', itemStyle: { color: '#f759ab' }, sales: 5372.48 },
+      { value: 1.7, name: '其他城市', itemStyle: { color: '#722ed1' }, sales: 2854.14 }
+    ]
+  },
+  '海南省': {
+    totalSales: 89123.45,
+    regions: [
+      { value: 68.5, name: '海口市', itemStyle: { color: '#1890ff' }, sales: 61049.56 },
+      { value: 28.7, name: '三亚市', itemStyle: { color: '#13c2c2' }, sales: 25578.43 },
+      { value: 2.1, name: '儋州市', itemStyle: { color: '#52c41a' }, sales: 1871.59 },
+      { value: 0.5, name: '三沙市', itemStyle: { color: '#faad14' }, sales: 445.62 },
+      { value: 0.2, name: '其他市县', itemStyle: { color: '#f759ab' }, sales: 178.25 }
+    ]
+  },
+  '重庆市': {
+    totalSales: 345678.90,
+    regions: [
+      { value: 52.8, name: '渝中区', itemStyle: { color: '#1890ff' }, sales: 182518.46 },
+      { value: 18.5, name: '江北区', itemStyle: { color: '#13c2c2' }, sales: 63950.60 },
+      { value: 12.3, name: '渝北区', itemStyle: { color: '#52c41a' }, sales: 42518.50 },
+      { value: 8.7, name: '沙坪坝区', itemStyle: { color: '#faad14' }, sales: 30074.06 },
+      { value: 4.9, name: '九龙坡区', itemStyle: { color: '#f759ab' }, sales: 16938.27 },
+      { value: 2.8, name: '其他区县', itemStyle: { color: '#722ed1' }, sales: 9679.01 }
+    ]
+  },
+  '贵州省': {
+    totalSales: 134567.89,
+    regions: [
+      { value: 48.6, name: '贵阳市', itemStyle: { color: '#1890ff' }, sales: 65400.00 },
+      { value: 22.8, name: '遵义市', itemStyle: { color: '#13c2c2' }, sales: 30681.48 },
+      { value: 12.5, name: '六盘水市', itemStyle: { color: '#52c41a' }, sales: 16820.99 },
+      { value: 8.9, name: '安顺市', itemStyle: { color: '#faad14' }, sales: 11976.54 },
+      { value: 4.7, name: '毕节市', itemStyle: { color: '#f759ab' }, sales: 6324.69 },
+      { value: 2.5, name: '其他州市', itemStyle: { color: '#722ed1' }, sales: 3364.19 }
+    ]
+  },
+  '云南省': {
+    totalSales: 198765.43,
+    regions: [
+      { value: 45.8, name: '昆明市', itemStyle: { color: '#1890ff' }, sales: 91054.57 },
+      { value: 18.5, name: '曲靖市', itemStyle: { color: '#13c2c2' }, sales: 36771.60 },
+      { value: 12.3, name: '红河州', itemStyle: { color: '#52c41a' }, sales: 24448.15 },
+      { value: 9.8, name: '大理州', itemStyle: { color: '#faad14' }, sales: 19479.01 },
+      { value: 7.2, name: '丽江市', itemStyle: { color: '#f759ab' }, sales: 14311.11 },
+      { value: 6.4, name: '其他州市', itemStyle: { color: '#722ed1' }, sales: 12700.99 }
+    ]
+  },
+  '西藏自治区': {
+    totalSales: 45678.90,
+    regions: [
+      { value: 58.5, name: '拉萨市', itemStyle: { color: '#1890ff' }, sales: 26722.16 },
+      { value: 18.7, name: '日喀则市', itemStyle: { color: '#13c2c2' }, sales: 8541.95 },
+      { value: 12.8, name: '昌都市', itemStyle: { color: '#52c41a' }, sales: 5846.90 },
+      { value: 6.2, name: '林芝市', itemStyle: { color: '#faad14' }, sales: 2832.09 },
+      { value: 2.5, name: '山南市', itemStyle: { color: '#f759ab' }, sales: 1141.97 },
+      { value: 1.3, name: '其他地区', itemStyle: { color: '#722ed1' }, sales: 593.83 }
+    ]
+  },
+  '陕西省': {
+    totalSales: 289012.34,
+    regions: [
+      { value: 52.8, name: '西安市', itemStyle: { color: '#1890ff' }, sales: 152598.52 },
+      { value: 18.5, name: '宝鸡市', itemStyle: { color: '#13c2c2' }, sales: 53467.28 },
+      { value: 12.8, name: '咸阳市', itemStyle: { color: '#52c41a' }, sales: 36993.58 },
+      { value: 8.2, name: '渭南市', itemStyle: { color: '#faad14' }, sales: 23699.01 },
+      { value: 4.9, name: '汉中市', itemStyle: { color: '#f759ab' }, sales: 14161.60 },
+      { value: 2.8, name: '其他城市', itemStyle: { color: '#722ed1' }, sales: 8092.35 }
+    ]
+  },
+  '甘肃省': {
+    totalSales: 112345.67,
+    regions: [
+      { value: 48.5, name: '兰州市', itemStyle: { color: '#1890ff' }, sales: 54487.65 },
+      { value: 18.8, name: '天水市', itemStyle: { color: '#13c2c2' }, sales: 21120.99 },
+      { value: 12.5, name: '庆阳市', itemStyle: { color: '#52c41a' }, sales: 14043.21 },
+      { value: 9.2, name: '平凉市', itemStyle: { color: '#faad14' }, sales: 10335.80 },
+      { value: 6.8, name: '武威市', itemStyle: { color: '#f759ab' }, sales: 7639.51 },
+      { value: 4.2, name: '其他州市', itemStyle: { color: '#722ed1' }, sales: 4718.51 }
+    ]
+  },
+  '青海省': {
+    totalSales: 67890.12,
+    regions: [
+      { value: 62.8, name: '西宁市', itemStyle: { color: '#1890ff' }, sales: 42635.36 },
+      { value: 22.5, name: '海东市', itemStyle: { color: '#13c2c2' }, sales: 15275.28 },
+      { value: 8.7, name: '海西州', itemStyle: { color: '#52c41a' }, sales: 5906.44 },
+      { value: 3.8, name: '海北州', itemStyle: { color: '#faad14' }, sales: 2579.82 },
+      { value: 1.5, name: '黄南州', itemStyle: { color: '#f759ab' }, sales: 1018.35 },
+      { value: 0.7, name: '其他州', itemStyle: { color: '#722ed1' }, sales: 474.87 }
+    ]
+  },
+  '宁夏回族自治区': {
+    totalSales: 78901.23,
+    regions: [
+      { value: 58.5, name: '银川市', itemStyle: { color: '#1890ff' }, sales: 46157.22 },
+      { value: 22.8, name: '吴忠市', itemStyle: { color: '#13c2c2' }, sales: 17993.48 },
+      { value: 12.5, name: '石嘴山市', itemStyle: { color: '#52c41a' }, sales: 9862.65 },
+      { value: 4.7, name: '固原市', itemStyle: { color: '#faad14' }, sales: 3708.36 },
+      { value: 1.5, name: '中卫市', itemStyle: { color: '#f759ab' }, sales: 1183.52 }
+    ]
+  },
+  '新疆维吾尔自治区': {
+    totalSales: 156789.01,
+    regions: [
+      { value: 48.2, name: '乌鲁木齐市', itemStyle: { color: '#1890ff' }, sales: 75572.30 },
+      { value: 15.8, name: '昌吉州', itemStyle: { color: '#13c2c2' }, sales: 24772.66 },
+      { value: 12.5, name: '喀什地区', itemStyle: { color: '#52c41a' }, sales: 19598.63 },
+      { value: 9.8, name: '阿克苏地区', itemStyle: { color: '#faad14' }, sales: 15365.32 },
+      { value: 7.2, name: '伊犁州', itemStyle: { color: '#f759ab' }, sales: 11288.89 },
+      { value: 6.5, name: '其他地区', itemStyle: { color: '#722ed1' }, sales: 10191.21 }
+    ]
   }
 }
 
@@ -279,11 +508,11 @@ const SalesOverviewChart = ({ visible, onClose, selectedRegion = '全国', force
       {
         text: selectedRegion,
         left: '25%',
-        top: '20%',
+        top: '12%',
         textAlign: 'center',
         textStyle: {
           color: 'rgba(255, 255, 255, 0.9)',
-          fontSize: 16,
+          fontSize: 13,
           fontWeight: 'bold'
         }
       }
@@ -414,18 +643,27 @@ const SalesOverviewChart = ({ visible, onClose, selectedRegion = '全国', force
       {/* 动画销售总额 */}
       <div style={{
         position: 'absolute',
-        right: '15%',
-        top: '40%',
+        right: '3%',
+        top: '45%',
         transform: 'translateY(-50%)',
         textAlign: 'center',
-        zIndex: 5
+        zIndex: 5,
+        pointerEvents: 'none',
+        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+        borderRadius: '8px',
+        padding: '10px 14px',
+        border: '1px solid rgba(255, 255, 255, 0.2)',
+        backdropFilter: 'blur(10px)',
+        minWidth: '140px'
       }}>
         <div style={{
           color: '#fff',
-          fontSize: '20px',
+          fontSize: '16px',
           fontWeight: 'bold',
           fontFamily: 'Arial, sans-serif',
-          marginBottom: '4px'
+          marginBottom: '3px',
+          textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
+          lineHeight: '1.2'
         }}>
           <AnimatedNumber 
             targetValue={regionData.totalSales} 
@@ -435,17 +673,20 @@ const SalesOverviewChart = ({ visible, onClose, selectedRegion = '全国', force
           />
         </div>
         <div style={{
-          color: 'rgba(255, 255, 255, 0.7)',
-          fontSize: '13px',
-          fontWeight: 'normal'
+          color: 'rgba(255, 255, 255, 0.9)',
+          fontSize: '11px',
+          fontWeight: 'normal',
+          textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)',
+          marginBottom: '2px'
         }}>
           {selectedRegion}销售总额
         </div>
         {/* 显示加载进度 */}
         <div style={{
-          color: 'rgba(255, 255, 255, 0.5)',
-          fontSize: '10px',
-          marginTop: '2px'
+          color: 'rgba(255, 255, 255, 0.7)',
+          fontSize: '8px',
+          marginTop: '2px',
+          textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)'
         }}>
           {animationProgress > 0 && animationProgress < 1 && (
             `加载中: ${(animationProgress * 100).toFixed(1)}%`
@@ -508,22 +749,16 @@ const Home = () => {
     console.log(`📍 当前selectedRegion: ${selectedRegion}`)
     console.log(`📊 可用地区数据:`, Object.keys(regionSalesData))
     
-    // 检查是否有该地区的销售数据
-    if (regionSalesData[regionName]) {
-      console.log(`✅ 找到地区数据: ${regionName}`)
-      setSelectedRegion(regionName)
-      setForceUpdate(prev => prev + 1) // 强制更新
-      console.log(`🔄 设置selectedRegion为: ${regionName}`)
-      
-      // 如果图表被关闭，自动显示
-      if (!chartVisible) {
-        console.log(`📈 自动显示图表`)
-        setChartVisible(true)
-      }
-    } else {
-      console.log(`❌ ${regionName} 暂无销售数据，显示全国数据`)
-      setSelectedRegion('全国')
-      setForceUpdate(prev => prev + 1) // 强制更新
+    // 所有地区都有销售数据
+    console.log(`✅ 找到地区数据: ${regionName}`)
+    setSelectedRegion(regionName)
+    setForceUpdate(prev => prev + 1) // 强制更新
+    console.log(`🔄 设置selectedRegion为: ${regionName}`)
+    
+    // 如果图表被关闭，自动显示
+    if (!chartVisible) {
+      console.log(`📈 自动显示图表`)
+      setChartVisible(true)
     }
   }
 
@@ -532,7 +767,7 @@ const Home = () => {
     console.log('🏠 首页已加载，环形图立即显示，销售总额数据开始10分钟平缓加载动画')
     console.log('💡 提示：刷新页面将重新开始动画，关闭/打开图表会继续当前进度')
     console.log('🗺️ 点击地图上的地区可切换环形图显示对应地区的销售数据')
-    console.log('📊 当前支持的地区数据: 全国、广东省、江苏省、四川省、北京市、上海市、浙江省、山东省、河南省、湖北省、湖南省')
+    console.log('📊 已为全国所有34个省份/直辖市/自治区添加销售数据，点击任何地区都有对应的环形图')
   }, [])
 
   return (
