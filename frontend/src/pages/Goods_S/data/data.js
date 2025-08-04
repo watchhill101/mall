@@ -114,7 +114,7 @@ export const GoodsListColumns = [
                 <Button type="link">复制</Button>
                 <Button type="link">编辑</Button>
                 <Button type="link" style={{ color: record.status === '在售' ? 'red' : 'blue' }} >{record.status === '在售' ? '下架' : '上架'}</Button>
-                <Button type="link" style={{ color: "red" }}>j</Button>
+                <Button type="link" style={{ color: "red" }}> 加入回收站</Button>
             </Space>
         ),
     },
@@ -243,6 +243,30 @@ export const formItemList = [
         },
     },
 ];
+// 回收站
+export const TrashformItemList = [
+    {
+        formItemProps: { name: 'ProductID', label: '商品ID' },
+        valueCompProps: {
+            placeholder: '请输入',
+        },
+    },
+    {
+        formItemProps: { name: 'ProductName', label: '商品名称' },
+        valueCompProps: {
+            placeholder: '请输入',
+        },
+    },
+    {
+        formItemProps: { name: 'Classification', label: '商品分类' },
+        valueCompProps: {
+            type: 'Cascader',
+            options: categoryData,
+            placeholder: '请选择',
+        },
+    },
+];
+
 // 商品分类
 export const categoryFormItemList = [
     {
@@ -352,4 +376,52 @@ export const items = [
         // icon: <MailOutlined />,
     },
 
+]
+// 回收站字段
+export const TrashColumns = [
+    {
+        title: '商品ID',
+        dataIndex: 'ProductID',
+        key: 'ProductID',
+    },
+    {
+        title: '商品名称',
+        dataIndex: 'ProductName',
+        key: 'ProductName',
+        render: (text, record) => <>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+                <div>
+                    <img src="" alt="" />
+                </div>
+                <div>
+                    {text}
+                </div>
+
+            </div>
+
+        </>,
+    },
+    {
+        title: '商品分类',
+        dataIndex: 'ProductCategory',
+        key: 'ProductCategory',
+    },
+    {
+        title: '市场售价',
+        dataIndex: 'MarketPrice',
+        key: 'MarketPrice',
+    },
+    {
+        title: "最后更新时间",
+        dataIndex: 'LastUpdateTime',
+        key: 'LastUpdateTime',
+    },
+    {
+        title: '操作',
+        dataIndex: 'operation',
+        key: 'operation',
+        render: (text, record) => <>
+            <Button type="link">恢复</Button>
+        </>
+    }
 ]
