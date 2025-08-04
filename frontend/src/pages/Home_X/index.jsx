@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import ReactECharts from 'echarts-for-react'
-import { CloseOutlined, PieChartOutlined } from '@ant-design/icons'
+import { CloseOutlined, PieChartOutlined, GlobalOutlined, FullscreenOutlined, FullscreenExitOutlined, CompressOutlined, ExpandOutlined } from '@ant-design/icons'
 import { Button } from 'antd'
 import Dashboard from './Dashboard'
 import './Dashboard.scss'
@@ -591,8 +591,8 @@ const SalesOverviewChart = ({ visible, onClose, selectedRegion = '全国', force
       return (
      <div className="sales-overview-chart" style={{
               position: 'fixed',
-              top: '210px',
-              left: '260px',
+              top: '250px',
+              left: '280px',
                     zIndex: 1000,
       width: '320px',
       height: '220px',
@@ -728,10 +728,698 @@ const SalesOverviewChart = ({ visible, onClose, selectedRegion = '全国', force
   )
 }
 
+// 3D地球组件
+const Globe3D = ({ visible, onClose, onToggleFullscreen, isFullscreen }) => {
+  const [isVisible, setIsVisible] = useState(visible)
+
+  useEffect(() => {
+    if (visible) {
+      setIsVisible(true)
+    } else {
+      const timer = setTimeout(() => setIsVisible(false), 300)
+      return () => clearTimeout(timer)
+    }
+  }, [visible])
+
+  // 超现代化CSS动画样式
+  useEffect(() => {
+    const style = document.createElement('style')
+    style.textContent = `
+      @keyframes cyberGlobeRotate {
+        from { transform: perspective(800px) rotateX(8deg) rotateY(0deg) rotateZ(-2deg); }
+        to { transform: perspective(800px) rotateX(8deg) rotateY(360deg) rotateZ(-2deg); }
+      }
+      @keyframes neonPulse {
+        0%, 100% { 
+          filter: hue-rotate(0deg) brightness(1) saturate(1);
+          transform: scale(1);
+          box-shadow: 
+            0 0 20px #ff0080,
+            0 0 40px #ff0080,
+            0 0 60px #ff0080;
+        }
+        25% {
+          filter: hue-rotate(90deg) brightness(1.2) saturate(1.3);
+          transform: scale(1.02);
+          box-shadow: 
+            0 0 25px #00ff80,
+            0 0 50px #00ff80,
+            0 0 75px #00ff80;
+        }
+        50% { 
+          filter: hue-rotate(180deg) brightness(1.1) saturate(1.2);
+          transform: scale(1.03);
+          box-shadow: 
+            0 0 30px #8000ff,
+            0 0 60px #8000ff,
+            0 0 90px #8000ff;
+        }
+        75% {
+          filter: hue-rotate(270deg) brightness(1.2) saturate(1.3);
+          transform: scale(1.02);
+          box-shadow: 
+            0 0 25px #ff8000,
+            0 0 50px #ff8000,
+            0 0 75px #ff8000;
+        }
+      }
+      @keyframes circuitFlow {
+        0% { 
+          stroke-dashoffset: 1000;
+          opacity: 0.3;
+        }
+        50% {
+          opacity: 1;
+        }
+        100% { 
+          stroke-dashoffset: 0;
+          opacity: 0.3;
+        }
+      }
+      @keyframes digitalRain {
+        0% { 
+          transform: translateY(-100px) scale(0.5);
+          opacity: 0;
+        }
+        10% {
+          opacity: 1;
+          transform: translateY(-80px) scale(0.7);
+        }
+        90% {
+          opacity: 1;
+          transform: translateY(180px) scale(1);
+        }
+        100% { 
+          transform: translateY(200px) scale(1.2);
+          opacity: 0;
+        }
+      }
+      @keyframes electroSpin {
+        from { 
+          transform: rotate(0deg) scale(1);
+          opacity: 0.6;
+        }
+        50% {
+          transform: rotate(180deg) scale(1.1);
+          opacity: 1;
+        }
+        to { 
+          transform: rotate(360deg) scale(1);
+          opacity: 0.6;
+        }
+      }
+      @keyframes dataPacket {
+        0% { 
+          transform: rotate(0deg) translateX(80px) rotate(0deg) scale(0);
+          opacity: 0;
+        }
+        10% {
+          opacity: 1;
+          transform: rotate(36deg) translateX(80px) rotate(-36deg) scale(1);
+        }
+        90% {
+          opacity: 1;
+          transform: rotate(324deg) translateX(80px) rotate(-324deg) scale(1);
+        }
+        100% { 
+          transform: rotate(360deg) translateX(80px) rotate(-360deg) scale(0);
+          opacity: 0;
+        }
+      }
+      @keyframes glitchEffect {
+        0%, 100% { 
+          transform: translate(0);
+          filter: hue-rotate(0deg);
+        }
+        2% { 
+          transform: translate(-2px, 1px);
+          filter: hue-rotate(90deg);
+        }
+        4% { 
+          transform: translate(1px, -1px);
+          filter: hue-rotate(180deg);
+        }
+        6% { 
+          transform: translate(0);
+          filter: hue-rotate(0deg);
+        }
+      }
+      .cyber-globe-main {
+        animation: cyberGlobeRotate 25s linear infinite;
+      }
+      .cyber-neon-field {
+        animation: neonPulse 3s ease-in-out infinite;
+      }
+      .cyber-circuit-line {
+        animation: circuitFlow 4s linear infinite;
+      }
+      .cyber-rain-drop {
+        animation: digitalRain 3s linear infinite;
+      }
+      .cyber-electro-ring {
+        animation: electroSpin 8s linear infinite;
+      }
+      .cyber-data-packet {
+        animation: dataPacket 6s linear infinite;
+      }
+      .cyber-glitch {
+        animation: glitchEffect 5s infinite;
+      }
+    `
+    document.head.appendChild(style)
+    
+    return () => {
+      if (document.head.contains(style)) {
+        document.head.removeChild(style)
+      }
+    }
+  }, [])
+
+  // 赛博朋克风格3D地球
+  const createCyberGlobeCSS = () => {
+    return (
+      <div style={{
+        position: 'relative',
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: `
+          linear-gradient(45deg, 
+            rgba(20, 0, 40, 0.9) 0%, 
+            rgba(40, 0, 60, 0.95) 25%,
+            rgba(10, 0, 30, 0.98) 50%,
+            rgba(30, 0, 50, 0.95) 75%,
+            rgba(20, 0, 40, 0.9) 100%
+          ),
+          radial-gradient(circle at 20% 80%, rgba(255, 0, 128, 0.15) 0%, transparent 50%),
+          radial-gradient(circle at 80% 20%, rgba(0, 255, 128, 0.15) 0%, transparent 50%)
+        `,
+        overflow: 'hidden'
+      }}>
+        
+        {/* 电子雨背景 */}
+        {Array.from({length: 12}).map((_, i) => (
+          <div
+            key={`rain-${i}`}
+            className="cyber-rain-drop"
+            style={{
+              position: 'absolute',
+              left: `${5 + i * 8}%`,
+              top: '-100px',
+              width: '2px',
+              height: '20px',
+              background: 'linear-gradient(180deg, transparent, #00ff41, transparent)',
+              borderRadius: '1px',
+              animationDelay: `${i * 0.3}s`,
+              opacity: 0.7
+            }}
+          />
+        ))}
+
+        {/* 电路网格背景 */}
+        <svg 
+          style={{
+            position: 'absolute',
+            width: '100%',
+            height: '100%',
+            top: 0,
+            left: 0
+          }}
+          viewBox="0 0 320 220"
+        >
+          {/* 电路线条 */}
+          <path
+            d="M 0,50 L 100,50 L 100,100 L 200,100 L 200,150 L 320,150"
+            stroke="#ff0080"
+            strokeWidth="1"
+            fill="none"
+            strokeDasharray="5,5"
+            className="cyber-circuit-line"
+            style={{ animationDelay: '0s' }}
+          />
+          <path
+            d="M 0,170 L 80,170 L 80,120 L 180,120 L 180,70 L 320,70"
+            stroke="#00ff80"
+            strokeWidth="1"
+            fill="none"
+            strokeDasharray="3,7"
+            className="cyber-circuit-line"
+            style={{ animationDelay: '1s' }}
+          />
+          <path
+            d="M 50,0 L 50,80 L 150,80 L 150,180 L 250,180 L 250,220"
+            stroke="#8000ff"
+            strokeWidth="1"
+            fill="none"
+            strokeDasharray="7,3"
+            className="cyber-circuit-line"
+            style={{ animationDelay: '2s' }}
+          />
+          
+          {/* 电路节点 */}
+          {[
+            {x: 100, y: 50}, {x: 200, y: 100}, {x: 80, y: 170}, 
+            {x: 180, y: 120}, {x: 50, y: 80}, {x: 150, y: 180}
+          ].map((node, i) => (
+            <circle
+              key={`node-${i}`}
+              cx={node.x}
+              cy={node.y}
+              r="3"
+              fill="#ffffff"
+              style={{
+                filter: 'drop-shadow(0 0 5px #ffffff)',
+                animation: `neonPulse 2s ease-in-out infinite`,
+                animationDelay: `${i * 0.4}s`
+              }}
+            />
+          ))}
+        </svg>
+
+        {/* 外层电子环 */}
+        <div 
+          className="cyber-electro-ring"
+          style={{
+            position: 'absolute',
+            width: '220px',
+            height: '220px',
+            border: '2px dashed #ff0080',
+            borderRadius: '50%',
+            opacity: 0.6
+          }}
+        />
+
+        {/* 中层霓虹环 */}
+        <div 
+          className="cyber-neon-field"
+          style={{
+            position: 'absolute',
+            width: '180px',
+            height: '180px',
+            border: '1px solid #00ff80',
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, transparent 70%, rgba(0,255,128,0.1) 100%)',
+            boxShadow: '0 0 20px #00ff80'
+          }}
+        />
+
+                 {/* 地球核心 */}
+         <div 
+           className="cyber-globe-main"
+           style={{
+             width: '140px',
+             height: '140px',
+             borderRadius: '50%',
+             background: `
+               radial-gradient(ellipse 70% 40% at 25% 20%, 
+                 rgba(0, 220, 255, 1) 0%,
+                 rgba(0, 180, 255, 0.9) 8%,
+                 rgba(0, 140, 220, 0.7) 20%,
+                 rgba(0, 100, 180, 0.5) 35%,
+                 transparent 50%
+               ),
+               radial-gradient(ellipse 120% 80% at 50% 50%, 
+                 rgba(0, 130, 200, 1) 0%,
+                 rgba(0, 100, 160, 1) 15%,
+                 rgba(0, 80, 130, 1) 30%,
+                 rgba(0, 60, 100, 1) 45%,
+                 rgba(0, 40, 70, 1) 60%,
+                 rgba(0, 25, 45, 1) 75%,
+                 rgba(0, 15, 25, 1) 90%,
+                 rgba(0, 8, 15, 1) 100%
+               ),
+               radial-gradient(ellipse 50% 30% at 75% 75%, 
+                 transparent 0%,
+                 rgba(0, 0, 0, 0.3) 30%,
+                 rgba(0, 0, 0, 0.7) 70%,
+                 rgba(0, 0, 0, 0.9) 100%
+               ),
+               radial-gradient(ellipse 30% 20% at 70% 80%, 
+                 rgba(255, 0, 128, 0.2) 0%,
+                 transparent 60%
+               )
+             `,
+             position: 'relative',
+             boxShadow: `
+               0 0 50px rgba(0, 150, 255, 0.4),
+               0 25px 50px rgba(0, 0, 0, 0.6),
+               inset -30px -30px 60px rgba(0, 0, 40, 0.8),
+               inset 20px 20px 40px rgba(0, 180, 255, 0.15),
+               inset -50px -50px 100px rgba(0, 0, 0, 0.5),
+               inset 5px 5px 20px rgba(0, 200, 255, 0.3)
+             `,
+             border: 'none',
+             filter: 'drop-shadow(0 20px 35px rgba(0, 0, 0, 0.4))'
+           }}
+        >
+          
+                     {/* 地球纬线 */}
+           <div style={{
+             position: 'absolute',
+             top: '35%',
+             left: '5%',
+             width: '90%',
+             height: '2px',
+             background: 'linear-gradient(90deg, transparent 10%, rgba(0,200,255,0.3) 50%, transparent 90%)',
+             borderRadius: '50%',
+             opacity: 0.6,
+             transform: 'perspective(200px) rotateX(60deg)'
+           }} />
+           <div style={{
+             position: 'absolute',
+             top: '50%',
+             left: '3%',
+             width: '94%',
+             height: '1px',
+             background: 'linear-gradient(90deg, transparent 5%, rgba(0,180,255,0.4) 50%, transparent 95%)',
+             borderRadius: '50%',
+             opacity: 0.7,
+             transform: 'perspective(200px) rotateX(0deg)'
+           }} />
+           <div style={{
+             position: 'absolute',
+             top: '65%',
+             left: '5%',
+             width: '90%',
+             height: '2px',
+             background: 'linear-gradient(90deg, transparent 10%, rgba(0,200,255,0.3) 50%, transparent 90%)',
+             borderRadius: '50%',
+             opacity: 0.6,
+             transform: 'perspective(200px) rotateX(-60deg)'
+           }} />
+
+                     {/* 地球大陆轮廓 */}
+           <div style={{
+             position: 'absolute',
+             top: '0',
+             left: '0',
+             width: '100%',
+             height: '100%',
+             borderRadius: '50%',
+             background: `
+               radial-gradient(ellipse 20% 30% at 30% 40%, 
+                 rgba(0, 80, 40, 0.4) 0%,
+                 rgba(0, 60, 30, 0.6) 50%,
+                 transparent 70%
+               ),
+               radial-gradient(ellipse 15% 25% at 70% 30%, 
+                 rgba(0, 80, 40, 0.3) 0%,
+                 rgba(0, 60, 30, 0.5) 50%,
+                 transparent 70%
+               ),
+               radial-gradient(ellipse 25% 35% at 60% 70%, 
+                 rgba(0, 80, 40, 0.4) 0%,
+                 rgba(0, 60, 30, 0.6) 50%,
+                 transparent 70%
+               ),
+               repeating-linear-gradient(
+                 20deg,
+                 transparent,
+                 transparent 15px,
+                 rgba(0,180,255,0.1) 15px,
+                 rgba(0,180,255,0.1) 16px
+               ),
+               repeating-linear-gradient(
+                 -30deg,
+                 transparent,
+                 transparent 20px,
+                 rgba(0,150,255,0.08) 20px,
+                 rgba(0,150,255,0.08) 21px
+               )
+             `,
+             opacity: 0.4,
+             mixBlendMode: 'multiply'
+           }} />
+
+          {/* 数据包轨道 */}
+          {Array.from({length: 8}).map((_, index) => (
+            <div
+              key={`packet-${index}`}
+              className="cyber-data-packet"
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                width: '8px',
+                height: '8px',
+                background: `
+                  radial-gradient(circle, 
+                    ${['#ff0080', '#00ff80', '#8000ff', '#ff8000'][index % 4]}, 
+                    transparent
+                  )
+                `,
+                borderRadius: '50%',
+                transformOrigin: '0 0',
+                animationDelay: `${index * 0.75}s`,
+                boxShadow: `0 0 15px ${['#ff0080', '#00ff80', '#8000ff', '#ff8000'][index % 4]}`,
+                filter: 'blur(0.5px)'
+              }}
+            />
+          ))}
+
+                     {/* 地球核心光点 */}
+           <div style={{
+             position: 'absolute',
+             top: '45%',
+             left: '45%',
+             width: '8px',
+             height: '8px',
+             background: 'radial-gradient(circle, rgba(255,255,255,0.8), rgba(0,200,255,0.4))',
+             borderRadius: '50%',
+             transform: 'translate(-50%, -50%)',
+             boxShadow: '0 0 15px rgba(0,200,255,0.6)',
+             opacity: 0.8
+           }} />
+
+           {/* 地球高光 */}
+           <div style={{
+             position: 'absolute',
+             top: '25%',
+             left: '30%',
+             width: '40px',
+             height: '30px',
+             background: 'radial-gradient(ellipse, rgba(255,255,255,0.15) 0%, transparent 70%)',
+             borderRadius: '50%',
+             transform: 'rotate(-20deg)',
+             opacity: 0.7
+           }} />
+
+        </div>
+
+        {/* 赛博朋克信息面板 */}
+        <div style={{
+          position: 'absolute',
+          bottom: '8px',
+          left: '8px',
+          right: '8px',
+          height: '35px',
+          background: 'linear-gradient(90deg, rgba(255,0,128,0.2), rgba(0,255,128,0.2))',
+          border: '1px solid #ff0080',
+          borderRadius: '6px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backdropFilter: 'blur(8px)'
+        }}>
+          <div style={{
+            color: '#ff0080',
+            fontSize: '10px',
+            fontFamily: 'monospace',
+            textShadow: '0 0 8px #ff0080',
+            fontWeight: 'bold'
+          }}>
+            ▸ CYBER EARTH NEXUS ◂ NET.STATUS: ONLINE ◂ UPLINK: 99.7%
+          </div>
+        </div>
+
+        {/* 左上角数据显示 */}
+        <div style={{
+          position: 'absolute',
+          top: '8px',
+          left: '8px',
+          color: '#00ff80',
+          fontSize: '9px',
+          fontFamily: 'monospace',
+          textShadow: '0 0 5px #00ff80',
+          lineHeight: '12px'
+        }}>
+          <div>██ SYS.VER: 2.8.4</div>
+          <div>██ CPU: 87.3%</div>
+          <div>██ MEM: 64.1%</div>
+          <div>██ NET: 1.2GB/s</div>
+        </div>
+
+        {/* 右上角故障代码 */}
+        <div 
+          className="cyber-glitch"
+          style={{
+            position: 'absolute',
+            top: '8px',
+            right: '8px',
+            color: '#ff8000',
+            fontSize: '8px',
+            fontFamily: 'monospace',
+            textShadow: '0 0 5px #ff8000',
+            lineHeight: '10px'
+          }}
+        >
+          <div>ERR_404</div>
+          <div>WARN_502</div>
+          <div>INFO_200</div>
+        </div>
+
+      </div>
+    )
+  }
+
+  const containerSize = isFullscreen ? { width: '80vw', height: '80vh' } : { width: '320px', height: '220px' }
+
+  return (
+    <div 
+      className="globe-3d-container" 
+      style={{
+        position: 'fixed',
+        top: isFullscreen ? '50%' : '250px',
+        right: isFullscreen ? '50%' : '240px',
+        transform: isFullscreen ? 'translate(50%, -50%)' : 'none',
+        zIndex: isFullscreen ? 2000 : 1000,
+        ...containerSize,
+                 backgroundColor: 'rgba(20, 0, 40, 0.95)',
+         borderRadius: '12px',
+         padding: '10px',
+         pointerEvents: 'auto',
+         backdropFilter: 'blur(15px)',
+         border: '1px solid rgba(255, 0, 128, 0.4)',
+         boxShadow: `
+           0 8px 32px rgba(255, 0, 128, 0.3),
+           inset 0 1px 0 rgba(255, 0, 128, 0.1)
+         `,
+        opacity: visible ? 1 : 0,
+        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
+      }}
+    >
+      {isVisible && (
+        <>
+                     {/* 标题栏 */}
+           <div style={{
+             display: 'flex',
+             justifyContent: 'space-between',
+             alignItems: 'center',
+             marginBottom: '12px',
+             padding: '8px 10px',
+             background: 'rgba(255, 0, 128, 0.05)',
+             borderRadius: '8px',
+             border: '1px solid rgba(255, 0, 128, 0.1)'
+           }}>
+                         <span style={{
+               color: '#ff0080',
+               fontSize: '16px',
+               fontWeight: 'bold',
+               textShadow: '0 0 12px rgba(255, 0, 128, 0.8)',
+               fontFamily: 'monospace',
+               letterSpacing: '1px',
+               display: 'flex',
+               alignItems: 'center',
+               height: '32px'
+             }}>
+               ▸ CYBER EARTH ◂
+             </span>
+                         <div style={{ 
+               display: 'flex', 
+               gap: '6px',
+               alignItems: 'center'
+             }}>
+               <Button
+                 type="text"
+                 icon={isFullscreen ? <CompressOutlined /> : <ExpandOutlined />}
+                 onClick={onToggleFullscreen}
+                 style={{
+                   color: '#ff0080',
+                   border: '1px solid rgba(255, 0, 128, 0.4)',
+                   borderRadius: '8px',
+                   padding: '6px 10px',
+                   background: 'rgba(255, 0, 128, 0.15)',
+                   minWidth: '32px',
+                   height: '32px',
+                   display: 'flex',
+                   alignItems: 'center',
+                   justifyContent: 'center',
+                   boxShadow: '0 2px 8px rgba(255, 0, 128, 0.2)',
+                   backdropFilter: 'blur(10px)',
+                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                 }}
+                 onMouseEnter={(e) => {
+                   e.target.style.transform = 'scale(1.1)'
+                   e.target.style.background = 'rgba(255, 0, 128, 0.25)'
+                   e.target.style.boxShadow = '0 4px 16px rgba(255, 0, 128, 0.4)'
+                 }}
+                 onMouseLeave={(e) => {
+                   e.target.style.transform = 'scale(1)'
+                   e.target.style.background = 'rgba(255, 0, 128, 0.15)'
+                   e.target.style.boxShadow = '0 2px 8px rgba(255, 0, 128, 0.2)'
+                 }}
+                 size="small"
+               />
+               <Button
+                 type="text"
+                 icon={<CloseOutlined />}
+                 onClick={onClose}
+                 style={{
+                   color: '#ff0080',
+                   border: '1px solid rgba(255, 0, 128, 0.4)',
+                   borderRadius: '8px',
+                   padding: '6px 10px',
+                   background: 'rgba(255, 0, 128, 0.15)',
+                   minWidth: '32px',
+                   height: '32px',
+                   display: 'flex',
+                   alignItems: 'center',
+                   justifyContent: 'center',
+                   boxShadow: '0 2px 8px rgba(255, 0, 128, 0.2)',
+                   backdropFilter: 'blur(10px)',
+                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                 }}
+                 onMouseEnter={(e) => {
+                   e.target.style.transform = 'scale(1.1)'
+                   e.target.style.background = 'rgba(255, 32, 32, 0.25)'
+                   e.target.style.color = '#ff4444'
+                   e.target.style.borderColor = 'rgba(255, 32, 32, 0.5)'
+                   e.target.style.boxShadow = '0 4px 16px rgba(255, 32, 32, 0.4)'
+                 }}
+                 onMouseLeave={(e) => {
+                   e.target.style.transform = 'scale(1)'
+                   e.target.style.background = 'rgba(255, 0, 128, 0.15)'
+                   e.target.style.color = '#ff0080'
+                   e.target.style.borderColor = 'rgba(255, 0, 128, 0.4)'
+                   e.target.style.boxShadow = '0 2px 8px rgba(255, 0, 128, 0.2)'
+                 }}
+                 size="small"
+               />
+             </div>
+          </div>
+
+                     {/* 3D地球主体 */}
+           <div style={{ 
+             width: '100%', 
+             height: 'calc(100% - 50px)',
+             position: 'relative'
+           }}>
+            {createCyberGlobeCSS()}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
 const Home = () => {
   const [chartVisible, setChartVisible] = useState(true)
   const [selectedRegion, setSelectedRegion] = useState('全国')
   const [forceUpdate, setForceUpdate] = useState(0)
+  const [globeVisible, setGlobeVisible] = useState(true)
+  const [globeFullscreen, setGlobeFullscreen] = useState(false)
 
   const handleCloseChart = () => {
     console.log('📊 销售总额图表已关闭，动画继续在后台运行')
@@ -741,6 +1429,22 @@ const Home = () => {
   const handleShowChart = () => {
     console.log('📊 重新显示销售总额图表，从当前进度继续')
     setChartVisible(true)
+  }
+
+  const handleCloseGlobe = () => {
+    console.log('🌍 3D地球已关闭')
+    setGlobeVisible(false)
+    setGlobeFullscreen(false)
+  }
+
+  const handleShowGlobe = () => {
+    console.log('🌍 显示3D地球')
+    setGlobeVisible(true)
+  }
+
+  const handleToggleGlobeFullscreen = () => {
+    console.log('🌍 切换3D地球全屏模式')
+    setGlobeFullscreen(!globeFullscreen)
   }
 
   // 处理地图点击事件
@@ -768,11 +1472,15 @@ const Home = () => {
     console.log('💡 提示：刷新页面将重新开始动画，关闭/打开图表会继续当前进度')
     console.log('🗺️ 点击地图上的地区可切换环形图显示对应地区的销售数据')
     console.log('📊 已为全国所有34个省份/直辖市/自治区添加销售数据，点击任何地区都有对应的环形图')
+    console.log('🌐 右上角数字化地球展示全球网络状态，科技感十足的数据可视化，支持全屏查看和折叠功能')
+    console.log('🎛️ 左上角销售统计与右上角3D地球形成对称的折叠对比布局')
   }, [])
 
   return (
     <div style={{ position: 'relative' }}>
       <Dashboard onRegionClick={handleMapRegionClick} />
+      
+      {/* 左上角销售统计图表 */}
       <SalesOverviewChart 
         visible={chartVisible} 
         onClose={handleCloseChart}
@@ -780,7 +1488,15 @@ const Home = () => {
         forceUpdate={forceUpdate}
       />
       
-      {/* 显示图表按钮 */}
+      {/* 右上角3D地球 */}
+      <Globe3D 
+        visible={globeVisible}
+        onClose={handleCloseGlobe}
+        onToggleFullscreen={handleToggleGlobeFullscreen}
+        isFullscreen={globeFullscreen}
+      />
+      
+      {/* 显示销售统计按钮 */}
       {!chartVisible && (
         <Button
           type="primary"
@@ -788,8 +1504,8 @@ const Home = () => {
           onClick={handleShowChart}
           style={{
             position: 'fixed',
-            top: '210px',
-            left: '260px',
+            top: '250px',
+            left: '280px',
             zIndex: 1000,
             borderRadius: '8px',
             backgroundColor: 'rgba(24, 144, 255, 0.9)',
@@ -809,6 +1525,38 @@ const Home = () => {
           }}
         >
           显示{selectedRegion}销售统计
+        </Button>
+      )}
+      
+      {/* 显示3D地球按钮 */}
+      {!globeVisible && (
+        <Button
+          type="primary"
+          icon={<GlobalOutlined />}
+          onClick={handleShowGlobe}
+          style={{
+            position: 'fixed',
+            top: '250px',
+            right: '240px',
+            zIndex: 1000,
+            borderRadius: '8px',
+            backgroundColor: 'rgba(28, 126, 214, 0.9)',
+            border: 'none',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+            backdropFilter: 'blur(10px)',
+            animation: 'fadeInScale 0.3s ease-out',
+            transition: 'all 0.3s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.transform = 'translateY(-2px) scale(1.05)'
+            e.target.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.4)'
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.transform = 'translateY(0) scale(1)'
+            e.target.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.3)'
+          }}
+        >
+          显示赛博地球
         </Button>
       )}
     </div>

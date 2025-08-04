@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, memo } from 'react'
 import { Card, Button, message, Switch, Space } from 'antd'
 import { ReloadOutlined, ArrowLeftOutlined } from '@ant-design/icons'
 import ReactECharts from 'echarts-for-react'
@@ -6,6 +6,144 @@ import * as echarts from 'echarts'
 import 'echarts-gl'
 import axios from 'axios'
 import './Dashboard.scss'
+
+// 优化的时间显示组件 - 避免时间更新影响整个页面
+const TimeDisplay = memo(() => {
+  const [currentTime, setCurrentTime] = useState(new Date())
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date())
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [])
+
+  // 使用useMemo优化时间格式化，避免每次渲染都重新计算
+  const timeString = useMemo(() => {
+    return currentTime.toLocaleTimeString('zh-CN', { 
+      hour12: false,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    })
+  }, [currentTime])
+
+  const dateString = useMemo(() => {
+    return currentTime.toLocaleDateString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).replace(/\//g, '.')
+  }, [currentTime])
+
+  return (
+    <div style={{
+      textAlign: 'center',
+      padding: '12px 20px',
+      background: 'linear-gradient(135deg, rgba(0, 191, 255, 0.1), rgba(0, 255, 255, 0.05))',
+      border: '1px solid rgba(0, 191, 255, 0.3)',
+      borderRadius: '8px',
+      backdropFilter: 'blur(10px)',
+      boxShadow: '0 0 20px rgba(0, 191, 255, 0.2), inset 0 0 20px rgba(0, 255, 255, 0.1)',
+      position: 'relative',
+      overflow: 'hidden',
+      animation: 'containerPulse 4s ease-in-out infinite',
+      minWidth: '160px'
+    }}>
+      {/* 扫描线动画 */}
+      <div style={{
+        position: 'absolute',
+        top: '0',
+        left: '-100%',
+        width: '100%',
+        height: '2px',
+        background: 'linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.8), transparent)',
+        animation: 'scanLine 3s linear infinite'
+      }} />
+      
+      <div style={{ 
+        fontSize: '24px', 
+        fontWeight: 'bold',
+        display: 'block',
+        marginBottom: '8px',
+        color: '#00FFFF',
+        fontFamily: '"Courier New", monospace',
+        textShadow: `
+          0 0 5px #00FFFF,
+          0 0 10px #00FFFF,
+          0 0 15px #00BFFF,
+          0 0 20px #00BFFF
+        `,
+        letterSpacing: '3px',
+        animation: 'digitalGlow 2s ease-in-out infinite',
+        lineHeight: '1',
+        whiteSpace: 'nowrap'
+      }}>
+        {timeString}
+      </div>
+      
+      <div style={{ 
+        fontSize: '14px', 
+        display: 'block',
+        color: '#00BFFF',
+        fontFamily: '"Courier New", monospace',
+        textShadow: '0 0 8px #00BFFF',
+        letterSpacing: '2px',
+        opacity: 0.9,
+        animation: 'dateFade 3s ease-in-out infinite',
+        lineHeight: '1',
+        whiteSpace: 'nowrap'
+      }}>
+        {dateString}
+      </div>
+      
+      {/* 边角装饰 */}
+      <div style={{
+        position: 'absolute',
+        top: '2px',
+        left: '2px',
+        width: '8px',
+        height: '8px',
+        border: '1px solid #00FFFF',
+        borderRight: 'none',
+        borderBottom: 'none'
+      }} />
+      <div style={{
+        position: 'absolute',
+        top: '2px',
+        right: '2px',
+        width: '8px',
+        height: '8px',
+        border: '1px solid #00FFFF',
+        borderLeft: 'none',
+        borderBottom: 'none'
+      }} />
+      <div style={{
+        position: 'absolute',
+        bottom: '2px',
+        left: '2px',
+        width: '8px',
+        height: '8px',
+        border: '1px solid #00FFFF',
+        borderRight: 'none',
+        borderTop: 'none'
+      }} />
+      <div style={{
+        position: 'absolute',
+        bottom: '2px',
+        right: '2px',
+        width: '8px',
+        height: '8px',
+        border: '1px solid #00FFFF',
+        borderLeft: 'none',
+        borderTop: 'none'
+      }} />
+    </div>
+  )
+})
+
+TimeDisplay.displayName = 'TimeDisplay'
 
 // 省份代码映射
 const provinceCodeMap = {
@@ -385,6 +523,517 @@ const Dashboard = ({ onRegionClick }) => {
     loadChinaMap()
   }, [])
 
+  // 添加科技感样式和地图背景动画
+  useEffect(() => {
+    const style = document.createElement('style')
+          style.textContent = `
+        @keyframes scanLine {
+          0% { left: -100%; }
+          100% { left: 100%; }
+        }
+        @keyframes digitalGlow {
+          0%, 100% {
+            text-shadow: 
+              0 0 5px #00FFFF,
+              0 0 10px #00FFFF,
+              0 0 15px #00BFFF,
+              0 0 20px #00BFFF;
+          }
+          50% {
+            text-shadow: 
+              0 0 8px #00FFFF,
+              0 0 15px #00FFFF,
+              0 0 20px #00BFFF,
+              0 0 25px #00BFFF,
+              0 0 30px #1E90FF;
+          }
+        }
+        @keyframes containerPulse {
+          0%, 100% {
+            box-shadow: 
+              0 0 20px rgba(0, 191, 255, 0.2), 
+              inset 0 0 20px rgba(0, 255, 255, 0.1),
+              0 0 1px rgba(0, 191, 255, 0.5);
+            border-color: rgba(0, 191, 255, 0.3);
+          }
+          50% {
+            box-shadow: 
+              0 0 30px rgba(0, 191, 255, 0.4), 
+              inset 0 0 25px rgba(0, 255, 255, 0.2),
+              0 0 3px rgba(0, 191, 255, 0.8);
+            border-color: rgba(0, 191, 255, 0.6);
+          }
+        }
+        @keyframes dateFade {
+          0%, 100% {
+            opacity: 0.9;
+            text-shadow: 0 0 8px #00BFFF;
+          }
+          50% {
+            opacity: 0.7;
+            text-shadow: 0 0 12px #00BFFF, 0 0 20px rgba(0, 191, 255, 0.3);
+          }
+        }
+        
+        /* 科技感地图容器样式 */
+      @keyframes techGridMove {
+        0% { transform: translateX(-20px) translateY(-20px); }
+        100% { transform: translateX(0px) translateY(0px); }
+      }
+      @keyframes techPulse {
+        0%, 100% { opacity: 0.3; }
+        50% { opacity: 0.7; }
+      }
+      @keyframes techGlow {
+        0%, 100% {
+          box-shadow: 
+            0 0 20px rgba(0, 150, 255, 0.3),
+            inset 0 0 20px rgba(0, 200, 255, 0.1);
+        }
+        50% {
+          box-shadow: 
+            0 0 40px rgba(0, 150, 255, 0.6),
+            inset 0 0 30px rgba(0, 200, 255, 0.2);
+        }
+      }
+      @keyframes greenGlow {
+        0%, 100% {
+          box-shadow: 
+            0 0 20px rgba(34, 197, 94, 0.3),
+            inset 0 0 20px rgba(74, 222, 128, 0.1);
+        }
+        50% {
+          box-shadow: 
+            0 0 40px rgba(34, 197, 94, 0.6),
+            inset 0 0 30px rgba(74, 222, 128, 0.2);
+        }
+      }
+      @keyframes dataFlow {
+        0% { transform: translateX(-100%); opacity: 0; }
+        50% { opacity: 1; }
+        100% { transform: translateX(100%); opacity: 0; }
+      }
+      @keyframes particleFloat {
+        0% { 
+          transform: translateY(100vh) translateX(0px) scale(0);
+          opacity: 0;
+        }
+        10% {
+          opacity: 1;
+        }
+        90% {
+          opacity: 1;
+        }
+        100% { 
+          transform: translateY(-20px) translateX(30px) scale(1);
+          opacity: 0;
+        }
+      }
+      @keyframes particleFloat2 {
+        0% { 
+          transform: translateY(100vh) translateX(0px) scale(0) rotate(0deg);
+          opacity: 0;
+        }
+        15% {
+          opacity: 0.8;
+        }
+        85% {
+          opacity: 0.8;
+        }
+        100% { 
+          transform: translateY(-30px) translateX(-20px) scale(1.2) rotate(360deg);
+          opacity: 0;
+        }
+      }
+      @keyframes particleFloat3 {
+        0% { 
+          transform: translateY(100vh) translateX(0px) scale(0);
+          opacity: 0;
+        }
+        20% {
+          opacity: 0.6;
+        }
+        80% {
+          opacity: 0.6;
+        }
+        100% { 
+          transform: translateY(-40px) translateX(10px) scale(0.8);
+          opacity: 0;
+        }
+      }
+      @keyframes particleTwinkle {
+        0%, 100% { 
+          opacity: 0.6; 
+          transform: scale(0.8);
+          filter: brightness(1) saturate(1);
+        }
+        25% {
+          opacity: 0.9;
+          transform: scale(1.2);
+          filter: brightness(1.3) saturate(1.2);
+        }
+        50% { 
+          opacity: 1; 
+          transform: scale(1.6);
+          filter: brightness(1.8) saturate(1.5);
+        }
+        75% {
+          opacity: 0.9;
+          transform: scale(1.2);
+          filter: brightness(1.3) saturate(1.2);
+        }
+      }
+      
+      /* 3D模式科技感背景 */
+      .map-3d-tech-bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+          radial-gradient(circle at 20% 30%, rgba(0, 150, 255, 0.08) 0%, transparent 50%),
+          radial-gradient(circle at 80% 70%, rgba(0, 100, 200, 0.08) 0%, transparent 50%),
+          linear-gradient(135deg, 
+            #020610 0%, 
+            #040812 25%, 
+            #060a15 50%, 
+            #040812 75%, 
+            #020610 100%);
+        animation: techGlow 4s ease-in-out infinite;
+        pointer-events: none;
+        z-index: 1;
+      }
+      
+      /* 3D模式网格效果 */
+      .map-3d-grid {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: 
+          linear-gradient(rgba(0, 255, 255, 0.25) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0, 255, 255, 0.25) 1px, transparent 1px);
+        background-size: 40px 40px;
+        animation: techGridMove 8s linear infinite, techPulse 3s ease-in-out infinite;
+        pointer-events: none;
+        z-index: 2;
+        filter: brightness(1.3);
+      }
+      
+      /* 3D模式颗粒效果 */
+      .map-3d-particles {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        pointer-events: none;
+        z-index: 5;
+        overflow: hidden;
+      }
+      
+      .particle-3d {
+        position: absolute;
+        background: radial-gradient(circle, rgba(0, 255, 255, 1) 0%, rgba(0, 191, 255, 1) 20%, rgba(0, 150, 255, 0.9) 40%, rgba(0, 120, 255, 0.7) 70%, transparent 100%);
+        border-radius: 50%;
+        pointer-events: none;
+        box-shadow: 
+          0 0 15px rgba(0, 255, 255, 1),
+          0 0 30px rgba(0, 255, 255, 0.8),
+          0 0 45px rgba(0, 255, 255, 0.6),
+          0 0 60px rgba(0, 191, 255, 0.4);
+        filter: brightness(1.3) saturate(1.2);
+      }
+      
+      .particle-3d:nth-child(1) { width: 10px; height: 10px; left: 10%; animation: particleFloat 6s linear infinite; animation-delay: 0s; }
+      .particle-3d:nth-child(2) { width: 8px; height: 8px; left: 20%; animation: particleFloat2 8s linear infinite; animation-delay: 1s; }
+      .particle-3d:nth-child(3) { width: 14px; height: 14px; left: 30%; animation: particleFloat3 7s linear infinite; animation-delay: 2s; }
+      .particle-3d:nth-child(4) { width: 9px; height: 9px; left: 40%; animation: particleFloat 9s linear infinite; animation-delay: 3s; }
+      .particle-3d:nth-child(5) { width: 12px; height: 12px; left: 50%; animation: particleFloat2 6s linear infinite; animation-delay: 4s; }
+      .particle-3d:nth-child(6) { width: 7px; height: 7px; left: 60%; animation: particleFloat3 8s linear infinite; animation-delay: 0.5s; }
+      .particle-3d:nth-child(7) { width: 15px; height: 15px; left: 70%; animation: particleFloat 7s linear infinite; animation-delay: 1.5s; }
+      .particle-3d:nth-child(8) { width: 8px; height: 8px; left: 80%; animation: particleFloat2 9s linear infinite; animation-delay: 2.5s; }
+      .particle-3d:nth-child(9) { width: 11px; height: 11px; left: 90%; animation: particleFloat3 6s linear infinite; animation-delay: 3.5s; }
+      .particle-3d:nth-child(10) { width: 7px; height: 7px; left: 15%; animation: particleFloat 8s linear infinite; animation-delay: 4.5s; }
+      .particle-3d:nth-child(11) { width: 13px; height: 13px; left: 25%; animation: particleFloat2 7s linear infinite; animation-delay: 5s; }
+      .particle-3d:nth-child(12) { width: 10px; height: 10px; left: 35%; animation: particleFloat3 9s linear infinite; animation-delay: 0.8s; }
+      .particle-3d:nth-child(13) { width: 9px; height: 9px; left: 45%; animation: particleFloat 5s linear infinite; animation-delay: 1.2s; }
+      .particle-3d:nth-child(14) { width: 11px; height: 11px; left: 55%; animation: particleFloat2 8s linear infinite; animation-delay: 2.3s; }
+      .particle-3d:nth-child(15) { width: 8px; height: 8px; left: 65%; animation: particleFloat3 7s linear infinite; animation-delay: 3.7s; }
+      .particle-3d:nth-child(16) { width: 12px; height: 12px; left: 75%; animation: particleFloat 6s linear infinite; animation-delay: 4.8s; }
+      .particle-3d:nth-child(17) { width: 7px; height: 7px; left: 85%; animation: particleFloat2 9s linear infinite; animation-delay: 0.3s; }
+      .particle-3d:nth-child(18) { width: 13px; height: 13px; left: 95%; animation: particleFloat3 8s linear infinite; animation-delay: 1.7s; }
+      
+      /* 3D模式静态闪烁颗粒 */
+      .particle-3d-static {
+        position: absolute;
+        background: radial-gradient(circle, rgba(0, 255, 255, 1) 0%, rgba(0, 255, 255, 1) 30%, rgba(0, 191, 255, 0.9) 60%, transparent 100%);
+        border-radius: 50%;
+        animation: particleTwinkle 3s ease-in-out infinite;
+        pointer-events: none;
+        box-shadow: 
+          0 0 12px rgba(0, 255, 255, 1),
+          0 0 24px rgba(0, 255, 255, 0.8),
+          0 0 36px rgba(0, 255, 255, 0.6);
+        filter: brightness(1.4) saturate(1.3);
+      }
+      
+      .particle-3d-static:nth-child(19) { width: 8px; height: 8px; top: 15%; left: 12%; animation-delay: 0s; }
+      .particle-3d-static:nth-child(20) { width: 6px; height: 6px; top: 25%; left: 75%; animation-delay: 1s; }
+      .particle-3d-static:nth-child(21) { width: 10px; height: 10px; top: 45%; left: 85%; animation-delay: 2s; }
+      .particle-3d-static:nth-child(22) { width: 7px; height: 7px; top: 65%; left: 18%; animation-delay: 0.5s; }
+      .particle-3d-static:nth-child(23) { width: 9px; height: 9px; top: 75%; left: 92%; animation-delay: 1.5s; }
+      .particle-3d-static:nth-child(24) { width: 6px; height: 6px; top: 85%; left: 55%; animation-delay: 2.5s; }
+      .particle-3d-static:nth-child(25) { width: 8px; height: 8px; top: 35%; left: 5%; animation-delay: 3s; }
+      .particle-3d-static:nth-child(26) { width: 7px; height: 7px; top: 55%; left: 95%; animation-delay: 0.8s; }
+      .particle-3d-static:nth-child(27) { width: 9px; height: 9px; top: 8%; left: 60%; animation-delay: 1.8s; }
+      .particle-3d-static:nth-child(28) { width: 6px; height: 6px; top: 90%; left: 30%; animation-delay: 2.8s; }
+      .particle-3d-static:nth-child(29) { width: 10px; height: 10px; top: 20%; left: 45%; animation-delay: 3.5s; }
+      .particle-3d-static:nth-child(30) { width: 8px; height: 8px; top: 70%; left: 8%; animation-delay: 4s; }
+      
+      /* 2D模式科技感背景 */
+      .map-2d-tech-bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+          radial-gradient(circle at 30% 40%, rgba(34, 197, 94, 0.2) 0%, transparent 50%),
+          radial-gradient(circle at 70% 60%, rgba(16, 185, 129, 0.2) 0%, transparent 50%),
+          linear-gradient(135deg, 
+            #0a1f0d 0%, 
+            #0d2818 25%, 
+            #0f3220 50%, 
+            #0d2818 75%, 
+            #0a1f0d 100%);
+        animation: greenGlow 4s ease-in-out infinite;
+        pointer-events: none;
+        z-index: 1;
+      }
+      
+      /* 2D模式网格效果 */
+      .map-2d-grid {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: 
+          linear-gradient(rgba(34, 197, 94, 0.1) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(34, 197, 94, 0.1) 1px, transparent 1px);
+        background-size: 40px 40px;
+        animation: techGridMove 6s linear infinite reverse, techPulse 2.5s ease-in-out infinite;
+        pointer-events: none;
+        z-index: 2;
+      }
+      
+      /* 2D模式颗粒效果 */
+      .map-2d-particles {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        pointer-events: none;
+        z-index: 5;
+        overflow: hidden;
+      }
+      
+      .particle-2d {
+        position: absolute;
+        background: radial-gradient(circle, rgba(34, 197, 94, 1) 0%, rgba(16, 185, 129, 0.8) 30%, rgba(5, 150, 105, 0.6) 60%, transparent 100%);
+        border-radius: 50%;
+        pointer-events: none;
+        box-shadow: 
+          0 0 8px rgba(34, 197, 94, 0.8),
+          0 0 16px rgba(34, 197, 94, 0.6),
+          0 0 24px rgba(34, 197, 94, 0.4);
+      }
+      
+      .particle-2d:nth-child(1) { width: 6px; height: 6px; left: 8%; animation: particleFloat 7s linear infinite; animation-delay: 0s; }
+      .particle-2d:nth-child(2) { width: 4px; height: 4px; left: 18%; animation: particleFloat2 9s linear infinite; animation-delay: 1.2s; }
+      .particle-2d:nth-child(3) { width: 8px; height: 8px; left: 28%; animation: particleFloat3 6s linear infinite; animation-delay: 2.4s; }
+      .particle-2d:nth-child(4) { width: 5px; height: 5px; left: 38%; animation: particleFloat 8s linear infinite; animation-delay: 3.6s; }
+      .particle-2d:nth-child(5) { width: 7px; height: 7px; left: 48%; animation: particleFloat2 7s linear infinite; animation-delay: 4.8s; }
+      .particle-2d:nth-child(6) { width: 4px; height: 4px; left: 58%; animation: particleFloat3 9s linear infinite; animation-delay: 0.6s; }
+      .particle-2d:nth-child(7) { width: 9px; height: 9px; left: 68%; animation: particleFloat 6s linear infinite; animation-delay: 1.8s; }
+      .particle-2d:nth-child(8) { width: 5px; height: 5px; left: 78%; animation: particleFloat2 8s linear infinite; animation-delay: 3s; }
+      .particle-2d:nth-child(9) { width: 6px; height: 6px; left: 88%; animation: particleFloat3 7s linear infinite; animation-delay: 4.2s; }
+      .particle-2d:nth-child(10) { width: 4px; height: 4px; left: 13%; animation: particleFloat 9s linear infinite; animation-delay: 5.4s; }
+      .particle-2d:nth-child(11) { width: 8px; height: 8px; left: 23%; animation: particleFloat2 6s linear infinite; animation-delay: 0.3s; }
+      .particle-2d:nth-child(12) { width: 7px; height: 7px; left: 33%; animation: particleFloat3 8s linear infinite; animation-delay: 1.5s; }
+      
+      /* 2D模式静态闪烁颗粒 */
+      .particle-2d-static {
+        position: absolute;
+        background: radial-gradient(circle, rgba(34, 197, 94, 1) 0%, rgba(34, 197, 94, 0.8) 50%, transparent 100%);
+        border-radius: 50%;
+        animation: particleTwinkle 3.5s ease-in-out infinite;
+        pointer-events: none;
+        box-shadow: 
+          0 0 6px rgba(34, 197, 94, 0.9),
+          0 0 12px rgba(34, 197, 94, 0.7);
+      }
+      
+      .particle-2d-static:nth-child(13) { width: 4px; height: 4px; top: 12%; left: 15%; animation-delay: 0s; }
+      .particle-2d-static:nth-child(14) { width: 3px; height: 3px; top: 22%; left: 72%; animation-delay: 1.2s; }
+      .particle-2d-static:nth-child(15) { width: 5px; height: 5px; top: 42%; left: 88%; animation-delay: 2.4s; }
+      .particle-2d-static:nth-child(16) { width: 3px; height: 3px; top: 62%; left: 25%; animation-delay: 0.8s; }
+      .particle-2d-static:nth-child(17) { width: 4px; height: 4px; top: 72%; left: 95%; animation-delay: 2s; }
+      .particle-2d-static:nth-child(18) { width: 3px; height: 3px; top: 82%; left: 52%; animation-delay: 3.2s; }
+      
+      /* 数据流动效果 */
+      .tech-data-flow {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        pointer-events: none;
+        z-index: 4;
+      }
+      
+      .tech-data-flow::before {
+        content: '';
+        position: absolute;
+        top: 20%;
+        left: 0;
+        width: 200px;
+        height: 2px;
+        background: linear-gradient(90deg, 
+          transparent 0%, 
+          rgba(0, 255, 255, 0.8) 50%, 
+          transparent 100%);
+        animation: dataFlow 3s linear infinite;
+      }
+      
+      .tech-data-flow::after {
+        content: '';
+        position: absolute;
+        bottom: 30%;
+        right: 0;
+        width: 150px;
+        height: 2px;
+        background: linear-gradient(90deg, 
+          transparent 0%, 
+          rgba(34, 197, 94, 0.8) 50%, 
+          transparent 100%);
+        animation: dataFlow 4s linear infinite reverse;
+        animation-delay: 1.5s;
+      }
+      
+      /* 边角装饰 */
+      .tech-corner-decoration {
+        position: absolute;
+        pointer-events: none;
+        z-index: 6;
+      }
+      
+      .tech-corner-decoration.top-left {
+        top: 10px;
+        left: 10px;
+        width: 40px;
+        height: 40px;
+        border-top: 3px solid rgba(0, 191, 255, 0.6);
+        border-left: 3px solid rgba(0, 191, 255, 0.6);
+        animation: techPulse 2s ease-in-out infinite;
+      }
+      
+      .tech-corner-decoration.top-right {
+        top: 10px;
+        right: 10px;
+        width: 40px;
+        height: 40px;
+        border-top: 3px solid rgba(0, 191, 255, 0.6);
+        border-right: 3px solid rgba(0, 191, 255, 0.6);
+        animation: techPulse 2s ease-in-out infinite;
+        animation-delay: 0.5s;
+      }
+      
+      .tech-corner-decoration.bottom-left {
+        bottom: 10px;
+        left: 10px;
+        width: 40px;
+        height: 40px;
+        border-bottom: 3px solid rgba(0, 191, 255, 0.6);
+        border-left: 3px solid rgba(0, 191, 255, 0.6);
+        animation: techPulse 2s ease-in-out infinite;
+        animation-delay: 1s;
+      }
+      
+      .tech-corner-decoration.bottom-right {
+        bottom: 10px;
+        right: 10px;
+        width: 40px;
+        height: 40px;
+        border-bottom: 3px solid rgba(0, 191, 255, 0.6);
+        border-right: 3px solid rgba(0, 191, 255, 0.6);
+        animation: techPulse 2s ease-in-out infinite;
+        animation-delay: 1.5s;
+      }
+      
+      /* 2D模式边角装饰 - 绿色主题 */
+      .mode-2d .tech-corner-decoration.top-left {
+        border-color: rgba(34, 197, 94, 0.6);
+      }
+      .mode-2d .tech-corner-decoration.top-right {
+        border-color: rgba(34, 197, 94, 0.6);
+      }
+      .mode-2d .tech-corner-decoration.bottom-left {
+        border-color: rgba(34, 197, 94, 0.6);
+      }
+      .mode-2d .tech-corner-decoration.bottom-right {
+        border-color: rgba(34, 197, 94, 0.6);
+      }
+      
+      /* 地图容器增强 */
+      .map-3d-container {
+        position: relative;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 2px solid rgba(0, 191, 255, 0.3);
+        box-shadow: 
+          0 0 30px rgba(0, 150, 255, 0.2),
+          inset 0 0 30px rgba(0, 200, 255, 0.1);
+      }
+      
+      .map-3d-container.mode-2d {
+        border-color: rgba(34, 197, 94, 0.3);
+        box-shadow: 
+          0 0 30px rgba(34, 197, 94, 0.2),
+          inset 0 0 30px rgba(74, 222, 128, 0.1);
+      }
+      
+      /* Card 容器科技感效果 */
+      .map-card {
+        background: rgba(0, 0, 0, 0.02) !important;
+        border: 1px solid rgba(0, 191, 255, 0.2) !important;
+        box-shadow: 0 8px 32px rgba(0, 150, 255, 0.1) !important;
+        backdrop-filter: blur(10px) !important;
+      }
+      
+      .map-card .ant-card-head {
+        background: #1e3a8a !important;
+        border-bottom: 1px solid rgba(0, 191, 255, 0.5) !important;
+      }
+      
+      .map-card .ant-card-body {
+        background: transparent !important;
+        padding: 16px !important;
+      }
+    `
+    document.head.appendChild(style)
+
+    return () => {
+      if (document.head.contains(style)) {
+        document.head.removeChild(style)
+      }
+    }
+  }, [])
+
   // 加载省份地图数据
   const loadProvinceMap = async (provinceName) => {
     const provinceCode = provinceCodeMap[provinceName]
@@ -500,15 +1149,21 @@ const Dashboard = ({ onRegionClick }) => {
     }
     
     return {
-      backgroundColor: '#0f172a', // 深蓝色背景
+      backgroundColor: 'transparent', // 透明背景，显示科技感背景层
       title: {
         text: '全国商家分布',
         left: 'center',
         top: 40,
         textStyle: {
-          color: '#ffffff', // 白色标题
-          fontSize: 20,
-          fontWeight: 'bold'
+          color: '#00FFFF', // 科技感青蓝色标题
+          fontSize: 22,
+          fontWeight: 'bold',
+          textShadow: `
+            0 0 10px rgba(0, 255, 255, 1),
+            0 0 20px rgba(0, 255, 255, 0.8),
+            0 0 30px rgba(0, 255, 255, 0.6),
+            0 0 40px rgba(0, 191, 255, 0.4)
+          `
         }
       },
       tooltip: {
@@ -721,15 +1376,21 @@ const Dashboard = ({ onRegionClick }) => {
     const currentCityData = cityData[currentProvince] || []
     
     return {
-      backgroundColor: 'transparent',
+      backgroundColor: 'transparent', // 透明背景，显示科技感背景层
       title: {
         text: `${currentProvince}商家分布`,
         left: 'center',
         top: 40,
         textStyle: {
-          color: '#333',
-          fontSize: 18,
-          fontWeight: 'bold'
+          color: '#00FFFF', // 3D模式使用青蓝色标题保持一致
+          fontSize: 20,
+          fontWeight: 'bold',
+          textShadow: `
+            0 0 10px rgba(0, 255, 255, 1),
+            0 0 20px rgba(0, 255, 255, 0.8),
+            0 0 30px rgba(0, 255, 255, 0.6),
+            0 0 40px rgba(0, 191, 255, 0.4)
+          `
         }
       },
       tooltip: {
@@ -952,20 +1613,21 @@ const Dashboard = ({ onRegionClick }) => {
             fontSize: 16
           }
         },
-        backgroundColor: '#ffffff'
+        backgroundColor: 'transparent'
       }
     }
     
     return {
-      backgroundColor: '#ffffff',
+      backgroundColor: 'transparent', // 透明背景，显示科技感背景层
       title: {
         text: '全国商家分布',
         left: 'center',
         top: 20,
         textStyle: {
-          color: '#333',
+          color: '#4ADE80', // 亮绿色标题，在深色背景下更突出  
           fontSize: 18,
-          fontWeight: 'bold'
+          fontWeight: 'bold',
+          textShadow: '0 0 15px rgba(74, 222, 128, 0.8)'
         }
       },
       tooltip: {
@@ -1035,22 +1697,23 @@ const Dashboard = ({ onRegionClick }) => {
             fontSize: 16
           }
         },
-        backgroundColor: '#ffffff'
+        backgroundColor: 'transparent'
       }
     }
     
     const currentCityData = cityData[currentProvince] || []
     
     return {
-      backgroundColor: '#ffffff',
+      backgroundColor: 'transparent', // 透明背景，显示科技感背景层
       title: {
         text: `${currentProvince}商家分布`,
         left: 'center',
         top: 20,
         textStyle: {
-          color: '#333',
+          color: '#4ADE80', // 亮绿色标题，在深色背景下更突出  
           fontSize: 18,
-          fontWeight: 'bold'
+          fontWeight: 'bold',
+          textShadow: '0 0 15px rgba(74, 222, 128, 0.8)'
         }
       },
       tooltip: {
@@ -1260,6 +1923,10 @@ const Dashboard = ({ onRegionClick }) => {
             <span style={{ fontSize: '18px', fontWeight: 'bold' }}>
               商家地理分布 {is3D ? '(3D立体模式)' : '(2D平面模式)'}
             </span>
+            
+            {/* 优化的时间显示组件 */}
+            <TimeDisplay />
+            
             <Space>
               <Switch 
                 checked={is3D}
@@ -1293,13 +1960,138 @@ const Dashboard = ({ onRegionClick }) => {
           </div>
         }
       >
-        <div className={`map-3d-container ${loading ? 'loading' : ''}`}>
+        <div className={`map-3d-container ${loading ? 'loading' : ''} ${is3D ? '' : 'mode-2d'}`}>
+          {/* 科技感背景层 */}
+          {is3D ? (
+            <>
+              {/* 3D模式科技感背景 */}
+              <div className="map-3d-tech-bg"></div>
+              <div className="map-3d-grid"></div>
+              
+              {/* 3D模式颗粒效果 */}
+              <div className="map-3d-particles">
+                {/* 飘浮颗粒 */}
+                <div className="particle-3d" style={{
+                  position: 'absolute',
+                  width: '15px',
+                  height: '15px',
+                  background: 'radial-gradient(circle, rgba(0, 255, 255, 1) 0%, rgba(0, 191, 255, 1) 20%, rgba(0, 150, 255, 0.9) 40%, rgba(0, 120, 255, 0.7) 70%, transparent 100%)',
+                  borderRadius: '50%',
+                  left: '10%',
+                  top: '20%',
+                  boxShadow: '0 0 15px rgba(0, 255, 255, 1), 0 0 30px rgba(0, 255, 255, 0.8), 0 0 45px rgba(0, 255, 255, 0.6)',
+                  animation: 'particleFloat 6s linear infinite',
+                  pointerEvents: 'none',
+                  zIndex: 1001
+                }}></div>
+                <div className="particle-3d" style={{
+                  position: 'absolute',
+                  width: '12px',
+                  height: '12px',
+                  background: 'radial-gradient(circle, rgba(0, 255, 255, 1) 0%, rgba(0, 191, 255, 1) 20%, rgba(0, 150, 255, 0.9) 40%, rgba(0, 120, 255, 0.7) 70%, transparent 100%)',
+                  borderRadius: '50%',
+                  left: '30%',
+                  top: '50%',
+                  boxShadow: '0 0 15px rgba(0, 255, 255, 1), 0 0 30px rgba(0, 255, 255, 0.8), 0 0 45px rgba(0, 255, 255, 0.6)',
+                  animation: 'particleFloat2 8s linear infinite 1s',
+                  pointerEvents: 'none',
+                  zIndex: 1001
+                }}></div>
+                <div className="particle-3d" style={{
+                  position: 'absolute',
+                  width: '18px',
+                  height: '18px',
+                  background: 'radial-gradient(circle, rgba(0, 255, 255, 1) 0%, rgba(0, 191, 255, 1) 20%, rgba(0, 150, 255, 0.9) 40%, rgba(0, 120, 255, 0.7) 70%, transparent 100%)',
+                  borderRadius: '50%',
+                  left: '60%',
+                  top: '30%',
+                  boxShadow: '0 0 15px rgba(0, 255, 255, 1), 0 0 30px rgba(0, 255, 255, 0.8), 0 0 45px rgba(0, 255, 255, 0.6)',
+                  animation: 'particleFloat3 7s linear infinite 2s',
+                  pointerEvents: 'none',
+                  zIndex: 1001
+                }}></div>
+                <div className="particle-3d"></div>
+                <div className="particle-3d"></div>
+                <div className="particle-3d"></div>
+                <div className="particle-3d"></div>
+                <div className="particle-3d"></div>
+                <div className="particle-3d"></div>
+                <div className="particle-3d"></div>
+                <div className="particle-3d"></div>
+                <div className="particle-3d"></div>
+                <div className="particle-3d"></div>
+                <div className="particle-3d"></div>
+                <div className="particle-3d"></div>
+                <div className="particle-3d"></div>
+                <div className="particle-3d"></div>
+                <div className="particle-3d"></div>
+                <div className="particle-3d"></div>
+                <div className="particle-3d"></div>
+                <div className="particle-3d"></div>
+                {/* 静态闪烁颗粒 */}
+                <div className="particle-3d-static"></div>
+                <div className="particle-3d-static"></div>
+                <div className="particle-3d-static"></div>
+                <div className="particle-3d-static"></div>
+                <div className="particle-3d-static"></div>
+                <div className="particle-3d-static"></div>
+                <div className="particle-3d-static"></div>
+                <div className="particle-3d-static"></div>
+                <div className="particle-3d-static"></div>
+                <div className="particle-3d-static"></div>
+                <div className="particle-3d-static"></div>
+                <div className="particle-3d-static"></div>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* 2D模式科技感背景 */}
+              <div className="map-2d-tech-bg"></div>
+              <div className="map-2d-grid"></div>
+              {/* 2D模式颗粒效果 */}
+              <div className="map-2d-particles">
+                {/* 飘浮颗粒 */}
+                <div className="particle-2d"></div>
+                <div className="particle-2d"></div>
+                <div className="particle-2d"></div>
+                <div className="particle-2d"></div>
+                <div className="particle-2d"></div>
+                <div className="particle-2d"></div>
+                <div className="particle-2d"></div>
+                <div className="particle-2d"></div>
+                <div className="particle-2d"></div>
+                <div className="particle-2d"></div>
+                <div className="particle-2d"></div>
+                <div className="particle-2d"></div>
+                {/* 静态闪烁颗粒 */}
+                <div className="particle-2d-static"></div>
+                <div className="particle-2d-static"></div>
+                <div className="particle-2d-static"></div>
+                <div className="particle-2d-static"></div>
+                <div className="particle-2d-static"></div>
+                <div className="particle-2d-static"></div>
+              </div>
+            </>
+          )}
+          
+          {/* 数据流动效果 */}
+          <div className="tech-data-flow"></div>
+          
+          {/* 边角装饰 */}
+          <div className="tech-corner-decoration top-left"></div>
+          <div className="tech-corner-decoration top-right"></div>
+          <div className="tech-corner-decoration bottom-left"></div>
+          <div className="tech-corner-decoration bottom-right"></div>
+          
           <ReactECharts 
             option={getCurrentMapOption()}
             style={{ 
               height: '700px', 
               width: '100%',
-              transition: 'all 0.5s ease-in-out'
+              transition: 'all 0.5s ease-in-out',
+              position: 'relative',
+              zIndex: 10,
+              backgroundColor: 'transparent'
             }}
             onEvents={{
               click: onMapClick,
