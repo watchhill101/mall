@@ -33,8 +33,8 @@ import {
   TagOutlined,
 } from '@ant-design/icons';
 import component from 'element-plus/es/components/tree-select/src/tree-select-option.mjs';
-
-export default function Index() {
+import GoodsLayout from '../Goods_Layout/Goods_Layout';
+const ListOfCommodities = () => {
   const handleSearch = () => {};
   const fetchMethod = async (requesParams) => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -51,6 +51,7 @@ export default function Index() {
     current: 1,
   });
   return (
+    // <GoodsLayout>
     <div className="List">
       <div className="searchbar">
         <SearchBar formItemList={formItemList} getSearchParams={handleSearch} />
@@ -137,4 +138,6 @@ export default function Index() {
       </div>
     </div>
   );
-}
+};
+
+export default ListOfCommodities;

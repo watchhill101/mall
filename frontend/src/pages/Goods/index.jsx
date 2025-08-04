@@ -1,151 +1,154 @@
-import React, { useState } from 'react';
-import { Outlet, Link, useNavigate } from 'react-router-dom';
-import {
-  Card,
-  Statistic,
-  Row,
-  Col,
-  Typography,
-  Cascader,
-  Button,
-  Menu,
-} from 'antd';
-import { data } from '@/db_S/data.mjs';
-import { SmileOutlined } from '@ant-design/icons';
-import SearchBar from '@/components/SearchBar';
-import {
-  categoryData,
-  GoodsListColumns,
-  formItemList,
-  items,
-} from '@/pages/Goods_S/data/data';
-import CustomTable from '@/components/CustomTable';
-import './index.scss';
-import SvgIcon from '@/components/SvgIcon';
-
+import React from 'react';
+import { Typography } from 'antd';
+import { useNavigate } from 'react-router-dom';
+import GoodsLayout from '../Goods_S/Goods_Layout/Goods_Layout';
 import {
   ShoppingCartOutlined,
-  DollarOutlined,
-  RiseOutlined,
-  TagOutlined,
+  AuditOutlined,
+  DeleteOutlined,
+  AppstoreOutlined,
+  DatabaseOutlined,
+  CheckSquareOutlined,
+  ImportOutlined,
+  ExportOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons';
-import component from 'element-plus/es/components/tree-select/src/tree-select-option.mjs';
 
-// console.log(data.list, '111');
 const { Title } = Typography;
 
 const Goods = () => {
   const navigate = useNavigate();
-  const handleChange = ({ key, keyPath }) => {
-    console.log(keyPath);
-    if (keyPath.length == 1) {
-      navigate(`/goods/${key}`);
-    } else {
-      navigate(`/goods/${keyPath[1]}/${key}`);
-    }
-  };
+
+  // 二级导航菜单项
+  const menuItems = [
+    {
+      key: '/goods/product-list',
+      icon: <ShoppingCartOutlined />,
+      label: '商品列表',
+    },
+    {
+      key: '/goods/audit-list',
+      icon: <AuditOutlined />,
+      label: '审核列表',
+    },
+    {
+      key: '/goods/recycle-bin',
+      icon: <DeleteOutlined />,
+      label: '回收站',
+    },
+    {
+      key: '/goods/product-category',
+      icon: <AppstoreOutlined />,
+      label: '商品分类',
+    },
+    {
+      key: '/goods/external-product',
+      icon: <DatabaseOutlined />,
+      label: '外部商品库',
+    },
+    {
+      key: '/goods/inventory/current-stock',
+      icon: <CheckSquareOutlined />,
+      label: '当前库存',
+    },
+    {
+      key: '/goods/inventory/stock-in',
+      icon: <ImportOutlined />,
+      label: '入库',
+    },
+    {
+      key: '/goods/inventory/stock-out',
+      icon: <ExportOutlined />,
+      label: '出库',
+    },
+    {
+      key: '/goods/inventory/stocktake',
+      icon: <CheckSquareOutlined />,
+      label: '盘点',
+    },
+    {
+      key: '/goods/inventory/stock-details',
+      icon: <FileTextOutlined />,
+      label: '出入库明细',
+    },
+  ];
+
   return (
-    <div
-      className="GoodsNav"
-      // style={{
-      //   display: 'flex',
-      //   justifyContent: 'space-between',
-      //   alignItems: 'center',
-      // }}
-    >
-      <div className="menu">
-        <Menu
-          defaultSelectedKeys={['ListofCommodities']}
-          defaultOpenKeys={['ListofCommodities']}
-          mode="inline"
-          theme="dark"
-          // inlineCollapsed={collapsed}
-          items={items}
-          style={{ height: '100vh', width: '150px' }}
-          onSelect={handleChange}
-        />
-      </div>
-      {/* <div className="menu">
-        <ul>
-          <li>
-            <Link to="/goods/ListOfCommodities">商品列表管理</Link>
-          </li>
-          <li>
-            <Link to="/goods/ClassificationOfCommodities">商品分类</Link>
-          </li>
-          <li>
-            <Link to="/goods/inventory">库存管理</Link>
-          </li>
-          <li>
-            <Link to="/goods/price">价格管理</Link>
-          </li>
-        </ul>
-      </div> */}
-      <div className="main-goods">
-        <Outlet></Outlet>
-      </div>
+    <GoodsLayout>
+      <div style={{ padding: '24px' }}>
+        <div>
+          {/* <div
+            style={{
+              textAlign: 'center',
+              padding: '40px',
+              marginBottom: '24px',
+            }}
+          >
+            <div
+              style={{
+                fontSize: '48px',
+                color: '#1890ff',
+                marginBottom: '16px',
+              }}
+            >
+              🏪
+            </div>
+            <Typography.Title level={2}>商品管理中心</Typography.Title>
+            <p style={{ color: '#666', fontSize: '16px' }}>
+              请从左侧菜单选择要管理的功能模块，或点击下方快捷入口
+            </p>
+          </div> */}
 
-      {/* <Title level={2} style={{ marginBottom: '24px' }}>
-        <ShoppingCartOutlined style={{ marginRight: '8px' }} />
-        商品管理
-      </Title>
-      
-      <Row gutter={16} style={{ marginBottom: '24px' }}>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="商品总数"
-              value={1128}
-              prefix={<ShoppingCartOutlined />}
-              valueStyle={{ color: '#3f8600' }}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="在售商品"
-              value={856}
-              prefix={<TagOutlined />}
-              valueStyle={{ color: '#1890ff' }}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="总销售额"
-              value={112893}
-              prefix={<DollarOutlined />}
-              precision={2}
-              valueStyle={{ color: '#cf1322' }}
-              suffix="元"
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="月增长率"
-              value={9.3}
-              prefix={<RiseOutlined />}
-              precision={2}
-              valueStyle={{ color: '#3f8600' }}
-              suffix="%"
-            />
-          </Card>
-        </Col>
-      </Row>
-
-      <Card title="商品管理功能" style={{ marginBottom: '16px' }}>
-        <p>📦 商品列表管理</p>
-        <p>➕ 新增商品</p>
-        <p>✏️ 编辑商品信息</p>
-        <p>🏷️ 商品分类管理</p>
-        <p>📊 库存管理</p>
-        <p>💰 价格管理</p>
-      </Card> */}
-    </div>
+          {/* 快捷入口卡片 */}
+          {/* <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '16px',
+              maxWidth: '800px',
+              margin: '0 auto',
+            }}
+          >
+            {menuItems.map((item) => (
+              <div
+                key={item.key}
+                style={{
+                  background: '#fff',
+                  border: '1px solid #f0f0f0',
+                  borderRadius: '8px',
+                  padding: '20px',
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                }}
+                onClick={() => navigate(item.key)}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow =
+                    '0 4px 16px rgba(0,0,0,0.15)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: '24px',
+                    marginBottom: '8px',
+                    color: '#1890ff',
+                  }}
+                >
+                  {item.icon}
+                </div>
+                <div style={{ fontWeight: 'bold' }}>{item.label}</div>
+              </div>
+            ))}
+          </div> */}
+        </div>
+      </div>
+    </GoodsLayout>
   );
 };
 

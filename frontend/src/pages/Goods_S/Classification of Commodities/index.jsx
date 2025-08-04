@@ -1,154 +1,195 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Card,
   Statistic,
   Row,
   Col,
   Typography,
-  Cascader,
   Button,
-  Menu,
+  Table,
+  Tag,
 } from 'antd';
-import Icon, { SearchOutlined } from '@ant-design/icons';
-import { ProductClassificationData } from '@/db_S/data.mjs';
 import {
-  RefreshSvg,
-  SearchSvg,
-  clipSvg,
-  toggleSvg,
-} from '@/pages/Goods_S/icons_svg/IconCom';
+  AppstoreOutlined,
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+} from '@ant-design/icons';
 import './index.scss';
-import SearchBar from '@/components/SearchBar';
-import {
-  categoryData,
-  ClassificationofCommoditiesColumns,
-  categoryFormItemList,
-} from '../data/data';
-import CustomTable from '@/components/CustomTable';
-// import SvgIcon from '@/components/SvgIcon';
-// import component from 'element-plus/es/components/tree-select/src/tree-select-option.mjs';
+import GoodsLayout from '../Goods_Layout/Goods_Layout';
 
-export default function Index() {
-  const [selectionType, setSelectionType] = useState('checkbox');
-  const handleSearch = () => {};
-  const fetchMethod = async (requesParams) => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    return {
-      data: {
-        count: ProductClassificationData.list.length,
-        rows: ProductClassificationData.list,
-      },
-    };
-  };
-  const onParamChange = () => {};
-  const [params, setparams] = useState({
-    pageSize: 5,
-    current: 1,
-  });
-  // rowSelection object indicates the need for row selection
-  const rowSelection = {
-    onChange: (selectedRowKeys, selectedRows) => {
-      console.log(
-        `selectedRowKeys: ${selectedRowKeys}`,
-        'selectedRows: ',
-        selectedRows
-      );
+const { Title } = Typography;
+
+export default function ProductCategory() {
+  // 模拟分类数据
+  const categoryData = [
+    {
+      key: '1',
+      businessType: '零售',
+      categoryId: 'CAT001',
+      categoryName: '电子产品',
+      parentCategory: '-',
+      categoryLevel: '一级分类',
+      afterSalesDays: 7,
+      sort: 1,
+      status: '启用',
     },
-    getCheckboxProps: (record) => ({
-      disabled: record.name === 'Disabled User', // Column configuration not to be checked
-      name: record.name,
-    }),
-  };
-  return (
-    <div className="List">
-      <div className="searchbar">
-        <SearchBar
-          formItemList={categoryFormItemList}
-          getSearchParams={handleSearch}
-        />
-      </div>
-      <div className="OperationButton">
-        <div className="OperationButton-left">
-          <Button
-            color="primary"
-            style={{
-              backgroundColor: '#EAF4FE',
-              border: '1px solid #448EF7',
-              color: '#4792F7',
-            }}
-          >
-            新增
+    {
+      key: '2',
+      businessType: '零售',
+      categoryId: 'CAT002',
+      categoryName: '服装',
+      parentCategory: '-',
+      categoryLevel: '一级分类',
+      afterSalesDays: 15,
+      sort: 2,
+      status: '启用',
+    },
+    {
+      key: '3',
+      businessType: '零售',
+      categoryId: 'CAT003',
+      categoryName: '手机',
+      parentCategory: '电子产品',
+      categoryLevel: '二级分类',
+      afterSalesDays: 7,
+      sort: 1,
+      status: '启用',
+    },
+  ];
+
+  const columns = [
+    {
+      title: '业务类型',
+      dataIndex: 'businessType',
+      key: 'businessType',
+    },
+    {
+      title: '分类ID',
+      dataIndex: 'categoryId',
+      key: 'categoryId',
+    },
+    {
+      title: '分类名称',
+      dataIndex: 'categoryName',
+      key: 'categoryName',
+    },
+    {
+      title: '上级分类',
+      dataIndex: 'parentCategory',
+      key: 'parentCategory',
+    },
+    {
+      title: '分类等级',
+      dataIndex: 'categoryLevel',
+      key: 'categoryLevel',
+    },
+    {
+      title: '售后天数',
+      dataIndex: 'afterSalesDays',
+      key: 'afterSalesDays',
+    },
+    {
+      title: '分类排序',
+      dataIndex: 'sort',
+      key: 'sort',
+    },
+    {
+      title: '状态',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status) => (
+        <Tag color={status === '启用' ? 'green' : 'red'}>{status}</Tag>
+      ),
+    },
+    {
+      title: '操作',
+      key: 'action',
+      render: (_, record) => (
+        <div>
+          <Button type="link" icon={<EditOutlined />}>
+            编辑
           </Button>
-          <Button
-            color="cyan"
-            variant="outlined"
-            style={{
-              backgroundColor: '#FDECEC',
-              border: '1px solid #EE736F',
-              color: '#EC5149',
-            }}
-          >
+          <Button type="link" danger icon={<DeleteOutlined />}>
             删除
           </Button>
         </div>
-        <div className="OperationButton-right">
-          <ul>
-            <li>
-              <Button
-                // type="primary"
-                shape="circle"
-                icon={
-                  <Icon component={RefreshSvg} />
-                  // <SvgIcon
-                  //   name="refresh"
-                  //   width="16"
-                  //   height="16"
-                  //   color="#1890ff"
-                  // ></SvgIcon>
-                }
-              />
-            </li>
-            <li>
-              <Button
-                // type="primary"
-                shape="circle"
-                icon={<Icon component={SearchSvg} />}
-                // icon={
-                //   <SvgIcon
-                //     name="setting"
-                //     width="16"
-                //     height="16"
-                //     color="#1890ff"
-                //
-              />
-            </li>
-            <li>
-              <Button
-                // type="primary"
-                shape="circle"
-                icon={<Icon component={clipSvg}></Icon>}
-              />
-            </li>
-            <li>
-              <Button
-                // type="primary"
-                shape="circle"
-                icon={<Icon component={toggleSvg} />}
-              />
-            </li>
-          </ul>
-        </div>
-      </div>
+      ),
+    },
+  ];
 
-      <div className="GoodsList">
-        <CustomTable
-          rowSelection={Object.assign({ type: selectionType }, rowSelection)}
-          columns={ClassificationofCommoditiesColumns}
-          fetchMethod={fetchMethod}
-          requestParam={params}
-          // onParamsChange={setparams}
-        />
+  return (
+    <GoodsLayout>
+      <div className="ProductCategory">
+        <Title level={2} style={{ marginBottom: '24px' }}>
+          <AppstoreOutlined style={{ marginRight: '8px' }} />
+          商品分类
+        </Title>
+
+        <Row gutter={16} style={{ marginBottom: '24px' }}>
+          <Col span={6}>
+            <Card>
+              <Statistic
+                title="分类总数"
+                value={categoryData.length}
+                prefix={<AppstoreOutlined />}
+                valueStyle={{ color: '#3f8600' }}
+              />
+            </Card>
+          </Col>
+          <Col span={6}>
+            <Card>
+              <Statistic
+                title="一级分类"
+                value={2}
+                prefix={<AppstoreOutlined />}
+                valueStyle={{ color: '#1890ff' }}
+              />
+            </Card>
+          </Col>
+          <Col span={6}>
+            <Card>
+              <Statistic
+                title="二级分类"
+                value={1}
+                prefix={<AppstoreOutlined />}
+                valueStyle={{ color: '#722ed1' }}
+              />
+            </Card>
+          </Col>
+          <Col span={6}>
+            <Card>
+              <Statistic
+                title="启用分类"
+                value={3}
+                prefix={<AppstoreOutlined />}
+                valueStyle={{ color: '#52c41a' }}
+              />
+            </Card>
+          </Col>
+        </Row>
+
+        <Card
+          title="分类管理"
+          extra={
+            <Button type="primary" icon={<PlusOutlined />}>
+              新增分类
+            </Button>
+          }
+        >
+          <Table
+            columns={columns}
+            dataSource={categoryData}
+            pagination={{
+              pageSize: 10,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total, range) =>
+                `第 ${range[0]}-${range[1]} 条/总共 ${total} 条`,
+            }}
+          />
+        </Card>
       </div>
-    </div>
+    </GoodsLayout>
   );
 }

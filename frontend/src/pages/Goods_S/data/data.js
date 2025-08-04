@@ -114,7 +114,7 @@ export const GoodsListColumns = [
                 <Button type="link">复制</Button>
                 <Button type="link">编辑</Button>
                 <Button type="link" style={{ color: record.status === '在售' ? 'red' : 'blue' }} >{record.status === '在售' ? '下架' : '上架'}</Button>
-                <Button type="link" style={{ color: "red" }}>删除</Button>
+                <Button type="link" style={{ color: "red" }}>j</Button>
             </Space>
         ),
     },
