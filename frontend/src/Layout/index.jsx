@@ -11,7 +11,7 @@ import {
 import { Layout, Menu, Button, theme, Switch, Dropdown, Space, Popconfirm, Breadcrumb } from 'antd'
 import { useDispatch, useSelector } from 'react-redux'
 import { logout } from '@/store/reducers/userSlice'
-import { useNavigate, Link, useLocation, Outlet } from 'react-router-dom'
+import { useNavigate, Link, useLocation } from 'react-router-dom'
 // 导入css（未模块化）
 import './Layout.scss'
 // 导入自定义组件
@@ -60,11 +60,15 @@ const LayoutApp = () => {
   // 获取当前路径数组片段
   const pathSnippets = pathname.split('/').filter((i) => i)
   const [subMenuKeys, setSubMenuKeys] = useState(pathSnippets.slice(0, -1).map((item) => '/' + item))
-  
+
   // 处理菜单选中状态 - 确保根路径也能正确选中首页
   const currentSelectedKey = useMemo(() => {
     if (pathname === '/' || pathname === '/home') {
       return '/home'
+    }
+    // 处理嵌套路由：如果是商家子路由，选中商家主菜单
+    if (pathname.startsWith('/shops')) {
+      return '/shops'
     }
     return pathname
   }, [pathname])
@@ -113,20 +117,41 @@ const LayoutApp = () => {
   }
   /** 面包屑 */
   const breadcrumbNameMap = useMemo(() => getBreadcrumbNameMap(permissionRoutes), [permissionRoutes])
-  const breadcrumbItems = pathSnippets.map((_, index) => {
-    const url = `/${pathSnippets.slice(0, index + 1).join('/')}`
-    // 如果是最后一项，即当前页面路由，渲染文本不可点击跳转
-    if (index + 1 === pathSnippets.length)
-      return {
-        key: url,
-        title: breadcrumbNameMap[url]
-      }
-    // 其余用link标签可点击跳转（注意：上级路由默认跳转到其定义的重定向路由，例如/system跳转至/system/user）
-    return {
-      key: url,
-      title: <Link to={url}>{breadcrumbNameMap[url]}</Link>
+  const breadcrumbItems = useMemo(() => {
+    const items = []
+
+    // 如果不在首页，总是添加首页作为第一项
+    if (pathname !== '/' && pathname !== '/home') {
+      items.push({
+        key: '/home',
+        title: <Link to="/home">首页</Link>
+      })
     }
-  })
+
+    // 生成路径面包屑
+    pathSnippets.forEach((_, index) => {
+      const url = `/${pathSnippets.slice(0, index + 1).join('/')}`
+      const title = breadcrumbNameMap[url]
+
+      if (title) {
+        // 如果是最后一项，即当前页面路由，渲染文本不可点击跳转
+        if (index + 1 === pathSnippets.length) {
+          items.push({
+            key: url,
+            title: title
+          })
+        } else {
+          // 其余用link标签可点击跳转
+          items.push({
+            key: url,
+            title: <Link to={url}>{title}</Link>
+          })
+        }
+      }
+    })
+
+    return items
+  }, [pathname, pathSnippets, breadcrumbNameMap])
   /** tabs栏 */
   // 选择选项卡以后，跳转对应路由
   const selectTab = useCallback(
@@ -141,13 +166,32 @@ const LayoutApp = () => {
   const Goods = lazy(() => import('@/pages/Goods'))
   const Orders = lazy(() => import('@/pages/Orders'))
   const Users = lazy(() => import('@/pages/Users'))
+  const Merchants = lazy(() => import('@/pages/Merchant/Merchant'))
+  const MerchantAccount = lazy(() => import('@/pages/Merchant/MerchantAccount'))
+  const WithdrawAccount = lazy(() => import('@/pages/Merchant/WithdrawAccount'))
+  const AccountDetail = lazy(() => import('@/pages/Merchant/AccountDetail'))
+  const MerchantWithdraw = lazy(() => import('@/pages/Merchant/MerchantWithdraw'))
+  const SettlementOrder = lazy(() => import('@/pages/Merchant/SettlementOrder'))
+  const SettlementBill = lazy(() => import('@/pages/Merchant/SettlementBill'))
+  const MerchantApplication = lazy(() => import('@/pages/Merchant/MerchantApplication'))
+  const DeviceManagement = lazy(() => import('@/pages/Merchant/DeviceManagement'))
   const formatRoutes = useMemo(() => {
     return [
       { title: '首页', menuPath: '/home', element: <Home /> },
       { title: '商家', menuPath: '/shops', element: <Shops /> },
       { title: '商品', menuPath: '/goods', element: <Goods /> },
       { title: '订单', menuPath: '/orders', element: <Orders /> },
-      { title: '用户', menuPath: '/users', element: <Users /> }
+      { title: '用户', menuPath: '/users', element: <Users /> },
+      // 添加商家子路由到TabsView
+      { title: '商家管理', menuPath: '/shops/merchants', element: <Merchants /> },
+      { title: '商家账号', menuPath: '/shops/merchant-account', element: <MerchantAccount /> },
+      { title: '提现账号', menuPath: '/shops/withdraw-account', element: <WithdrawAccount /> },
+      { title: '账户明细', menuPath: '/shops/account-detail', element: <AccountDetail /> },
+      { title: '商家提现', menuPath: '/shops/merchant-withdraw', element: <MerchantWithdraw /> },
+      { title: '结算订单', menuPath: '/shops/settlement-order', element: <SettlementOrder /> },
+      { title: '结账单', menuPath: '/shops/settlement-bill', element: <SettlementBill /> },
+      { title: '商家申请', menuPath: '/shops/merchant-application', element: <MerchantApplication /> },
+      { title: '设备管理', menuPath: '/shops/device-management', element: <DeviceManagement /> }
     ].concat(getMenus(permissionRoutes))
   }, [permissionRoutes])
   // 用户头像
@@ -269,7 +313,6 @@ const LayoutApp = () => {
             // background: colorBgContainer
           }}>
           <TabsView pathname={pathname} formatRoutes={formatRoutes} selectTab={selectTab} />
-          {/* <Outlet></Outlet> */}
         </Content>
       </Layout>
       <CustomModal title="个人中心" ref={userCenterRef}>

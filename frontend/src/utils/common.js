@@ -1,9 +1,9 @@
 /**
  * 内置一些工具类函数
- */ 
+ */
 import { Link } from 'react-router-dom'
 import SvgIcon from '@/components/SvgIcon'
-import { 
+import {
   HomeOutlined
 } from '@ant-design/icons'
 
@@ -30,6 +30,16 @@ export const getBreadcrumbNameMap = (routes) => {
     { path: 'goods', menuPath: '/goods', title: '商品' }, // 添加商品路由
     { path: 'orders', menuPath: '/orders', title: '订单' }, // 添加订单路由
     { path: 'users', menuPath: '/users', title: '用户' }, // 添加用户路由
+    // 添加商家子路由映射
+    { path: 'merchants', menuPath: '/shops/merchants', title: '商家管理' },
+    { path: 'merchant-account', menuPath: '/shops/merchant-account', title: '商家账号' },
+    { path: 'withdraw-account', menuPath: '/shops/withdraw-account', title: '提现账号' },
+    { path: 'account-detail', menuPath: '/shops/account-detail', title: '账户明细' },
+    { path: 'merchant-withdraw', menuPath: '/shops/merchant-withdraw', title: '商家提现' },
+    { path: 'settlement-order', menuPath: '/shops/settlement-order', title: '结算订单' },
+    { path: 'settlement-bill', menuPath: '/shops/settlement-bill', title: '结账单' },
+    { path: 'merchant-application', menuPath: '/shops/merchant-application', title: '商家申请' },
+    { path: 'device-management', menuPath: '/shops/device-management', title: '设备管理' },
     ...routes
   ]
   let breadcrumbNameObj = {}
@@ -71,7 +81,7 @@ export function getItem(label, key, icon, children, type) {
 export const getTreeMenu = (menuData) => {
   if (!menuData || !menuData.length) return []
   const menuItems = []
-  
+
   menuData.forEach((item) => {
     if (!item.hidden) {
       // 如果有子菜单
@@ -103,5 +113,5 @@ export const getTreeMenu = (menuData) => {
 // 导出可用的图标列表，方便其他地方使用
 export const availableIcons = [
   'HomeOutlined',
-  'ShopOutlined', 
+  'ShopOutlined',
 ]
