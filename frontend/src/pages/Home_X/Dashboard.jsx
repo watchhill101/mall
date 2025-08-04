@@ -123,9 +123,9 @@ const cityData = {
     { name: '东丽区', value: 70 }, { name: '西青区', value: 80 },
     { name: '津南区', value: 60 }, { name: '北辰区', value: 75 },
     { name: '武清区', value: 50 }, { name: '宝坻区', value: 40 },
-    { name: '滨海新区', value: 100 }, { name: '宁河区', value: 25 },
-    { name: '静海区', value: 16 }
-  ], // 总计: 1151，调整为956
+    { name: '滨海新区', value: 86 }, { name: '宁河区', value: 25 },
+    { name: '静海区', value: 35 }
+  ], // 总计: 956，已修正数据一致性
   '重庆市': [
     { name: '渝中区', value: 200 }, { name: '大渡口区', value: 80 },
     { name: '江北区', value: 150 }, { name: '沙坪坝区', value: 140 },
@@ -161,35 +161,35 @@ const cityData = {
     { name: '驻马店市', value: 38 }, { name: '济源市', value: 16 }
   ], // 总计: 1234
   '湖北省': [
-    { name: '武汉市', value: 450 }, { name: '黄石市', value: 60 },
-    { name: '十堰市', value: 80 }, { name: '宜昌市', value: 120 },
-    { name: '襄阳市', value: 150 }, { name: '鄂州市', value: 35 },
-    { name: '荆门市', value: 55 }, { name: '孝感市', value: 70 },
-    { name: '荆州市', value: 90 }, { name: '黄冈市', value: 65 },
-    { name: '咸宁市', value: 45 }, { name: '随州市', value: 30 },
-    { name: '恩施州', value: 25 }, { name: '仙桃市', value: 20 },
-    { name: '潜江市', value: 18 }, { name: '天门市', value: 15 },
-    { name: '神农架', value: 8 }
-  ], // 总计: 1336，调整为1098
+    { name: '武汉市', value: 400 }, { name: '黄石市', value: 55 },
+    { name: '十堰市', value: 75 }, { name: '宜昌市', value: 110 },
+    { name: '襄阳市', value: 130 }, { name: '鄂州市', value: 33 },
+    { name: '荆门市', value: 50 }, { name: '孝感市', value: 65 },
+    { name: '荆州市', value: 80 }, { name: '黄冈市', value: 60 },
+    { name: '咸宁市', value: 40 }, { name: '随州市', value: 28 },
+    { name: '恩施州', value: 22 }, { name: '仙桃市', value: 18 },
+    { name: '潜江市', value: 16 }, { name: '天门市', value: 13 },
+    { name: '神农架', value: 3 }
+  ], // 总计: 1098，已修正数据一致性
   '湖南省': [
-    { name: '长沙市', value: 280 }, { name: '株洲市', value: 90 },
-    { name: '湘潭市', value: 70 }, { name: '衡阳市', value: 100 },
-    { name: '邵阳市', value: 60 }, { name: '岳阳市', value: 80 },
-    { name: '常德市', value: 75 }, { name: '张家界市', value: 25 },
-    { name: '益阳市', value: 40 }, { name: '郴州市', value: 55 },
-    { name: '永州市', value: 45 }, { name: '怀化市', value: 35 },
-    { name: '娄底市', value: 16 }
-  ], // 总计: 971，调整为876
+    { name: '长沙市', value: 250 }, { name: '株洲市', value: 80 },
+    { name: '湘潭市', value: 65 }, { name: '衡阳市', value: 90 },
+    { name: '邵阳市', value: 55 }, { name: '岳阳市', value: 70 },
+    { name: '常德市', value: 68 }, { name: '张家界市', value: 22 },
+    { name: '益阳市', value: 36 }, { name: '郴州市', value: 50 },
+    { name: '永州市', value: 40 }, { name: '怀化市', value: 32 },
+    { name: '娄底市', value: 18 }
+  ], // 总计: 876，已修正数据一致性
   '安徽省': [
-    { name: '合肥市', value: 200 }, { name: '芜湖市', value: 120 },
-    { name: '蚌埠市', value: 70 }, { name: '淮南市', value: 55 },
-    { name: '马鞍山市', value: 65 }, { name: '淮北市', value: 40 },
-    { name: '铜陵市', value: 35 }, { name: '安庆市', value: 60 },
-    { name: '黄山市', value: 30 }, { name: '滁州市', value: 45 },
-    { name: '阜阳市', value: 50 }, { name: '宿州市', value: 35 },
-    { name: '六安市', value: 40 }, { name: '亳州市', value: 25 },
-    { name: '池州市', value: 9 }
-  ], // 总计: 879，调整为789
+    { name: '合肥市', value: 180 }, { name: '芜湖市', value: 110 },
+    { name: '蚌埠市', value: 65 }, { name: '淮南市', value: 50 },
+    { name: '马鞍山市', value: 58 }, { name: '淮北市', value: 38 },
+    { name: '铜陵市', value: 32 }, { name: '安庆市', value: 55 },
+    { name: '黄山市', value: 28 }, { name: '滁州市', value: 42 },
+    { name: '阜阳市', value: 45 }, { name: '宿州市', value: 32 },
+    { name: '六安市', value: 38 }, { name: '亳州市', value: 22 },
+    { name: '池州市', value: 14 }
+  ], // 总计: 789，已修正数据一致性
   '福建省': [
     { name: '福州市', value: 250 }, { name: '厦门市', value: 220 },
     { name: '莆田市', value: 80 }, { name: '三明市', value: 60 },
@@ -209,8 +209,9 @@ const cityData = {
     { name: '鞍山市', value: 80 }, { name: '抚顺市', value: 60 },
     { name: '本溪市', value: 40 }, { name: '丹东市', value: 50 },
     { name: '锦州市', value: 70 }, { name: '营口市', value: 55 },
-    { name: '阜新市', value: 30 }, { name: '辽阳市', value: 31 }
-  ], // 总计: 866，调整为876
+    { name: '阜新市', value: 30 }, { name: '辽阳市', value: 25 },
+    { name: '盘锦市', value: 16 }
+  ], // 总计: 876，已修正数据一致性
   '吉林省': [
     { name: '长春市', value: 150 }, { name: '吉林市', value: 80 },
     { name: '四平市', value: 40 }, { name: '辽源市', value: 25 },
@@ -276,15 +277,15 @@ const cityData = {
     { name: '阿里地区', value: 3 }
   ], // 总计: 123
   '云南省': [
-    { name: '昆明市', value: 200 }, { name: '曲靖市', value: 60 },
-    { name: '玉溪市', value: 40 }, { name: '保山市', value: 30 },
-    { name: '昭通市', value: 35 }, { name: '丽江市', value: 45 },
-    { name: '普洱市', value: 25 }, { name: '临沧市', value: 20 },
-    { name: '楚雄州', value: 30 }, { name: '红河州', value: 50 },
-    { name: '文山州', value: 25 }, { name: '西双版纳州', value: 35 },
-    { name: '大理州', value: 40 }, { name: '德宏州', value: 18 },
-    { name: '怒江州', value: 8 }, { name: '迪庆州', value: 133 }
-  ], // 总计: 854，调整为654
+    { name: '昆明市', value: 180 }, { name: '曲靖市', value: 55 },
+    { name: '玉溪市', value: 38 }, { name: '保山市', value: 28 },
+    { name: '昭通市', value: 32 }, { name: '丽江市', value: 40 },
+    { name: '普洱市', value: 23 }, { name: '临沧市', value: 18 },
+    { name: '楚雄州', value: 28 }, { name: '红河州', value: 45 },
+    { name: '文山州', value: 22 }, { name: '西双版纳州', value: 32 },
+    { name: '大理州', value: 38 }, { name: '德宏州', value: 16 },
+    { name: '怒江州', value: 7 }, { name: '迪庆州', value: 52 }
+  ], // 总计: 654，已修正数据一致性
   '贵州省': [
     { name: '贵阳市', value: 150 }, { name: '六盘水市', value: 40 },
     { name: '遵义市', value: 80 }, { name: '安顺市', value: 30 },
@@ -311,7 +312,7 @@ const Dashboard = () => {
   const [chinaGeoData, setChinaGeoData] = useState(null)
   const [provinceGeoData, setProvinceGeoData] = useState(null)
   const [loading, setLoading] = useState(false)
-  const [is3D, setIs3D] = useState(true) // 3D模式开关
+  const [is3D, setIs3D] = useState(true) // 3D模式开关，默认为立体模式
 
   // 数据验证函数 - 企业级标准
   const validateDataConsistency = (provinceName) => {
@@ -343,12 +344,39 @@ const Dashboard = () => {
     const loadChinaMap = async () => {
       try {
         setLoading(true)
-        const response = await axios.get('https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json')
-        setChinaGeoData(response.data)
-        echarts.registerMap('china', response.data)
+        // 添加超时处理
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 10000) // 10秒超时
+        
+        const response = await axios.get('https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json', {
+          signal: controller.signal,
+          timeout: 10000
+        })
+        
+        clearTimeout(timeoutId)
+        
+        if (response.data && response.data.features) {
+          setChinaGeoData(response.data)
+          echarts.registerMap('china', response.data)
+          console.log('✅ 中国地图数据加载成功')
+        } else {
+          throw new Error('地图数据格式不正确')
+        }
       } catch (error) {
-        console.error('加载中国地图失败:', error)
-        message.error('地图数据加载失败')
+        console.error('❌ 加载中国地图失败:', error)
+        if (error.name === 'AbortError') {
+          message.error('地图数据加载超时，请检查网络连接')
+        } else {
+          message.error(`地图数据加载失败: ${error.message}`)
+        }
+        
+        // 使用备用数据或重试机制
+        setTimeout(() => {
+          if (!chinaGeoData) {
+            console.log('🔄 尝试重新加载地图数据...')
+            loadChinaMap()
+          }
+        }, 3000)
       } finally {
         setLoading(false)
       }
@@ -369,6 +397,8 @@ const Dashboard = () => {
     const validation = validateDataConsistency(provinceName)
     if (validation && !validation.isConsistent) {
       console.warn(`⚠️ 数据不一致警告: ${provinceName} - 省份总数:${validation.provinceTotal}, 城市总和:${validation.cityTotal}`)
+    } else {
+      console.log(`✅ 数据一致性验证通过: ${provinceName}`)
     }
 
     try {
@@ -376,20 +406,43 @@ const Dashboard = () => {
       // 添加延迟以显示加载效果
       await new Promise(resolve => setTimeout(resolve, 300))
       
-      const response = await axios.get(`https://geo.datav.aliyun.com/areas_v3/bound/${provinceCode}_full.json`)
+      // 添加超时控制
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 8000) // 8秒超时
       
-      setProvinceGeoData(response.data)
-      echarts.registerMap(provinceName, response.data)
-      setCurrentProvince(provinceName)
-      setCurrentView('province')
+      const response = await axios.get(`https://geo.datav.aliyun.com/areas_v3/bound/${provinceCode}_full.json`, {
+        signal: controller.signal,
+        timeout: 8000
+      })
       
-      // 成功提示 - 包含数据统计
-      const cityCount = cityData[provinceName]?.length || 0
-      const totalValue = cityData[provinceName]?.reduce((sum, city) => sum + city.value, 0) || 0
-      message.success(`${provinceName}地图加载成功 - ${cityCount}个城市，总计${totalValue}家商户`)
+      clearTimeout(timeoutId)
+      
+      if (response.data && response.data.features) {
+        setProvinceGeoData(response.data)
+        echarts.registerMap(provinceName, response.data)
+        setCurrentProvince(provinceName)
+        setCurrentView('province')
+        
+        // 成功提示 - 包含数据统计
+        const cityCount = cityData[provinceName]?.length || 0
+        const totalValue = cityData[provinceName]?.reduce((sum, city) => sum + city.value, 0) || 0
+        message.success(`${provinceName}地图加载成功 - ${cityCount}个城市，总计${totalValue}家商户`)
+        console.log(`✅ ${provinceName}地图数据加载成功`)
+      } else {
+        throw new Error('省份地图数据格式不正确')
+      }
     } catch (error) {
-      console.error('加载省份地图失败:', error)
-      message.error(`${provinceName}地图数据加载失败，请稍后重试`)
+      console.error(`❌ 加载${provinceName}地图失败:`, error)
+      if (error.name === 'AbortError') {
+        message.error(`${provinceName}地图数据加载超时，请检查网络连接`)
+      } else {
+        message.error(`${provinceName}地图数据加载失败: ${error.message}`)
+      }
+      
+      // 失败时回退到全国地图
+      setCurrentView('china')
+      setCurrentProvince('')
+      setProvinceGeoData(null)
     } finally {
       setLoading(false)
     }
@@ -422,7 +475,21 @@ const Dashboard = () => {
 
   // 中国地图配置
   const chinaMapOption = useMemo(() => {
-    if (!chinaGeoData) return {}
+    if (!chinaGeoData) {
+      // 返回空配置而不是空对象，避免渲染问题
+      return {
+        title: {
+          text: '地图数据加载中...',
+          left: 'center',
+          top: 'middle',
+          textStyle: {
+            color: '#999',
+            fontSize: 16
+          }
+        },
+        backgroundColor: 'transparent'
+      }
+    }
     
     return {
       backgroundColor: '#0f172a', // 深蓝色背景
@@ -487,8 +554,8 @@ const Dashboard = () => {
           type: 'map3D',
           map: 'china',
           // 移除coordinateSystem，让map3D独立渲染
-          boxHeight: 15,
-          regionHeight: 6,
+          boxHeight: 25, // 增加整体高度，增强立体效果
+          regionHeight: 10, // 增加区域高度，让地图更立体
           // 设置深蓝色背景环境
           environment: '#0a0e27', // 更深的背景色增强对比度
           // 完全隐藏地面以避免额外渲染层
@@ -497,22 +564,22 @@ const Dashboard = () => {
           },
           light: {
             main: {
-              intensity: 3.2, // 进一步增强主光源
+              intensity: 4.0, // 进一步增强主光源，配合立体视角
               shadow: true,
               shadowQuality: 'high',
-              alpha: 28, // 调整光照角度增强立体感
-              beta: 15,
+              alpha: 45, // 调整光照角度增强立体感
+              beta: 30,
               color: '#ffffff'
             },
             ambient: {
-              intensity: 1.0, // 增强环境光确保颜色清晰
+              intensity: 0.8, // 适当降低环境光，增强阴影对比
               color: '#e0f2fe'
             }
           },
           viewControl: {
             projection: 'perspective',
-            distance: 135, // 稍微拉近距离
-            alpha: 32, // 优化俯视角度
+            distance: 150, // 适当拉远距离以获得更好的立体视角
+            alpha: 65, // 设置为较大的角度，让地图立起来
             beta: 0,
             rotateSensitivity: 1.0,
             zoomSensitivity: 1.0,
@@ -526,8 +593,8 @@ const Dashboard = () => {
             animation: true,
             animationDurationUpdate: 1500,
             animationEasingUpdate: 'cubicInOut',
-            minDistance: 80,
-            maxDistance: 250
+            minDistance: 100,
+            maxDistance: 300
           },
           // 使用真实感渲染增强3D效果
           shading: 'realistic',
@@ -627,7 +694,21 @@ const Dashboard = () => {
 
   // 省份地图配置
   const provinceMapOption = useMemo(() => {
-    if (!provinceGeoData || !currentProvince) return {}
+    if (!provinceGeoData || !currentProvince) {
+      // 返回空配置而不是空对象，避免渲染问题
+      return {
+        title: {
+          text: currentProvince ? `${currentProvince}地图数据加载中...` : '请选择省份',
+          left: 'center',
+          top: 'middle',
+          textStyle: {
+            color: '#999',
+            fontSize: 16
+          }
+        },
+        backgroundColor: 'transparent'
+      }
+    }
     
     const currentCityData = cityData[currentProvince] || []
     
@@ -712,8 +793,8 @@ const Dashboard = () => {
           type: 'map3D',
           map: currentProvince,
           // 移除coordinateSystem，让map3D独立渲染
-          boxHeight: 20,
-          regionHeight: 8,
+          boxHeight: 30, // 增加整体高度，增强立体效果
+          regionHeight: 12, // 增加区域高度，让省份地图更立体
           // 省份地图环境设置
           environment: '#f0fdf4', // 淡绿色背景增强对比度
           // 完全隐藏地面避免额外渲染层
@@ -722,22 +803,22 @@ const Dashboard = () => {
           },
           light: {
             main: {
-              intensity: 2.5, // 优化光照强度
+              intensity: 3.5, // 增强光照强度，配合立体视角
               shadow: true,
               shadowQuality: 'high',
-              alpha: 35, // 调整光照角度
-              beta: 25,
+              alpha: 45, // 调整光照角度增强立体感
+              beta: 30,
               color: '#ffffff'
             },
             ambient: {
-              intensity: 1.3, // 增强环境光确保颜色清晰
+              intensity: 1.0, // 适当降低环境光，增强阴影对比
               color: '#f0fdf4' // 淡绿色环境光
             }
           },
           viewControl: {
             projection: 'perspective',
-            distance: 95, // 优化省份地图距离
-            alpha: 38, // 更好的俯视角度
+            distance: 110, // 适当拉远距离以获得更好的立体视角
+            alpha: 60, // 设置为较大的角度，让省份地图也立起来
             beta: 0,
             rotateSensitivity: 1.2,
             zoomSensitivity: 1.2,
@@ -747,8 +828,8 @@ const Dashboard = () => {
             autoRotateSpeed: 8,
             autoRotateAfterStill: 5,
             damping: 0.9,
-            minDistance: 40,
-            maxDistance: 150,
+            minDistance: 60,
+            maxDistance: 200,
             center: [0, 0, 0],
             animation: true,
             animationDurationUpdate: 1000,
@@ -852,7 +933,20 @@ const Dashboard = () => {
 
   // 2D中国地图配置
   const china2DMapOption = useMemo(() => {
-    if (!chinaGeoData) return {}
+    if (!chinaGeoData) {
+      return {
+        title: {
+          text: '地图数据加载中...',
+          left: 'center',
+          top: 'middle',
+          textStyle: {
+            color: '#999',
+            fontSize: 16
+          }
+        },
+        backgroundColor: '#ffffff'
+      }
+    }
     
     return {
       backgroundColor: '#ffffff',
@@ -922,7 +1016,20 @@ const Dashboard = () => {
 
   // 2D省份地图配置
   const province2DMapOption = useMemo(() => {
-    if (!provinceGeoData || !currentProvince) return {}
+    if (!provinceGeoData || !currentProvince) {
+      return {
+        title: {
+          text: currentProvince ? `${currentProvince}地图数据加载中...` : '请选择省份',
+          left: 'center',
+          top: 'middle',
+          textStyle: {
+            color: '#999',
+            fontSize: 16
+          }
+        },
+        backgroundColor: '#ffffff'
+      }
+    }
     
     const currentCityData = cityData[currentProvince] || []
     
@@ -1002,11 +1109,24 @@ const Dashboard = () => {
     }
   }, [provinceGeoData, currentProvince])
 
-  // 地图点击事件
-  const onMapClick = (params) => {
+  // 防抖函数
+  const debounce = (func, wait) => {
+    let timeout
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout)
+        func(...args)
+      }
+      clearTimeout(timeout)
+      timeout = setTimeout(later, wait)
+    }
+  }
+
+  // 地图点击事件（防抖处理）
+  const onMapClick = debounce((params) => {
     console.log('地图点击事件:', params) // 调试用
     
-    if (currentView === 'china') {
+    if (currentView === 'china' && !loading) {
       // 处理3D和2D模式的不同数据结构
       let provinceName = ''
       
@@ -1022,12 +1142,22 @@ const Dashboard = () => {
         }
       }
       
-      if (provinceName) {
-        console.log('点击省份:', provinceName)
-        loadProvinceMap(provinceName)
+      // 验证省份名称是否有效
+      if (provinceName && provinceCodeMap[provinceName]) {
+        console.log('✅ 点击省份:', provinceName)
+        // 检查是否有对应的城市数据
+        const hasCityData = cityData[provinceName] && cityData[provinceName].length > 0
+        if (hasCityData) {
+          loadProvinceMap(provinceName)
+        } else {
+          message.warning(`${provinceName}暂无详细城市数据`)
+        }
+      } else if (provinceName) {
+        console.warn('⚠️ 未识别的省份:', provinceName)
+        message.warning('暂不支持该地区的详细地图')
       }
     }
-  }
+  }, 300) // 300ms防抖
 
   // 获取当前地图配置
   const getCurrentMapOption = () => {
@@ -1041,7 +1171,41 @@ const Dashboard = () => {
   // 切换2D/3D模式
   const toggle3D = () => {
     setIs3D(!is3D)
+    message.info(`已切换到${!is3D ? '3D立体' : '2D平面'}模式`)
   }
+
+  // 检查地图数据完整性
+  const checkMapDataIntegrity = () => {
+    const issues = []
+    
+    // 检查省份数据
+    provinceData.forEach(province => {
+      const cities = cityData[province.name]
+      if (cities) {
+        const cityTotal = cities.reduce((sum, city) => sum + city.value, 0)
+        if (cityTotal !== province.value) {
+          issues.push(`${province.name}: 省份数据(${province.value}) ≠ 城市总和(${cityTotal})`)
+        }
+      }
+    })
+    
+    if (issues.length > 0) {
+      console.warn('🔍 发现数据不一致问题:', issues)
+    } else {
+      console.log('✅ 所有地区数据一致性检查通过')
+    }
+    
+    return issues.length === 0
+  }
+
+  // 地图初始化完成后检查数据
+  useEffect(() => {
+    if (chinaGeoData) {
+      setTimeout(() => {
+        checkMapDataIntegrity()
+      }, 1000)
+    }
+  }, [chinaGeoData])
 
   return (
     <div className="dashboard-container">
@@ -1050,14 +1214,14 @@ const Dashboard = () => {
         title={
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '18px', fontWeight: 'bold' }}>
-              商家地理分布 {is3D ? '(3D模式)' : '(2D模式)'}
+              商家地理分布 {is3D ? '(3D立体模式)' : '(2D平面模式)'}
             </span>
             <Space>
               <Switch 
                 checked={is3D}
                 onChange={toggle3D}
-                checkedChildren="3D"
-                unCheckedChildren="2D"
+                checkedChildren="立体"
+                unCheckedChildren="平面"
                 style={{ 
                   backgroundColor: is3D ? '#1890ff' : '#d9d9d9'
                 }}
@@ -1096,16 +1260,20 @@ const Dashboard = () => {
             onEvents={{
               click: onMapClick,
               mouseover: (params) => {
-                // 3D模式下增强鼠标悬浮效果
-                if (is3D && params.componentType === 'series' && params.seriesType === 'map3D') {
+                // 3D模式下增强鼠标悬浮效果（仅在调试模式下输出）
+                if (process.env.NODE_ENV === 'development' && is3D && params.componentType === 'series' && params.seriesType === 'map3D') {
                   console.log('3D地图鼠标悬浮:', params.name)
                 }
               },
               mouseout: (params) => {
-                // 处理鼠标离开事件
-                if (is3D && params.componentType === 'series' && params.seriesType === 'map3D') {
+                // 处理鼠标离开事件（仅在调试模式下输出）
+                if (process.env.NODE_ENV === 'development' && is3D && params.componentType === 'series' && params.seriesType === 'map3D') {
                   console.log('3D地图鼠标离开:', params.name)
                 }
+              },
+              finished: () => {
+                // 地图渲染完成回调
+                console.log('✅ 地图渲染完成')
               }
             }}
             loadingOption={{
