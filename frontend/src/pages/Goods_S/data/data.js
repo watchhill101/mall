@@ -353,14 +353,3 @@ export const items = [
     },
 
 ]
-export const OrderItems = [
-    {
-        label: '订单',
-        key: 'order',
-        // icon: <MailOutlined />,
-    },
-
-
-
-
-]

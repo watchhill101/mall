@@ -1,0 +1,54 @@
+.OrderS {
+  border: 1px solid black;
+  width: 1200px;
+  height: 100vh;
+  .header {
+    // border: 1px solid blue;
+    ul {
+      display: flex;
+      list-style: none;
+      width: 450px;
+
+      li {
+        border: 1px solid #ececec;
+        padding: 5px 10px;
+
+        a {
+          color: black;
+        }
+        .active {
+          color: #549bf8;
+        }
+      }
+    }
+  }
+  .OperationButton {
+    // border: 1px solid blue;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    // border: 1px solid red;
+    .OperationButton-left {
+      Button {
+        margin-left: 20px;
+      }
+    }
+
+    .OperationButton-right {
+      margin-right: 20px;
+      ul {
+        list-style: none;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        // border: 1px solid blue;
+        width: 200px;
+        height: 50px;
+        padding: 20px 10px;
+        // margin-right: 10px;
+        li {
+        }
+      }
+    }
+  }
+}

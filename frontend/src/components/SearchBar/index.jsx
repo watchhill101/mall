@@ -13,7 +13,7 @@ import {
   Radio,
 } from 'antd';
 import { PlusCircleOutlined } from '@ant-design/icons';
-
+const { RangePicker } = DatePicker;
 const SearchBar = ({ name, formItemList, getSearchParams }) => {
   // form 表单实例
   const [searchForm] = Form.useForm();
@@ -44,6 +44,7 @@ const SearchBar = ({ name, formItemList, getSearchParams }) => {
     datePicker: ({ type, ...restProps }) => (
       <DatePicker format="YYYY-MM-DD" {...restProps} />
     ),
+    rangePicker: ({ type, ...restProps }) => <RangePicker {...restProps} />,
     Cascader: ({ type, options, onChange, ...restProps }) => {
       // 自定义选项渲染函数
       const renderRadioOption = (node) => {
