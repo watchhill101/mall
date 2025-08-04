@@ -10,42 +10,26 @@ mongoose
     console.error("MongoDB connection error:", err);
   });
 
-// 导入所有模型
+// 导入所有模型 - 方式一：分别导入
 const User = require("./user/user");
 const Role = require("./role/role");
-const FirstLevelNavigation = require("./navigation/firstLevelNavigation");
-const SecondaryNavigation = require("./navigation/secondaryNavigation");
-const Goods = require("./goods");
-const Order = require("./goodsOrder/order");
-const Merchant = require("./merchant/merchant");
 
-// 新增的商家相关模型
-const PersonInCharge = require("./person/personInCharge");
-const MerchantAccount = require("./merchant/merchantAccount");
-const WithdrawAccount = require("./merchant/withdrawAccount");
-const AccountDetail = require("./merchant/accountDetail");
-const MerchantWithdraw = require("./merchant/merchantWithdraw");
-const Product = require("./goods/product");
-const SettlementOrder = rquire("./merchant/settlementOrder");
-const Bill = require("./merchant/bill");
-const MerchantApplication = require("./merchant/merchantApplication");
+// 导入模块化的子模块
+const Navigation = require("./navigation");
+const GoodsOrder = require("./goodsOrder");
+const Goods = require("./goods");
+const Merchant = require("./merchant");
+const Person = require("./person");
 
 module.exports = {
+  // 单独模型
   User,
   Role,
-  FirstLevelNavigation,
-  SecondaryNavigation,
-  Goods,
-  Order,
-  Merchant,
-  PersonInCharge,
-  MerchantAccount,
-  WithdrawAccount,
-  AccountDetail,
-  MerchantWithdraw,
-  Product,
-  SettlementOrder,
-  Bill,
-  MerchantApplication,
-};
 
+  // 解构导出各模块的所有模型
+  ...Navigation, // FirstLevelNavigation, SecondaryNavigation
+  ...GoodsOrder, // Order, AfterSales, TallyOrder, etc.
+  ...Goods, // Product, ProductCategory, ProductAudit, etc.
+  ...Merchant, // Merchant, MerchantAccount, MerchantApplication, etc.
+  ...Person, // PersonInCharge
+};
