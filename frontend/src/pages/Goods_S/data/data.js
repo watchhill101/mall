@@ -391,7 +391,7 @@ export const TrashColumns = [
         render: (text, record) => <>
             <div style={{ display: 'flex', alignItems: 'center' }}>
                 <div>
-                    <img src="" alt="" />
+                    <img src={record.src} alt="" />
                 </div>
                 <div>
                     {text}
@@ -422,6 +422,7 @@ export const TrashColumns = [
         key: 'operation',
         render: (text, record) => <>
             <Button type="link">恢复</Button>
+            <Button type="link">删除</Button>
         </>
     }
 ]

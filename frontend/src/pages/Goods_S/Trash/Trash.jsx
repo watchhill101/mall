@@ -17,9 +17,8 @@ import {
   Button,
   Menu,
 } from 'antd';
-import { data } from '@/db_S/data.mjs';
+import { TrashData } from '@/db_S/data.mjs';
 import './index.scss';
-
 import SearchBar from '@/components/SearchBar';
 import { TrashColumns, TrashformItemList } from '../data/data';
 import CustomTable from '@/components/CustomTable';
@@ -40,8 +39,8 @@ const Trash = () => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
     return {
       data: {
-        count: data.list.length,
-        rows: data.list,
+        count: TrashData.data.length,
+        rows: TrashData.data,
       },
     };
   };

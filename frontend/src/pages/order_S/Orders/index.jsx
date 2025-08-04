@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import './index.scss';
-import { ProductClassificationData } from '@/db_S/data.mjs';
+import { OrderData } from '@/db_S/data.mjs';
 import SearchBar from '@/components/SearchBar';
 import Icon, { SearchOutlined } from '@ant-design/icons';
 import { Table } from 'antd';
@@ -115,124 +115,155 @@ export default function Index() {
   });
   const fetchMethod = async (requesParams) => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    // 模拟分页（你需要根据实际接口分页）
+    const { current = 1, pageSize = 5 } = requesParams;
+    const startIdx = (current - 1) * pageSize;
+    const endIdx = startIdx + pageSize;
+
+    const currentOrders = OrderData.list.slice(startIdx, endIdx);
+
+    const expandedData = currentOrders.flatMap((order) => {
+      return order.ProductInformation.map((product, index) => ({
+        ...order,
+        product,
+        rowSpan: index === 0 ? order.ProductInformation.length : 0,
+        isFirstRow: index === 0,
+      }));
+    });
+
     return {
       data: {
-        count: ProductClassificationData.list.length,
-        rows: ProductClassificationData.list,
+        count: OrderData.list.length, // 这里是总订单数
+        rows: expandedData, // 展示用的扁平化行
       },
     };
   };
+  const expandedData = OrderData.list.flatMap((order) => {
+    return order.ProductInformation.map((product, index) => ({
+      ...order,
+      product,
+      rowSpan: index === 0 ? order.ProductInformation.length : 0, // 用于跨行显示
+      isFirstRow: index === 0,
+    }));
+  });
   const columns = [
+    {
+      title: '订单编号',
+      dataIndex: 'OrderNumber',
+      render: (value, row) => ({
+        children: row.isFirstRow ? value : null,
+        props: {
+          rowSpan: row.rowSpan,
+        },
+      }),
+    },
     {
       title: '商品信息',
       dataIndex: 'ProductInformation',
       key: 'ProductInformation',
-      render: (_, record) => (
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <img
-            src={record.productImage}
-            alt="商品图"
-            style={{ width: 60, height: 60, marginRight: 10 }}
-          />
-          <div>
-            <div>{record.productName}</div>
-            <div style={{ color: '#999' }}>{record.productSpec}</div>
-            {record.isRefunded && (
-              <span
-                style={{
-                  color: 'red',
-                  border: '1px solid red',
-                  padding: '2px 4px',
-                  fontSize: 12,
-                }}
-              >
-                已退款
-              </span>
-            )}
-          </div>
+      render: (productList) => (
+        <div>
+          {productList.map((product) => (
+            <div key={product.id}>
+              {product.ProductName} - {product.Specification}
+            </div>
+          ))}
         </div>
       ),
     },
     {
       title: '价格(元)/数量',
-      dataIndex: 'Price (yuan) / Quantity',
+      dataIndex: 'ProductInformation',
       key: 'Price (yuan) / Quantity',
+      render: (productList) => (
+        <div>
+          {productList.map((product) => (
+            <div key={product.id}>
+              ￥{product.price} / {product.quantity}
+            </div>
+          ))}
+        </div>
+      ),
     },
     {
       title: '总价',
-      dataIndex: 'TotalPrice',
-      key: 'TotalPrice',
+      render: (value, row) => ({
+        children: row.isFirstRow
+          ? `￥${row.ProductInformation.reduce(
+              (sum, p) => sum + p.price * p.quantity,
+              0
+            )}`
+          : null,
+        props: { rowSpan: row.rowSpan },
+      }),
     },
     {
       title: '客户信息',
-      dataIndex: 'CustomerInformation',
-      key: 'CustomerInformation',
-    },
-    {
-      title: '分销佣金',
-      dataIndex: 'DistributionCommission',
-      key: 'DistributionCommission',
-    },
-    {
-      title: '所属店铺',
-      dataIndex: 'AffiliatedStore',
-      key: 'AffiliatedStore',
-    },
-    {
-      title: '所属网点',
-      dataIndex: 'AffiliatedNetwork',
-      key: 'AffiliatedNetwork',
+      render: (value, row) => ({
+        children: row.isFirstRow
+          ? row.CustomerInformation.map(
+              (c) => `${c.CustomerName} - ${c.ContactInformation}`
+            ).join('\n')
+          : null,
+        props: { rowSpan: row.rowSpan },
+      }),
     },
     {
       title: '订单状态',
       dataIndex: 'OrderStatus',
-      key: 'OrderStatus',
+      render: (val, row) => ({
+        children: row.isFirstRow
+          ? {
+              0: '待支付',
+              1: '已支付',
+              2: '已完成',
+              3: '已关闭',
+              4: '已退款',
+              5: '部分退款',
+            }[val] || '未知'
+          : null,
+        props: { rowSpan: row.rowSpan },
+      }),
     },
     {
-      title: 'Action',
-      key: 'operation',
-      fixed: 'right',
-      width: 250,
-      render: (_, record) => (
-        <>
-          <Button type="link">详情</Button>
-          {record.status !== '已退款' && (
-            <>
-              <Button type="link">完成</Button>
-              <Button type="link" style={{ color: 'red' }}>
-                退款
-              </Button>
-            </>
-          )}
-        </>
-      ),
+      title: '分销佣金',
+      dataIndex: 'Commission',
+      key: 'DistributionCommission',
+      render: (value) => `￥${value}`,
+    },
+    {
+      title: '所属店铺',
+      dataIndex: 'StoreName',
+      key: 'AffiliatedStore',
+    },
+    {
+      title: '所属网点',
+      dataIndex: 'OutletName',
+      key: 'AffiliatedNetwork',
+    },
+
+    {
+      title: '操作',
+      render: (_, row) => ({
+        children: row.isFirstRow ? (
+          <>
+            <Button type="link">详情</Button>
+            {row.OrderStatus !== 4 && (
+              <>
+                <Button type="link">完成</Button>
+                <Button type="link" style={{ color: 'red' }}>
+                  退款
+                </Button>
+              </>
+            )}
+          </>
+        ) : null,
+        props: { rowSpan: row.rowSpan },
+      }),
     },
   ];
-  const expandable = {
-    expandedRowRender: (record) => {
-      const columns = [
-        { title: '商品名', dataIndex: 'productName', key: 'productName' },
-        { title: '规格', dataIndex: 'productSpec', key: 'productSpec' },
-        { title: '单价', dataIndex: 'price', key: 'price' },
-        { title: '数量', dataIndex: 'quantity', key: 'quantity' },
-        {
-          title: '图片',
-          dataIndex: 'productImage',
-          key: 'productImage',
-          render: (src) => <img src={src} alt="商品图" style={{ width: 50 }} />,
-        },
-      ];
-      return (
-        <Table
-          columns={columns}
-          dataSource={record.productList}
-          pagination={false}
-          rowKey={(item, index) => index}
-        />
-      );
-    },
-    rowExpandable: (record) => record.productList?.length > 0,
-  };
+
   return (
     // <OrderLayout>
     <div className="OrderS">
@@ -325,7 +356,6 @@ export default function Index() {
           columns={columns}
           fetchMethod={fetchMethod}
           requestParam={params}
-          expandable={expandable}
         />
       </div>
     </div>

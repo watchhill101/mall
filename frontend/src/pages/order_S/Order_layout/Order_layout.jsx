@@ -86,9 +86,9 @@ const OrderLayout = ({ children }) => {
 
         {/* 主内容区域 */}
         <Content style={{ padding: '0' }}>
-          {/* {children}
-           */}
-          <Outlet></Outlet>
+          {children}
+
+          {/* <Outlet></Outlet> */}
         </Content>
       </Layout>
     </div>
