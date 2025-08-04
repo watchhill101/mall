@@ -306,7 +306,7 @@ const cityData = {
   ] // 总计: 234
 }
 
-const Dashboard = () => {
+const Dashboard = ({ onRegionClick }) => {
   const [currentView, setCurrentView] = useState('china') // 'china' 或 'province'
   const [currentProvince, setCurrentProvince] = useState('')
   const [chinaGeoData, setChinaGeoData] = useState(null)
@@ -458,6 +458,14 @@ const Dashboard = () => {
       setProvinceGeoData(null)
       setLoading(false)
       message.success('已返回全国地图')
+      
+      // 触发环形图回到全国数据
+      if (onRegionClick) {
+        console.log('🔗 返回全国地图，触发onRegionClick回调: 全国')
+        onRegionClick('全国')
+      } else {
+        console.warn('⚠️ 返回全国时onRegionClick回调函数未定义')
+      }
     }, 300)
   }
 
@@ -1145,6 +1153,15 @@ const Dashboard = () => {
       // 验证省份名称是否有效
       if (provinceName && provinceCodeMap[provinceName]) {
         console.log('✅ 点击省份:', provinceName)
+        
+        // 触发环形图更新回调
+        if (onRegionClick) {
+          console.log(`🔗 触发onRegionClick回调: ${provinceName}`)
+          onRegionClick(provinceName)
+        } else {
+          console.warn('⚠️ onRegionClick回调函数未定义')
+        }
+        
         // 检查是否有对应的城市数据
         const hasCityData = cityData[provinceName] && cityData[provinceName].length > 0
         if (hasCityData) {
@@ -1155,6 +1172,33 @@ const Dashboard = () => {
       } else if (provinceName) {
         console.warn('⚠️ 未识别的省份:', provinceName)
         message.warning('暂不支持该地区的详细地图')
+      }
+    } else if (currentView === 'province' && currentProvince && !loading) {
+      // 处理省份地图中城市的点击事件
+      let cityName = ''
+      
+      if (is3D) {
+        // 3D模式下，map3D直接返回数据
+        if (params.componentType === 'series' && params.seriesType === 'map3D') {
+          cityName = params.name || (params.data && params.data.name)
+        }
+      } else {
+        // 2D模式下的数据结构
+        if (params.componentType === 'series') {
+          cityName = params.name
+        }
+      }
+      
+      if (cityName) {
+        console.log(`✅ 点击城市: ${currentProvince} - ${cityName}`)
+        
+        // 触发环形图更新回调，显示省份数据
+        if (onRegionClick) {
+          console.log(`🔗 城市点击，触发onRegionClick回调: ${currentProvince}`)
+          onRegionClick(currentProvince)
+        } else {
+          console.warn('⚠️ 城市点击时onRegionClick回调函数未定义')
+        }
       }
     }
   }, 300) // 300ms防抖
