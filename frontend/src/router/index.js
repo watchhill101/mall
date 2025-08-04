@@ -35,7 +35,11 @@ const StockIn = lazy(() => import('@/pages/Goods_S/inventory/enterTheWarehouse/e
 const StockOut = lazy(() => import('@/pages/Goods_S/inventory/exWarehouse/exWarehouse'))
 const Stocktake = lazy(() => import('@/pages/Goods_S/inventory/stocktaking/stocktaking'))
 const StockDetails = lazy(() => import('@/pages/Goods_S/inventory/DetailsOfStockInAndstockOut/DetailsOfStockInAndstockOut'))
-
+// 订单相关页面
+const OrdersList = lazy(() => import('@/pages/order_S/Orders'))
+const AfterSales = lazy(() => import('@/pages/order_S/afterSales'))
+const TallySheet = lazy(() => import('@/pages/order_S/tallySheet'))
+const SortingList = lazy(() => import('@/pages/order_S/sortingList'))
 const constantRoutes = [
   { path: '/login', title: '登录', element: <Login /> },
   {
@@ -233,7 +237,41 @@ const constantRoutes = [
         element: <Orders />,
         hidden: false,
         icon: 'OrdersOutlined',    // 订单图标
-        menuPath: '/orders'
+        menuPath: '/orders',
+        children: [
+          {
+            path: 'orders-list',
+            title: '订单',
+            element: <OrdersList />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/orders/orders-list'
+          },
+          {
+            path: 'afterSales',
+            title: '售后',
+            element: <AfterSales />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/orders/afterSales'
+          },
+          {
+            path: 'tallySheet',
+            title: '理货单',
+            element: <TallySheet />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/orders/tallySheet'
+          },
+          {
+            path: 'SortingList',
+            title: '分拣单',
+            element: <SortingList />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/orders/SortingList '
+          }
+        ]
       },
       {
         path: 'users',

@@ -3,7 +3,7 @@ import './index.scss';
 import { ProductClassificationData } from '@/db_S/data.mjs';
 import SearchBar from '@/components/SearchBar';
 import Icon, { SearchOutlined } from '@ant-design/icons';
-
+import { Table } from 'antd';
 import {
   RefreshSvg,
   SearchSvg,
@@ -12,6 +12,7 @@ import {
 } from '@/pages/Goods_S/icons_svg/IconCom';
 import { Button } from 'antd';
 import CustomTable from '@/components/CustomTable';
+import OrderLayout from '../Order_layout/Order_layout';
 export default function Index() {
   const [btnList, setBtnlist] = useState([
     '全部',
@@ -207,7 +208,33 @@ export default function Index() {
       ),
     },
   ];
+  const expandable = {
+    expandedRowRender: (record) => {
+      const columns = [
+        { title: '商品名', dataIndex: 'productName', key: 'productName' },
+        { title: '规格', dataIndex: 'productSpec', key: 'productSpec' },
+        { title: '单价', dataIndex: 'price', key: 'price' },
+        { title: '数量', dataIndex: 'quantity', key: 'quantity' },
+        {
+          title: '图片',
+          dataIndex: 'productImage',
+          key: 'productImage',
+          render: (src) => <img src={src} alt="商品图" style={{ width: 50 }} />,
+        },
+      ];
+      return (
+        <Table
+          columns={columns}
+          dataSource={record.productList}
+          pagination={false}
+          rowKey={(item, index) => index}
+        />
+      );
+    },
+    rowExpandable: (record) => record.productList?.length > 0,
+  };
   return (
+    // <OrderLayout>
     <div className="OrderS">
       <div className="header">
         <ul>
@@ -298,8 +325,10 @@ export default function Index() {
           columns={columns}
           fetchMethod={fetchMethod}
           requestParam={params}
+          expandable={expandable}
         />
       </div>
     </div>
+    // </OrderLayout>
   );
 }
