@@ -321,10 +321,27 @@ export const items = [
         // icon: <MailOutlined />,
         children: [
             {
-                key: "Currentinventory",
-
-
+                key: "CurrentInventory",
+                label: '当前库存'
+            },
+            {
+                key: "enterTheWarehouse",
+                label: '入库'
+            },
+            {
+                key: "exWarehouse",
+                label: '出库'
+            },
+            {
+                key: "stocktaking",
+                label: '盘点'
+            },
+            {
+                key: "DetailsOfStockInAndstockOut",
+                label: '出入库明细'
             }
+
+
 
         ]
 
@@ -334,5 +351,16 @@ export const items = [
         key: 'price',
         // icon: <MailOutlined />,
     },
+
+]
+export const OrderItems = [
+    {
+        label: '订单',
+        key: 'order',
+        // icon: <MailOutlined />,
+    },
+
+
+
 
 ]

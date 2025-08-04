@@ -36,8 +36,13 @@ const { Title } = Typography;
 
 const Goods = () => {
   const navigate = useNavigate();
-  const handleChange = ({ key }) => {
-    navigate(`/goods/${key}`);
+  const handleChange = ({ key, keyPath }) => {
+    console.log(keyPath);
+    if (keyPath.length == 1) {
+      navigate(`/goods/${key}`);
+    } else {
+      navigate(`/goods/${keyPath[1]}/${key}`);
+    }
   };
   return (
     <div

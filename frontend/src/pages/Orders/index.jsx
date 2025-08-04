@@ -1,77 +1,65 @@
-import React from 'react'
-import { Card, Statistic, Row, Col, Typography } from 'antd'
-import { 
-  FileTextOutlined, 
-  CheckCircleOutlined, 
-  ClockCircleOutlined,
-  DollarCircleOutlined 
-} from '@ant-design/icons'
-
-const { Title } = Typography
-
-const Orders = () => {
+import React, { useState } from 'react';
+import {
+  AppstoreOutlined,
+  ContainerOutlined,
+  DesktopOutlined,
+  MailOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+  PieChartOutlined,
+} from '@ant-design/icons';
+import { Outlet, useNavigate } from 'react-router-dom';
+import { Button, Menu } from 'antd';
+import './index.scss';
+const items = [
+  {
+    key: 'orders',
+    icon: <PieChartOutlined />,
+    label: '订单',
+    children: [
+      { key: 'list', icon: <PieChartOutlined />, label: '订单' },
+      { key: 'afterSales', icon: <PieChartOutlined />, label: '售后' },
+      { key: 'tallySheet', icon: <PieChartOutlined />, label: '理货单' },
+      { key: 'sortingList', icon: <PieChartOutlined />, label: '分拣单' },
+    ],
+  },
+];
+export default function Index() {
+  // const [collapsed, setCollapsed] = useState(false);
+  const navigate = useNavigate();
+  // const toggleCollapsed = () => {
+  //   setCollapsed(!collapsed);
+  // };
+  const handleOnchange = ({ key, keyPath }) => {
+    if (keyPath.length == 1) {
+      navigate(`/orders/${key}`);
+    } else {
+      navigate(`/${keyPath[1]}/${key}`);
+    }
+  };
   return (
-    <div style={{ padding: '24px' }}>
-      <Title level={2} style={{ marginBottom: '24px' }}>
-        <FileTextOutlined style={{ marginRight: '8px' }} />
-        订单管理
-      </Title>
-      
-      <Row gutter={16} style={{ marginBottom: '24px' }}>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="订单总数"
-              value={2568}
-              prefix={<FileTextOutlined />}
-              valueStyle={{ color: '#3f8600' }}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="已完成订单"
-              value={2103}
-              prefix={<CheckCircleOutlined />}
-              valueStyle={{ color: '#1890ff' }}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="待处理订单"
-              value={465}
-              prefix={<ClockCircleOutlined />}
-              valueStyle={{ color: '#faad14' }}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="订单总额"
-              value={298567}
-              prefix={<DollarCircleOutlined />}
-              precision={2}
-              valueStyle={{ color: '#cf1322' }}
-              suffix="元"
-            />
-          </Card>
-        </Col>
-      </Row>
-
-      <Card title="订单管理功能" style={{ marginBottom: '16px' }}>
-        <p>📋 订单列表查看</p>
-        <p>🔍 订单搜索与筛选</p>
-        <p>✅ 订单状态更新</p>
-        <p>📦 发货管理</p>
-        <p>💳 支付状态跟踪</p>
-        <p>📊 订单统计分析</p>
-      </Card>
+    <div className="OrdersNav">
+      {/* <Button
+          type="primary"
+          onClick={toggleCollapsed}
+          style={{ marginBottom: 16 }}
+        >
+          {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+        </Button> */}
+      <div className="menu">
+        <Menu
+          defaultSelectedKeys={['1']}
+          defaultOpenKeys={['sub1']}
+          mode="inline"
+          theme="dark"
+          // inlineCollapsed={collapsed}
+          items={items}
+          onSelect={handleOnchange}
+        />
+      </div>
+      <div>
+        <Outlet />
+      </div>
     </div>
-  )
+  );
 }
-
-export default Orders

@@ -8,8 +8,17 @@ const Goods = lazy(() => import('@/pages/Goods'))
 const ListOfCommodities = lazy(() => import('@/pages/Goods_S/ListOfCommodities'));
 const ClassificationOfCommodities = lazy(() => import('@/pages/Goods_S/Classification of Commodities'));
 const Inventory = lazy(() => import('@/pages/Goods_S/inventory'))
+const CurrentInventory = lazy(() => import('@/pages/Goods_S/inventory/CurrentInventory/CurrentInventory'))
+const EnterTheWarehouse = lazy(() => import("@/pages/Goods_S/inventory/enterTheWarehouse/enterTheWarehouse"))
+const ExWarehouse = lazy(() => import("@/pages/Goods_S/inventory/exWarehouse/exWarehouse"))
+const Stocktaking = lazy(() => import("@/pages/Goods_S/inventory/stocktaking/stocktaking"))
+const DetailsOfStockInAndstockOut = lazy(() => import("@/pages/Goods_S/inventory/DetailsOfStockInAndstockOut/DetailsOfStockInAndstockOut"))
 const Price = lazy(() => import("@/pages/Goods_S/price"))
 const Orders = lazy(() => import('@/pages/Orders'))
+const OrdersS = lazy(() => import('@/pages/order_S/Orders'))
+const AfterSales = lazy(() => import('@/pages/order_S/afterSales'))
+const TallySheet = lazy(() => import('@/pages/order_S/tallySheet'))
+const SortingList = lazy(() => import('@/pages/order_S/sortingList'))
 const Users = lazy(() => import('@/pages/Users'))
 const Login = lazy(() => import('@/pages/Login'))
 const NotFound = lazy(() => import('@/pages/NotFound'))
@@ -62,6 +71,34 @@ const constantRoutes = [
             path: "/goods/inventory",
             title: "库存管理",
             element: <Inventory />,
+            children: [
+              {
+                path: "/goods/inventory/CurrentInventory",
+                title: "当前库存",
+                element: <CurrentInventory></CurrentInventory>
+              },
+              {
+                path: "/goods/inventory/enterTheWarehouse",
+                title: "入库",
+                element: <EnterTheWarehouse></EnterTheWarehouse>
+              },
+              {
+                path: "/goods/inventory/exWarehouse",
+                title: "出库",
+                element: <ExWarehouse></ExWarehouse>
+              },
+              {
+                path: "/goods/inventory/Stocktaking",
+                title: "盘点",
+                element: <Stocktaking></Stocktaking>
+              },
+              {
+                path: "/goods/inventory/DetailsOfStockInAndStockOut",
+                title: "出入库明细",
+                element: <DetailsOfStockInAndstockOut></DetailsOfStockInAndstockOut>
+              },
+
+            ]
           },
           {
             path: "/goods/price",
@@ -77,7 +114,30 @@ const constantRoutes = [
         element: <Orders />,
         hidden: false,
         icon: 'OrdersOutlined',    // 订单图标
-        menuPath: '/orders'
+        menuPath: '/orders',
+        children: [
+          { index: true, element: <Navigate to={'/orders/list'} replace /> },
+          {
+            path: '/orders/list',
+            title: '订单',
+            element: <OrdersS />,
+          },
+          {
+            path: "/orders/afterSales",
+            title: "售后",
+            element: <AfterSales />,
+          },
+          {
+            path: "/orders/tallySheet",
+            title: "理货单",
+            element: <TallySheet />,
+          },
+          {
+            path: "/orders/sortingList",
+            title: "分拣单",
+            element: <SortingList />,
+          }
+        ]
       },
       {
         path: 'users',
