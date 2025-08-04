@@ -11,7 +11,7 @@ var authRouter = require("./routes/auth");
 
 //导入中间件
 var cors = require("cors");
-app.use(cors());
+// app.use(cors());
 
 //导入规则中间件
 var joi = require("joi");
@@ -27,7 +27,7 @@ const {
   jwtAuth,
   optionalJwtAuth,
   verifyTokenType,
-  verifyTokenType,
+  jwtErrorHandler,
 } = require("./utils/ejwt");
 // view engine setup
 app.set("views", path.join(__dirname, "views"));
