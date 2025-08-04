@@ -11,13 +11,12 @@ import {
   ExportOutlined,
   FileTextOutlined,
 } from '@ant-design/icons';
-import { useNavigate, useLocation, Outlet } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const { Title } = Typography;
 const { Sider, Content } = Layout;
 
 const GoodsLayout = ({ children }) => {
-  console.log(children, 'children~~~');
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -83,7 +82,6 @@ const GoodsLayout = ({ children }) => {
     console.log(key, '111111000000');
     navigate(key);
   };
-  console.log(React.isValidElement(children), 'children-----');
 
   return (
     <div style={{ background: '#f0f2f5', minHeight: 'calc(100vh - 64px)' }}>
@@ -115,9 +113,8 @@ const GoodsLayout = ({ children }) => {
         </Sider>
 
         {/* 主内容区域 */}
-        <Content style={{ padding: '24px', minHeight: 'calc(100vh - 64px)' }}>
+        <Content style={{ padding: '0' }}>
           {children}
-          {/* <Outlet /> */}
         </Content>
       </Layout>
     </div>

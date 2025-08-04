@@ -18,7 +18,6 @@ import {
   EyeOutlined,
   SearchOutlined,
 } from '@ant-design/icons';
-import MerchantLayout from './MerchantLayout';
 
 const { Title } = Typography;
 const { Search } = Input;
@@ -197,17 +196,16 @@ const Merchant = () => {
   };
 
   return (
-    <MerchantLayout>
-      <div style={{ padding: '24px' }}>
-        <Card>
-          <div style={{ marginBottom: '16px' }}>
-            <Title level={3} style={{ margin: 0 }}>
-              商家管理
-            </Title>
-            <p style={{ color: '#666', margin: '8px 0 0 0' }}>
-              管理平台所有商家信息
-            </p>
-          </div>
+    <div style={{ padding: '24px' }}>
+      <Card>
+        <div style={{ marginBottom: '16px' }}>
+          <Title level={3} style={{ margin: 0 }}>
+            商家管理
+          </Title>
+          <p style={{ color: '#666', margin: '8px 0 0 0' }}>
+            管理平台所有商家信息
+          </p>
+        </div>
 
           {/* 搜索和操作区域 */}
           <div
@@ -268,7 +266,6 @@ const Merchant = () => {
           />
         </Card>
       </div>
-    </MerchantLayout>
   );
 };
 

@@ -9,11 +9,6 @@ import {
   Tag,
   Button,
   Space,
-  Form,
-  Input,
-  Select,
-  DatePicker,
-  InputNumber,
 } from 'antd';
 import {
   ImportOutlined,
@@ -21,9 +16,9 @@ import {
   CheckCircleOutlined,
   ClockCircleOutlined,
 } from '@ant-design/icons';
+import GoodsLayout from '../../Goods_Layout/Goods_Layout';
 
 const { Title } = Typography;
-const { Option } = Select;
 
 export default function StockIn() {
   // 模拟入库数据
@@ -142,11 +137,12 @@ export default function StockIn() {
   );
 
   return (
-    <div className="StockIn">
-      <Title level={2} style={{ marginBottom: '24px' }}>
-        <ImportOutlined style={{ marginRight: '8px' }} />
-        入库管理
-      </Title>
+    <GoodsLayout>
+      <div className="StockIn" style={{ padding: '24px' }}>
+        <Title level={2} style={{ marginBottom: '24px' }}>
+          <ImportOutlined style={{ marginRight: '8px' }} />
+          入库管理
+        </Title>
 
       <Row gutter={16} style={{ marginBottom: '24px' }}>
         <Col span={6}>
@@ -211,6 +207,7 @@ export default function StockIn() {
           }}
         />
       </Card>
-    </div>
+      </div>
+    </GoodsLayout>
   );
 }

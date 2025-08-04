@@ -120,7 +120,7 @@ export default function ProductCategory() {
 
   return (
     <GoodsLayout>
-      <div className="ProductCategory">
+      <div className="ProductCategory" style={{ padding: '24px' }}>
         <Title level={2} style={{ marginBottom: '24px' }}>
           <AppstoreOutlined style={{ marginRight: '8px' }} />
           商品分类

@@ -145,7 +145,6 @@ const constantRoutes = [
         menuPath: '/goods',
         children: [
           { index: true, element: <Navigate to={'/goods/product-list'} replace /> },
-
           {
             path: 'product-list',
             title: '商品列表',

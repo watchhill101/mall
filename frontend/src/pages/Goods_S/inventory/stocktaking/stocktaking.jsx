@@ -18,6 +18,7 @@ import {
   ClockCircleOutlined,
   ExclamationCircleOutlined,
 } from '@ant-design/icons';
+import GoodsLayout from '../../Goods_Layout/Goods_Layout';
 
 const { Title } = Typography;
 
@@ -183,11 +184,12 @@ export default function Stocktake() {
   );
 
   return (
-    <div className="Stocktake">
-      <Title level={2} style={{ marginBottom: '24px' }}>
-        <CheckSquareOutlined style={{ marginRight: '8px' }} />
-        库存盘点
-      </Title>
+    <GoodsLayout>
+      <div className="Stocktake" style={{ padding: '24px' }}>
+        <Title level={2} style={{ marginBottom: '24px' }}>
+          <CheckSquareOutlined style={{ marginRight: '8px' }} />
+          库存盘点
+        </Title>
 
       <Row gutter={16} style={{ marginBottom: '24px' }}>
         <Col span={6}>
@@ -252,6 +254,7 @@ export default function Stocktake() {
           }}
         />
       </Card>
-    </div>
+      </div>
+    </GoodsLayout>
   );
 }

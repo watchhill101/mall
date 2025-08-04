@@ -18,6 +18,7 @@ import {
   ExportOutlined,
   SearchOutlined,
 } from '@ant-design/icons';
+import GoodsLayout from '../../Goods_Layout/Goods_Layout';
 
 const { Title } = Typography;
 const { RangePicker } = DatePicker;
@@ -173,11 +174,12 @@ export default function StockDetails() {
     .reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <div className="StockDetails">
-      <Title level={2} style={{ marginBottom: '24px' }}>
-        <FileTextOutlined style={{ marginRight: '8px' }} />
-        出入库明细
-      </Title>
+    <GoodsLayout>
+      <div className="StockDetails" style={{ padding: '24px' }}>
+        <Title level={2} style={{ marginBottom: '24px' }}>
+          <FileTextOutlined style={{ marginRight: '8px' }} />
+          出入库明细
+        </Title>
 
       <Row gutter={16} style={{ marginBottom: '24px' }}>
         <Col span={6}>
@@ -251,6 +253,7 @@ export default function StockDetails() {
           }}
         />
       </Card>
-    </div>
+      </div>
+    </GoodsLayout>
   );
 }

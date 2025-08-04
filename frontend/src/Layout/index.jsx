@@ -84,6 +84,18 @@ const LayoutApp = () => {
     if (pathname.startsWith('/shops')) {
       return '/shops';
     }
+    // 处理嵌套路由：如果是商品子路由，选中商品主菜单
+    if (pathname.startsWith('/goods')) {
+      return '/goods';
+    }
+    // 处理嵌套路由：如果是订单子路由，选中订单主菜单
+    if (pathname.startsWith('/orders')) {
+      return '/orders';
+    }
+    // 处理嵌套路由：如果是用户子路由，选中用户主菜单
+    if (pathname.startsWith('/users')) {
+      return '/users';
+    }
     return pathname;
   }, [pathname]);
   const menuItems = useMemo(() => {

@@ -17,6 +17,7 @@ import {
   ShoppingCartOutlined,
   ExclamationCircleOutlined,
 } from '@ant-design/icons';
+import GoodsLayout from '../Goods_Layout/Goods_Layout';
 
 const { Title } = Typography;
 
@@ -148,11 +149,12 @@ export default function Trash() {
   ).length;
 
   return (
-    <div className="Trash">
-      <Title level={2} style={{ marginBottom: '24px' }}>
-        <DeleteOutlined style={{ marginRight: '8px' }} />
-        回收站
-      </Title>
+    <GoodsLayout>
+      <div className="Trash" style={{ padding: '24px' }}>
+        <Title level={2} style={{ marginBottom: '24px' }}>
+          <DeleteOutlined style={{ marginRight: '8px' }} />
+          回收站
+        </Title>
 
       <Row gutter={16} style={{ marginBottom: '24px' }}>
         <Col span={6}>
@@ -222,6 +224,7 @@ export default function Trash() {
           }}
         />
       </Card>
-    </div>
+      </div>
+    </GoodsLayout>
   );
 }

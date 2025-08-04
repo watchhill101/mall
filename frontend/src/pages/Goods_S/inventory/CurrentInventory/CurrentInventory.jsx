@@ -14,8 +14,8 @@ import {
   InboxOutlined,
   CheckSquareOutlined,
   WarningOutlined,
-  ExclamationCircleOutlined,
 } from '@ant-design/icons';
+import GoodsLayout from '../../Goods_Layout/Goods_Layout';
 
 const { Title } = Typography;
 
@@ -145,11 +145,12 @@ export default function CurrentInventory() {
   );
 
   return (
-    <div className="CurrentInventory">
-      <Title level={2} style={{ marginBottom: '24px' }}>
-        <CheckSquareOutlined style={{ marginRight: '8px' }} />
-        当前库存
-      </Title>
+    <GoodsLayout>
+      <div className="CurrentInventory" style={{ padding: '24px' }}>
+        <Title level={2} style={{ marginBottom: '24px' }}>
+          <CheckSquareOutlined style={{ marginRight: '8px' }} />
+          当前库存
+        </Title>
 
       <Row gutter={16} style={{ marginBottom: '24px' }}>
         <Col span={6}>
@@ -215,6 +216,7 @@ export default function CurrentInventory() {
           }}
         />
       </Card>
-    </div>
+      </div>
+    </GoodsLayout>
   );
 }
