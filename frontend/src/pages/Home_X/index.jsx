@@ -5,6 +5,35 @@ import { Button } from 'antd'
 import Dashboard from './Dashboard'
 import './Dashboard.scss'
 
+// 数字滚动动画组件
+const AnimatedNumber = ({ targetValue, duration = 2000, formatter = (val) => val }) => {
+  const [currentValue, setCurrentValue] = useState(0)
+
+  React.useEffect(() => {
+    let start = 0
+    const startTime = Date.now()
+    
+    const animate = () => {
+      const elapsedTime = Date.now() - startTime
+      const progress = Math.min(elapsedTime / duration, 1)
+      
+      // 使用缓动函数让动画更自然
+      const easeOutExpo = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress)
+      const current = start + (targetValue - start) * easeOutExpo
+      
+      setCurrentValue(current)
+      
+      if (progress < 1) {
+        requestAnimationFrame(animate)
+      }
+    }
+    
+    requestAnimationFrame(animate)
+  }, [targetValue, duration])
+
+  return formatter(currentValue)
+}
+
 // 销售总额圆环图组件
 const SalesOverviewChart = ({ visible, onClose }) => {
   const [isVisible, setIsVisible] = useState(visible)
@@ -35,76 +64,26 @@ const SalesOverviewChart = ({ visible, onClose }) => {
         fontSize: 12
       }
     },
-    title: [
-      {
-        text: '2,545,124.24元',
-        subtext: '销售总额',
-        left: '70%',
-        top: '18%',
-        textAlign: 'center',
-        textStyle: {
-          color: '#fff',
-          fontSize: 18,
-          fontWeight: 'bold',
-          fontFamily: 'Arial, sans-serif'
-        },
-        subtextStyle: {
-          color: 'rgba(255, 255, 255, 0.7)',
-          fontSize: 12,
-          fontWeight: 'normal'
-        }
-      },
-      {
-        text: '23.5%',
-        subtext: '同比增长',
-        left: '70%',
-        top: '45%',
-        textAlign: 'center',
-        textStyle: {
-          color: '#52c41a',
-          fontSize: 14,
-          fontWeight: 'bold'
-        },
-        subtextStyle: {
-          color: 'rgba(255, 255, 255, 0.6)',
-          fontSize: 10
-        }
-      },
-      {
-        text: '1,286',
-        subtext: '活跃商户',
-        left: '70%',
-        top: '65%',
-        textAlign: 'center',
-        textStyle: {
-          color: '#1890ff',
-          fontSize: 14,
-          fontWeight: 'bold'
-        },
-        subtextStyle: {
-          color: 'rgba(255, 255, 255, 0.6)',
-          fontSize: 10
-        }
-      }
-    ],
+    title: [],
     legend: {
       orient: 'horizontal',
-      bottom: '3%',
+      bottom: '2%',
       left: 'center',
       textStyle: {
         color: 'rgba(255, 255, 255, 0.9)',
-        fontSize: 9
+        fontSize: 8
       },
-      itemWidth: 6,
-      itemHeight: 6,
-      itemGap: 10
+      itemWidth: 5,
+      itemHeight: 5,
+      itemGap: 6,
+      width: '90%'
     },
     series: [
       {
         name: '业务占比',
         type: 'pie',
-        radius: ['30%', '50%'],
-        center: ['30%', '42%'],
+        radius: ['28%', '48%'],
+        center: ['30%', '40%'],
         avoidLabelOverlap: false,
         animationType: 'scale',
         animationEasing: 'elasticOut',
@@ -158,11 +137,13 @@ const SalesOverviewChart = ({ visible, onClose }) => {
           }
         },
         data: [
-          { value: 23.5, name: '业务1', itemStyle: { color: '#1890ff' } },
-          { value: 19.8, name: '业务2', itemStyle: { color: '#13c2c2' } },
-          { value: 18.7, name: '业务3', itemStyle: { color: '#52c41a' } },
-          { value: 20.2, name: '业务4', itemStyle: { color: '#faad14' } },
-          { value: 17.8, name: '业务5', itemStyle: { color: '#f759ab' } }
+          { value: 16.8, name: '西北地区', itemStyle: { color: '#1890ff' } },
+          { value: 15.2, name: '华北地区', itemStyle: { color: '#13c2c2' } },
+          { value: 12.7, name: '东北地区', itemStyle: { color: '#52c41a' } },
+          { value: 18.3, name: '华东地区', itemStyle: { color: '#faad14' } },
+          { value: 14.5, name: '华中地区', itemStyle: { color: '#f759ab' } },
+          { value: 13.9, name: '华南地区', itemStyle: { color: '#fa8c16' } },
+          { value: 8.6, name: '西南地区', itemStyle: { color: '#722ed1' } }
         ]
       }
     ]
@@ -173,9 +154,9 @@ const SalesOverviewChart = ({ visible, onClose }) => {
               position: 'fixed',
               top: '210px',
               left: '260px',
-              zIndex: 1000,
-              width: '320px',
-      height: '230px',
+                    zIndex: 1000,
+      width: '320px',
+      height: '220px',
       backgroundColor: 'rgba(0, 0, 0, 0.85)',
       borderRadius: '8px',
       padding: '10px',
@@ -187,7 +168,7 @@ const SalesOverviewChart = ({ visible, onClose }) => {
       transform: visible ? 'translateY(0) scale(1)' : 'translateY(-10px) scale(0.95)',
       transition: 'all 0.3s ease-in-out'
     }}>
-      {/* 关闭按钮 */}
+            {/* 关闭按钮 */}
       <CloseOutlined 
         onClick={onClose}
         style={{
@@ -219,8 +200,41 @@ const SalesOverviewChart = ({ visible, onClose }) => {
           e.target.style.transform = 'scale(1)'
         }}
       />
+
+      {/* 动画销售总额 */}
+      <div style={{
+        position: 'absolute',
+        left: '70%',
+        top: '35%',
+        transform: 'translateX(-50%)',
+        textAlign: 'center',
+        zIndex: 10
+      }}>
+        <div style={{
+          color: '#fff',
+          fontSize: '20px',
+          fontWeight: 'bold',
+          fontFamily: 'Arial, sans-serif',
+          marginBottom: '4px'
+        }}>
+          <AnimatedNumber 
+            targetValue={2545124.24} 
+            duration={600000}
+            formatter={(val) => `${val.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}元`}
+          />
+        </div>
+        <div style={{
+          color: 'rgba(255, 255, 255, 0.7)',
+          fontSize: '13px',
+          fontWeight: 'normal'
+        }}>
+          销售总额
+        </div>
+      </div>
+
+
       
-              <ReactECharts 
+      <ReactECharts 
           option={chartOption}
           style={{ 
             height: '100%', 
@@ -292,7 +306,7 @@ const Home = () => {
             e.target.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.3)'
           }}
         >
-          显示销售数据统计
+          显示地区销售统计
         </Button>
       )}
     </div>

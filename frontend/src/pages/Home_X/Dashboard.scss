@@ -42,7 +42,7 @@
       transition: all 0.2s ease;
       
       &:hover {
-        backgroundColor: rgba(255, 255, 255, 0.3) !important;
+        background-color: rgba(255, 255, 255, 0.3) !important;
         transform: scale(1.1);
       }
     }
@@ -51,20 +51,20 @@
     @media (max-width: 1200px) {
       left: 30px !important;
       width: 280px !important;
-      height: 200px !important;
+      height: 190px !important;
       top: 190px !important;
     }
 
     @media (max-width: 768px) {
       width: 260px !important;
-      height: 180px !important;
+      height: 170px !important;
       top: 170px !important;
       left: 20px !important;
     }
 
     @media (max-width: 480px) {
       width: 220px !important;
-      height: 160px !important;
+      height: 150px !important;
       top: 150px !important;
       left: 10px !important;
     }
