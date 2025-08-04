@@ -1,64 +1,124 @@
 import React from 'react'
-import { Card, Typography, Row, Col, Statistic } from 'antd'
-import { ShopOutlined, ShoppingCartOutlined, DollarOutlined, UserOutlined } from '@ant-design/icons'
+import { Typography } from 'antd'
+import {
+  TeamOutlined,
+  UserOutlined,
+  BankOutlined,
+  FileTextOutlined,
+  MoneyCollectOutlined,
+  CalculatorOutlined,
+  FileOutlined,
+  AuditOutlined,
+  DesktopOutlined
+} from '@ant-design/icons'
+import { useNavigate } from 'react-router-dom'
+import MerchantLayout from '../Merchant/MerchantLayout'
 
 const { Title } = Typography
 
 const Shops = () => {
+  const navigate = useNavigate()
+
+  // 快捷入口菜单项
+  const menuItems = [
+    {
+      key: '/shops/merchants',
+      icon: <TeamOutlined />,
+      label: '商家管理',
+    },
+    {
+      key: '/shops/merchant-account',
+      icon: <UserOutlined />,
+      label: '商家账号',
+    },
+    {
+      key: '/shops/withdraw-account',
+      icon: <BankOutlined />,
+      label: '提现账号',
+    },
+    {
+      key: '/shops/account-detail',
+      icon: <FileTextOutlined />,
+      label: '账户明细',
+    },
+    {
+      key: '/shops/merchant-withdraw',
+      icon: <MoneyCollectOutlined />,
+      label: '商家提现',
+    },
+    {
+      key: '/shops/settlement-order',
+      icon: <CalculatorOutlined />,
+      label: '结算订单',
+    },
+    {
+      key: '/shops/settlement-bill',
+      icon: <FileOutlined />,
+      label: '结账单',
+    },
+    {
+      key: '/shops/merchant-application',
+      icon: <AuditOutlined />,
+      label: '商家申请',
+    },
+    {
+      key: '/shops/device-management',
+      icon: <DesktopOutlined />,
+      label: '设备管理',
+    }
+  ]
+
   return (
-    <div style={{ padding: '24px', background: '#f0f2f5', minHeight: 'calc(100vh - 64px)' }}>
-      <Card>
-        <div style={{ textAlign: 'center', padding: '20px', marginBottom: '24px' }}>
-          <ShopOutlined style={{ fontSize: '48px', color: '#1890ff', marginBottom: '16px' }} />
-          <Title level={2}>商城管理</Title>
-          <p style={{ color: '#666', fontSize: '16px' }}>这里是商城管理页面</p>
+    <MerchantLayout>
+      <div style={{ padding: '24px' }}>
+        <div>
+          <div style={{ textAlign: 'center', padding: '40px', marginBottom: '24px' }}>
+            <div style={{ fontSize: '48px', color: '#1890ff', marginBottom: '16px' }}>🏪</div>
+            <Typography.Title level={2}>商家管理中心</Typography.Title>
+            <p style={{ color: '#666', fontSize: '16px' }}>请从左侧菜单选择要管理的功能模块，或点击下方快捷入口</p>
+          </div>
+
+          {/* 快捷入口卡片 */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '16px',
+            maxWidth: '800px',
+            margin: '0 auto'
+          }}>
+            {menuItems.map((item) => (
+              <div
+                key={item.key}
+                style={{
+                  background: '#fff',
+                  border: '1px solid #f0f0f0',
+                  borderRadius: '8px',
+                  padding: '20px',
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                }}
+                onClick={() => navigate(item.key)}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)'
+                  e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.15)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)'
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)'
+                }}
+              >
+                <div style={{ fontSize: '24px', marginBottom: '8px', color: '#1890ff' }}>
+                  {item.icon}
+                </div>
+                <div style={{ fontWeight: 'bold' }}>{item.label}</div>
+              </div>
+            ))}
+          </div>
         </div>
-        
-        {/* 统计卡片 */}
-        <Row gutter={16}>
-          <Col span={6}>
-            <Card>
-              <Statistic
-                title="商品总数"
-                value={1234}
-                prefix={<ShopOutlined />}
-                valueStyle={{ color: '#3f8600' }}
-              />
-            </Card>
-          </Col>
-          <Col span={6}>
-            <Card>
-              <Statistic
-                title="订单总数"
-                value={567}
-                prefix={<ShoppingCartOutlined />}
-                valueStyle={{ color: '#cf1322' }}
-              />
-            </Card>
-          </Col>
-          <Col span={6}>
-            <Card>
-              <Statistic
-                title="销售额"
-                value={89012}
-                prefix={<DollarOutlined />}
-                valueStyle={{ color: '#1890ff' }}
-              />
-            </Card>
-          </Col>
-          <Col span={6}>
-            <Card>
-              <Statistic
-                title="用户总数"
-                value={3456}
-                prefix={<UserOutlined />}
-                valueStyle={{ color: '#722ed1' }}
-              />
-            </Card>
-          </Col>
-        </Row>
-      </Card>
-    </div>
+      </div>
+    </MerchantLayout>
   )
 }
 

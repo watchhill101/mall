@@ -5,23 +5,19 @@ const Layout = lazy(() => import('@/Layout'))
 const Home = lazy(() => import('@/pages/Home'))
 const Shops = lazy(() => import('@/pages/Shops'))
 const Goods = lazy(() => import('@/pages/Goods'))
-const ListOfCommodities = lazy(() => import('@/pages/Goods_S/ListOfCommodities'));
-const ClassificationOfCommodities = lazy(() => import('@/pages/Goods_S/Classification of Commodities'));
-const Inventory = lazy(() => import('@/pages/Goods_S/inventory'))
-const CurrentInventory = lazy(() => import('@/pages/Goods_S/inventory/CurrentInventory/CurrentInventory'))
-const EnterTheWarehouse = lazy(() => import("@/pages/Goods_S/inventory/enterTheWarehouse/enterTheWarehouse"))
-const ExWarehouse = lazy(() => import("@/pages/Goods_S/inventory/exWarehouse/exWarehouse"))
-const Stocktaking = lazy(() => import("@/pages/Goods_S/inventory/stocktaking/stocktaking"))
-const DetailsOfStockInAndstockOut = lazy(() => import("@/pages/Goods_S/inventory/DetailsOfStockInAndstockOut/DetailsOfStockInAndstockOut"))
-const Price = lazy(() => import("@/pages/Goods_S/price"))
 const Orders = lazy(() => import('@/pages/Orders'))
-const OrdersS = lazy(() => import('@/pages/order_S/Orders'))
-const AfterSales = lazy(() => import('@/pages/order_S/afterSales'))
-const TallySheet = lazy(() => import('@/pages/order_S/tallySheet'))
-const SortingList = lazy(() => import('@/pages/order_S/sortingList'))
 const Users = lazy(() => import('@/pages/Users'))
 const Login = lazy(() => import('@/pages/Login'))
 const NotFound = lazy(() => import('@/pages/NotFound'))
+const Merchants = lazy(() => import('@/pages/Merchant/Merchant'))
+const MerchantAccount = lazy(() => import('@/pages/Merchant/MerchantAccount'))
+const WithdrawAccount = lazy(() => import('@/pages/Merchant/WithdrawAccount'))
+const AccountDetail = lazy(() => import('@/pages/Merchant/AccountDetail'))
+const MerchantWithdraw = lazy(() => import('@/pages/Merchant/MerchantWithdraw'))
+const SettlementOrder = lazy(() => import('@/pages/Merchant/SettlementOrder'))
+const SettlementBill = lazy(() => import('@/pages/Merchant/SettlementBill'))
+const MerchantApplication = lazy(() => import('@/pages/Merchant/MerchantApplication'))
+const DeviceManagement = lazy(() => import('@/pages/Merchant/DeviceManagement'))
 
 const constantRoutes = [
   { path: '/login', title: '登录', element: <Login /> },
@@ -46,67 +42,90 @@ const constantRoutes = [
         element: <Shops />,
         hidden: false,
         icon: 'ShopOutlined',    // 使用存在的图标
-        menuPath: '/shops'
+        menuPath: '/shops',
+        children: [
+          { index: true, element: <Navigate to={'/shops/merchants'} replace /> },
+          {
+            path: 'merchants',
+            title: '商家管理',
+            element: <Merchants />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/shops/merchants'
+          },
+          {
+            path: 'merchant-account',
+            title: '商家账号',
+            element: <MerchantAccount />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/shops/merchant-account'
+          },
+          {
+            path: 'withdraw-account',
+            title: '提现账号',
+            element: <WithdrawAccount />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/shops/withdraw-account'
+          },
+          {
+            path: 'account-detail',
+            title: '账户明细',
+            element: <AccountDetail />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/shops/account-detail'
+          },
+          {
+            path: 'merchant-withdraw',
+            title: '商家提现',
+            element: <MerchantWithdraw />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/shops/merchant-withdraw'
+          },
+          {
+            path: 'settlement-order',
+            title: '结算订单',
+            element: <SettlementOrder />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/shops/settlement-order'
+          },
+          {
+            path: 'settlement-bill',
+            title: '结账单',
+            element: <SettlementBill />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/shops/settlement-bill'
+          },
+          {
+            path: 'merchant-application',
+            title: '商家申请',
+            element: <MerchantApplication />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/shops/merchant-application'
+          },
+          {
+            path: 'device-management',
+            title: '设备管理',
+            element: <DeviceManagement />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/shops/device-management'
+          }
+        ]
       },
       {
         path: 'goods',
         title: '商品',
-        element: <Goods></Goods>,
+        element: <Goods />,
         hidden: false,
         icon: 'GoodsOutlined',    // 商品图标
-        menuPath: '/goods',
-        children: [
-          { index: true, element: <Navigate to={'/goods/ListOfCommodities'} replace /> },
-          {
-            path: "/goods/ListOfCommodities",
-            title: "商品列表",
-            element: <ListOfCommodities />,
-          },
-          {
-            path: "/goods/ClassificationOfCommodities",
-            title: "商品分类",
-            element: <ClassificationOfCommodities />,
-          },
-          {
-            path: "/goods/inventory",
-            title: "库存管理",
-            element: <Inventory />,
-            children: [
-              {
-                path: "/goods/inventory/CurrentInventory",
-                title: "当前库存",
-                element: <CurrentInventory></CurrentInventory>
-              },
-              {
-                path: "/goods/inventory/enterTheWarehouse",
-                title: "入库",
-                element: <EnterTheWarehouse></EnterTheWarehouse>
-              },
-              {
-                path: "/goods/inventory/exWarehouse",
-                title: "出库",
-                element: <ExWarehouse></ExWarehouse>
-              },
-              {
-                path: "/goods/inventory/Stocktaking",
-                title: "盘点",
-                element: <Stocktaking></Stocktaking>
-              },
-              {
-                path: "/goods/inventory/DetailsOfStockInAndStockOut",
-                title: "出入库明细",
-                element: <DetailsOfStockInAndstockOut></DetailsOfStockInAndstockOut>
-              },
-
-            ]
-          },
-          {
-            path: "/goods/price",
-            title: "价格管理",
-            element: <Price />,
-          }
-        ]
-
+        menuPath: '/goods'
       },
       {
         path: 'orders',
@@ -114,30 +133,7 @@ const constantRoutes = [
         element: <Orders />,
         hidden: false,
         icon: 'OrdersOutlined',    // 订单图标
-        menuPath: '/orders',
-        children: [
-          { index: true, element: <Navigate to={'/orders/list'} replace /> },
-          {
-            path: '/orders/list',
-            title: '订单',
-            element: <OrdersS />,
-          },
-          {
-            path: "/orders/afterSales",
-            title: "售后",
-            element: <AfterSales />,
-          },
-          {
-            path: "/orders/tallySheet",
-            title: "理货单",
-            element: <TallySheet />,
-          },
-          {
-            path: "/orders/sortingList",
-            title: "分拣单",
-            element: <SortingList />,
-          }
-        ]
+        menuPath: '/orders'
       },
       {
         path: 'users',
