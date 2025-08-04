@@ -26,6 +26,8 @@ import {
   DownloadOutlined,
   FileExcelOutlined
 } from '@ant-design/icons'
+import * as XLSX from 'xlsx'
+import dayjs from 'dayjs'
 import MerchantLayout from './MerchantLayout'
 
 const { Title } = Typography
@@ -40,9 +42,12 @@ const SettlementOrder = () => {
   const [searchParams, setSearchParams] = useState({})
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 10,
+    pageSize: 2,
     total: 0
   })
+
+  // 时间类型选择状态
+  const [selectedTimeType, setSelectedTimeType] = useState('')
 
   // 详情模态框相关状态
   const [detailModalVisible, setDetailModalVisible] = useState(false)
@@ -145,6 +150,14 @@ const SettlementOrder = () => {
     setPagination(prev => ({ ...prev, total: mockSettlementOrderData.length }))
   }, [])
 
+  // 监听表单时间类型变化
+  useEffect(() => {
+    const timeType = form.getFieldValue('timeType')
+    if (timeType !== selectedTimeType) {
+      setSelectedTimeType(timeType || '')
+    }
+  }, [form, selectedTimeType])
+
   // 筛选数据
   const filterData = (data, params) => {
     return data.filter(item => {
@@ -173,31 +186,29 @@ const SettlementOrder = () => {
         return false
       }
 
-      // 按支付时间范围筛选
-      if (params.paymentTime && params.paymentTime.length === 2) {
-        const [startDate, endDate] = params.paymentTime
-        const itemDate = new Date(item.paymentTime)
+      // 按日期筛选（根据选择的时间类型）
+      if (params.timeType && params.selectedDate) {
+        const selectedDateStr = params.selectedDate.format('YYYY-MM-DD')
 
-        if (startDate && itemDate < startDate.toDate()) {
-          return false
-        }
-
-        if (endDate && itemDate > endDate.toDate()) {
-          return false
-        }
-      }
-
-      // 按结算时间范围筛选
-      if (params.settlementTime && params.settlementTime.length === 2) {
-        const [startDate, endDate] = params.settlementTime
-        if (item.settlementTime) {
-          const itemDate = new Date(item.settlementTime)
-
-          if (startDate && itemDate < startDate.toDate()) {
-            return false
+        if (params.timeType === 'paymentTime') {
+          // 按支付日期筛选
+          if (item.paymentTime) {
+            const itemDateStr = item.paymentTime.split(' ')[0] // 提取日期部分
+            if (itemDateStr !== selectedDateStr) {
+              return false
+            }
+          } else {
+            return false // 没有支付时间的记录排除
           }
-
-          if (endDate && itemDate > endDate.toDate()) {
+        } else if (params.timeType === 'settlementTime') {
+          // 按结算日期筛选
+          if (item.settlementTime && item.settlementTime.trim() !== '') {
+            const itemDateStr = item.settlementTime.split(' ')[0] // 提取日期部分
+            if (itemDateStr !== selectedDateStr) {
+              return false
+            }
+          } else {
+            // 如果选择结算时间筛选，但该条记录没有结算时间，则排除
             return false
           }
         }
@@ -225,6 +236,7 @@ const SettlementOrder = () => {
   const handleReset = () => {
     form.resetFields()
     setSearchParams({})
+    setSelectedTimeType('')
     setFilteredData(allData)
     setPagination(prev => ({ ...prev, current: 1, total: allData.length }))
   }
@@ -240,8 +252,111 @@ const SettlementOrder = () => {
 
   // 导出数据
   const handleExport = () => {
-    console.log('导出结算订单数据')
-    message.success('导出成功')
+    try {
+      // 创建工作簿
+      const workBook = XLSX.utils.book_new()
+
+      // 1. 计算统计数据
+      const statistics = allData.reduce((acc, item) => {
+        acc.totalOrders += 1
+        acc.totalAmount += item.totalPrice
+
+        if (item.settlementStatus === 'unsettled') {
+          acc.unsettledCount += 1
+          acc.unsettledAmount += item.totalPrice
+        } else if (item.settlementStatus === 'settled') {
+          acc.settledCount += 1
+          acc.settledAmount += item.totalPrice
+        } else if (item.settlementStatus === 'failed') {
+          acc.failedCount += 1
+          acc.failedAmount += item.totalPrice
+        }
+
+        return acc
+      }, {
+        totalOrders: 0,
+        totalAmount: 0,
+        unsettledCount: 0,
+        unsettledAmount: 0,
+        settledCount: 0,
+        settledAmount: 0,
+        failedCount: 0,
+        failedAmount: 0
+      })
+
+      // 创建统计数据工作表
+      const statisticsData = [
+        { '统计项目': '订单总数', '数值': statistics.totalOrders + ' 单' },
+        { '统计项目': '订单总金额', '数值': '¥' + statistics.totalAmount.toFixed(2) },
+        { '统计项目': '未结算订单数', '数值': statistics.unsettledCount + ' 单' },
+        { '统计项目': '未结算金额', '数值': '¥' + statistics.unsettledAmount.toFixed(2) },
+        { '统计项目': '已结算订单数', '数值': statistics.settledCount + ' 单' },
+        { '统计项目': '已结算金额', '数值': '¥' + statistics.settledAmount.toFixed(2) },
+        { '统计项目': '结算失败订单数', '数值': statistics.failedCount + ' 单' },
+        { '统计项目': '结算失败金额', '数值': '¥' + statistics.failedAmount.toFixed(2) }
+      ]
+
+      const statisticsSheet = XLSX.utils.json_to_sheet(statisticsData)
+      statisticsSheet['!cols'] = [
+        { wch: 20 },  // 统计项目
+        { wch: 20 }   // 数值
+      ]
+      XLSX.utils.book_append_sheet(workBook, statisticsSheet, '结算统计')
+
+      // 2. 创建详细订单数据工作表
+      const detailData = allData.map((item, index) => {
+        const statusMap = {
+          unsettled: '未结算',
+          settled: '已结算',
+          failed: '结算失败'
+        }
+
+        return {
+          '序号': index + 1,
+          '订单号': item.orderNo,
+          '商家名称': item.merchantName,
+          '所属网点': item.networkPoint,
+          '商品名称': item.productName,
+          '规格': item.specifications,
+          '供货价(元)': item.supplyPrice,
+          '数量': item.quantity,
+          '总价(元)': item.totalPrice,
+          '结算状态': statusMap[item.settlementStatus] || item.settlementStatus,
+          '支付时间': item.paymentTime,
+          '结算时间': item.settlementTime || '-'
+        }
+      })
+
+      const detailSheet = XLSX.utils.json_to_sheet(detailData)
+      detailSheet['!cols'] = [
+        { wch: 8 },   // 序号
+        { wch: 15 },  // 订单号
+        { wch: 20 },  // 商家名称
+        { wch: 20 },  // 所属网点
+        { wch: 20 },  // 商品名称
+        { wch: 15 },  // 规格
+        { wch: 12 },  // 供货价
+        { wch: 8 },   // 数量
+        { wch: 12 },  // 总价
+        { wch: 12 },  // 结算状态
+        { wch: 20 },  // 支付时间
+        { wch: 20 }   // 结算时间
+      ]
+      XLSX.utils.book_append_sheet(workBook, detailSheet, '结算订单明细')
+
+      // 3. 生成文件名
+      const now = dayjs().format('YYYY-MM-DD_HH-mm-ss')
+      const fileName = `结算订单明细_全部数据_${now}.xlsx`
+
+      // 4. 导出文件
+      XLSX.writeFile(workBook, fileName)
+
+      message.success(`成功导出Excel文件：${fileName}，包含 ${allData.length} 条订单记录`)
+
+    } catch (error) {
+      console.error('导出Excel时出错:', error)
+      message.error('导出Excel失败，请重试')
+    }
   }
 
   // 刷新数据
@@ -381,21 +496,35 @@ const SettlementOrder = () => {
               </Col>
             </Row>
             <Row gutter={16}>
-              <Col span={8}>
-                <Form.Item label="支付时间" name="paymentTime">
-                  <RangePicker
+              <Col span={6}>
+                <Form.Item label="时间类型" name="timeType">
+                  <Select
+                    placeholder="选择时间类型"
                     style={{ width: '100%' }}
-                    placeholder={['开始日期', '结束日期']}
-                    format="YYYY-MM-DD"
-                  />
+                    onChange={(value) => {
+                      setSelectedTimeType(value)
+                      // 清空日期选择
+                      form.setFieldValue('selectedDate', null)
+                    }}
+                  >
+                    <Option value="paymentTime">支付时间</Option>
+                    <Option value="settlementTime">结算时间</Option>
+                  </Select>
                 </Form.Item>
               </Col>
-              <Col span={8}>
-                <Form.Item label="结算时间" name="settlementTime">
-                  <RangePicker
+              <Col span={10}>
+                <Form.Item label="选择日期" name="selectedDate">
+                  <DatePicker
                     style={{ width: '100%' }}
-                    placeholder={['开始日期', '结束日期']}
+                    placeholder={
+                      selectedTimeType === 'paymentTime'
+                        ? '选择支付日期'
+                        : selectedTimeType === 'settlementTime'
+                          ? '选择结算日期'
+                          : '选择日期'
+                    }
                     format="YYYY-MM-DD"
+                    disabled={!selectedTimeType}
                   />
                 </Form.Item>
               </Col>
@@ -427,6 +556,12 @@ const SettlementOrder = () => {
                     >
                       重置
                     </Button>
+                    {selectedTimeType && (
+                      <span style={{ color: '#666', fontSize: '12px' }}>
+                        💡 当前按{selectedTimeType === 'paymentTime' ? '支付日期' : '结算日期'}筛选
+                        {selectedTimeType === 'settlementTime' && '（仅显示已结算的订单）'}
+                      </span>
+                    )}
                   </Space>
                 </Form.Item>
               </Col>
@@ -507,8 +642,8 @@ const SettlementOrder = () => {
                 `第 ${range[0]}-${range[1]} 条/共 ${total} 条`
               }
               onChange={handlePaginationChange}
-              pageSizeOptions={['10', '20', '50', '100']}
-              defaultPageSize={10}
+              pageSizeOptions={['2', '5', '10', '20', '50', '100']}
+              defaultPageSize={2}
             />
           </div>
         </Card>

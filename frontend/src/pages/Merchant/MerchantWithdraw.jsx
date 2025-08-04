@@ -40,7 +40,7 @@ const MerchantWithdraw = () => {
   const [searchParams, setSearchParams] = useState({})
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 10,
+    pageSize: 2,
     total: 0
   })
 
@@ -509,8 +509,8 @@ const MerchantWithdraw = () => {
                 `第 ${range[0]}-${range[1]} 条/共 ${total} 条`
               }
               onChange={handlePaginationChange}
-              pageSizeOptions={['10', '20', '50', '100']}
-              defaultPageSize={10}
+              pageSizeOptions={['2', '5', '10', '20', '50', '100']}
+              defaultPageSize={2}
             />
           </div>
         </Card>
