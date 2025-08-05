@@ -40,7 +40,10 @@ app.use(express.static(path.join(__dirname, "public")));
 
 // 添加请求日志中间件
 app.use((req, res, next) => {
-  console.log(`📥 ${req.method} ${req.path}`, req.body);
+  // 只记录重要的API请求，忽略静态资源
+  if (!req.path.startsWith('/static') && !req.path.endsWith('.ico')) {
+    console.log(`📥 ${req.method} ${req.path}`);
+  }
   next();
 });
 // 添加测试路由
@@ -52,7 +55,7 @@ app.get("/test", (req, res) => {
   });
 });
 
-// 路由配置
+// 路由
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
 app.use("/auth", authRouter);
@@ -60,7 +63,7 @@ app.use("/merchant", merchantRouter);
 app.use("/captcha", captchaRouter);
 
 // 需要认证的路由 - 使用express-jwt
-app.use("/api/protected", jwtAuth, verifyTokenType); // 需要强制验证的路由
+app.use("/merchant/list", jwtAuth, verifyTokenType); // 需要强制验证的路由
 
 // JWT错误处理中间件
 app.use(jwtErrorHandler);

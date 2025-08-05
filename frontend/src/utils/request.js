@@ -9,7 +9,7 @@ const instance = Axios.create({
   baseURL: BASE_URL,
   timeout: TIME_OUT
 })
-console.log(process.env.NODE_ENV,'获取环境变量')
+console.log(process.env.NODE_ENV, '获取环境变量')
 // 不需要token的接口白名单
 const whiteList = ['/auth/login', '/auth/refresh', '/captcha/generate', '/captcha/verify', '/captcha/refresh']
 
@@ -17,7 +17,7 @@ const whiteList = ['/auth/login', '/auth/refresh', '/captcha/generate', '/captch
 instance.interceptors.request.use(
   (config) => {
     console.log('📤 发送请求:', config.method?.toUpperCase(), config.url, config.data);
-    
+
     if (config.url && typeof config.url === 'string') {
       if (!whiteList.includes(config.url)) {
         let token = getToken()
@@ -53,7 +53,7 @@ export function setResponseInterceptor(store, login, logout) {
         return response
       } else {
         console.log('📥 收到响应:', response.status, response.data);
-        
+
         // 处理后端返回的数据格式
         if (response.data && response.data.code !== undefined) {
           if (response.data.code === 200) {

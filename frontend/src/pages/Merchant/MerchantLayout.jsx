@@ -18,7 +18,6 @@ const { Title } = Typography;
 const { Sider, Content } = Layout;
 
 const MerchantLayout = ({ children }) => {
-  console.log(children);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -76,7 +75,6 @@ const MerchantLayout = ({ children }) => {
 
   // 菜单点击处理
   const handleMenuClick = ({ key }) => {
-    console.log(key);
     navigate(key);
   };
   return (

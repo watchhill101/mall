@@ -4,9 +4,35 @@ const { jwtAuth } = require('../utils/ejwt');
 const Merchant = require('../moudle/merchant/merchant');
 const mongoose = require('mongoose');
 
-// 获取商户列表（分页查询）
-router.get('/list', jwtAuth, async (req, res) => {
+// 测试接口 - 无需认证
+router.get('/test', async (req, res) => {
   try {
+    console.log('🧪 测试merchant接口被调用');
+    const count = await Merchant.countDocuments();
+    res.json({
+      code: 200,
+      message: 'Merchant API 正常运行',
+      data: {
+        merchantCount: count,
+        timestamp: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('❌ 测试接口错误:', error);
+    res.status(500).json({
+      code: 500,
+      message: '测试接口错误: ' + error.message,
+      data: null
+    });
+  }
+});
+
+// 获取商户列表（分页查询） - 临时移除JWT认证用于调试
+router.get('/list', async (req, res) => {
+  console.log('📋 获取商户列表请求:', req.query);
+  try {
+
+
     const {
       page = 1,
       pageSize = 10,
@@ -34,19 +60,24 @@ router.get('/list', jwtAuth, async (req, res) => {
       query.merchantType = merchantType;
     }
 
+    console.log('🔍 查询条件:', query);
+
     // 计算跳过的文档数
     const skip = (parseInt(page) - 1) * parseInt(pageSize);
 
-    // 执行分页查询
+    // 执行分页查询 - 修复populate引用
     const [merchants, total] = await Promise.all([
       Merchant.find(query)
         .populate('personInCharge', 'name phone email')
-        .populate('role', 'name permissions')
+        .populate('role', 'name')
         .skip(skip)
         .limit(parseInt(pageSize))
-        .sort({ createdAt: -1 }),
+        .sort({ createdAt: -1 })
+        .lean(), // 添加lean()提高性能
       Merchant.countDocuments(query)
     ]);
+
+    console.log(`📊 查询结果: 找到 ${merchants.length} 条商户记录，总计 ${total} 条`);
 
     res.json({
       code: 200,
@@ -62,11 +93,18 @@ router.get('/list', jwtAuth, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('获取商户列表失败:', error);
+    console.error('❌ 获取商户列表失败:', error);
+    console.error('错误详情:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+
     res.status(500).json({
       code: 500,
-      message: '获取商户列表失败',
-      data: null
+      message: '获取商户列表失败: ' + error.message,
+      data: null,
+      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });
