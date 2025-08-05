@@ -57,7 +57,7 @@ const merchantSchema = new mongoose.Schema(
 
 // 添加索引优化查询性能
 merchantSchema.index({ name: 1 });
-merchantSchema.index({ phone: 1 });
+// merchantSchema.index({ phone: 1 }); // 移除重复索引，phone 已经通过 unique: true 自动创建
 merchantSchema.index({ status: 1 });
 merchantSchema.index({ merchantType: 1 });
 

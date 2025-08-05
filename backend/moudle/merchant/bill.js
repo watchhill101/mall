@@ -70,7 +70,7 @@ const billSchema = new mongoose.Schema(
 // 添加索引
 billSchema.index({ merchant: 1 });
 billSchema.index({ status: 1 });
-billSchema.index({ billNumber: 1 });
+// billSchema.index({ billNumber: 1 }); // 移除重复索引，billNumber 已经通过 unique: true 自动创建
 billSchema.index({ billPeriodStart: 1, billPeriodEnd: 1 });
 billSchema.index({ createdAt: -1 });
 

@@ -88,7 +88,7 @@ merchantApplicationSchema.index({ merchant: 1 });
 merchantApplicationSchema.index({ personInCharge: 1 });
 merchantApplicationSchema.index({ status: 1 });
 merchantApplicationSchema.index({ applicationType: 1 });
-merchantApplicationSchema.index({ applicationNumber: 1 });
+// merchantApplicationSchema.index({ applicationNumber: 1 }); // 移除重复索引，applicationNumber 已经通过 unique: true 自动创建
 merchantApplicationSchema.index({ applicationTime: -1 });
 
 const MerchantApplication = mongoose.model("MerchantApplication", merchantApplicationSchema, "merchantApplication");

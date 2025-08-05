@@ -133,7 +133,7 @@ const productSchema = new mongoose.Schema(
 );
 
 // 索引
-productSchema.index({ productId: 1 });
+// productSchema.index({ productId: 1 }); // 移除重复索引，productId 已经通过 unique: true 自动创建
 productSchema.index({ merchant: 1 });
 productSchema.index({ productCategory: 1 });
 productSchema.index({ status: 1 });

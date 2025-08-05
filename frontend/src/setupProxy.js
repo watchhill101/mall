@@ -1,15 +1,20 @@
 const { createProxyMiddleware } = require('http-proxy-middleware')
-const path = require('path')
+
 module.exports = function (app) {
   app.use(
     '/api',
     createProxyMiddleware({
-      target: 'http://127.0.0.1:9999', // 后台服务地址以及端口号
+      target: 'http://localhost:3001', // 后台服务地址以及端口号
       changeOrigin: true, // 是否开启代理
-      // pathRewrite: {
-      //   '/api': '' // 代理前缀重写
-      // }
-      pathRewrite: (path) => path.replace(/^\/api/, '')
+      pathRewrite: {
+        '^/api': '' // 将 /api 前缀移除，直接转发到后端
+      },
+      onError: (err, req, res) => {
+        console.error('代理错误:', err)
+      },
+      onProxyReq: (proxyReq, req, res) => {
+        console.log('代理请求:', req.method, req.url, '->', proxyReq.path)
+      }
     })
   )
 }

@@ -1,12 +1,22 @@
-import React from 'react'
-import './SvgIcon.scss'
+import React from "react";
+import "./SvgIcon.scss";
 
-const SvgIcon = React.memo(({ width, height, name, color, className }) => {
+const SvgIcon = ({
+  name,
+  width = "1em",
+  height = "1em",
+  color = "currentColor",
+  className = "icon-svg",
+}) => {
   return (
-    <svg className={className || 'icon-svg'} aria-hidden="true" width={width} height={height}>
-      <use xlinkHref={'#icon-' + name} fill={color}></use>
+    <svg
+      className={className}
+      style={{ width, height, fill: color }}
+      aria-hidden="true"
+    >
+      <use xlinkHref={`#icon-${name}`} />
     </svg>
-  )
-})
+  );
+};
 
-export default SvgIcon
+export default SvgIcon; // ✅ 确保有默认导出

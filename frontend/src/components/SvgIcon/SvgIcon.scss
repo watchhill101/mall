@@ -3,4 +3,6 @@
   height: 1em;
   fill: currentColor;
   overflow: hidden;
+  border: 1px solid red; /* ✅ 临时添加边框，确认组件是否渲染 */
+  background: rgba(0, 255, 0, 0.1); /* ✅ 临时添加背景色 */
 }

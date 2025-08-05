@@ -31,7 +31,7 @@ const accountDetailSchema = new mongoose.Schema(
 );
 
 // 添加索引
-accountDetailSchema.index({ merchant: 1 });
+// accountDetailSchema.index({ merchant: 1 }); // 移除重复索引，merchant 已经通过 unique: true 自动创建
 
 const AccountDetail = mongoose.model("AccountDetail", accountDetailSchema, "accountDetail");
 module.exports = AccountDetail;
