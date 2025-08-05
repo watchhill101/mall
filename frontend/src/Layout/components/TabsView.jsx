@@ -169,7 +169,7 @@ const TabsView = React.memo(({ pathname, formatRoutes, selectTab }) => {
       theme={{
         components: {
           Tabs: {
-            horizontalMargin: 0
+            horizontalMargin: 3
           }
         }
       }}>
