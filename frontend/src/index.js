@@ -9,6 +9,7 @@ import '@/assets/Icon'
 import store from './store'
 import { Provider } from 'react-redux'
 import { login, logout } from './store/reducers/userSlice'
+
 // 导入axios的响应拦截器方法
 import { setResponseInterceptor } from './utils/request'
 // 设置axios的响应拦截器

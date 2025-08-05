@@ -1,124 +1,250 @@
 import React, { useState } from 'react';
-import { Outlet, Link } from 'react-router-dom';
-import Icon, { SearchOutlined } from '@ant-design/icons';
-import {
-  RefreshSvg,
-  SearchSvg,
-  clipSvg,
-  toggleSvg,
-} from '@/pages/Goods_S/icons_svg/IconCom';
 import {
   Card,
   Statistic,
   Row,
   Col,
   Typography,
-  Cascader,
+  Table,
+  Tag,
   Button,
-  Menu,
+  Space,
+  Popconfirm,
 } from 'antd';
-import { TrashData } from '@/db_S/data.mjs';
-import './index.scss';
-import SearchBar from '@/components/SearchBar';
-import { TrashColumns, TrashformItemList } from '../data/data';
-import CustomTable from '@/components/CustomTable';
-// import { refreshSvg } from './icons_svg/icon';
-import SvgIcon from '@/components/SvgIcon';
-import '../index.scss';
 import {
+  DeleteOutlined,
+  // RestoreOutlined,
   ShoppingCartOutlined,
-  DollarOutlined,
-  RiseOutlined,
-  TagOutlined,
+  ExclamationCircleOutlined,
 } from '@ant-design/icons';
 import GoodsLayout from '../Goods_Layout/Goods_Layout';
-const Trash = () => {
-  const handleSearch = () => {};
-  const fetchMethod = async (requesParams) => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    return {
-      data: {
-        count: TrashData.data.length,
-        rows: TrashData.data,
-      },
-    };
+import { TrashData, data } from '@/db_S/data.mjs';
+
+const { Title } = Typography;
+
+export default function Trash() {
+  // 模拟回收站数据
+  // const trashData = [
+  //   {
+  //     key: '1',
+  //     productId: 'P001',
+  //     productName: 'iPhone 14 Pro',
+  //     category: '电子产品',
+  //     deleteTime: '2024-01-15 10:30:00',
+  //     deleteReason: '商品下架',
+  //     operator: '张三',
+  //     status: '已删除',
+  //   },
+  //   {
+  //     key: '2',
+  //     productId: 'P002',
+  //     productName: 'MacBook Pro',
+  //     category: '电子产品',
+  //     deleteTime: '2024-01-14 16:45:00',
+  //     deleteReason: '库存不足',
+  //     operator: '李四',
+  //     status: '已删除',
+  //   },
+  //   {
+  //     key: '3',
+  //     productId: 'P003',
+  //     productName: 'Nike运动鞋',
+  //     category: '服装',
+  //     deleteTime: '2024-01-13 09:20:00',
+  //     deleteReason: '商品过期',
+  //     operator: '王五',
+  //     status: '已删除',
+  //   },
+  // ];
+
+  const TrashColumns = [
+    {
+      title: '商品ID',
+      dataIndex: 'ProductID',
+      key: 'ProductID',
+    },
+    {
+      title: '商品名称',
+      dataIndex: 'ProductName',
+      key: 'ProductName',
+      render: (text, record) => (
+        <>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <div>
+              <img
+                src={record.src}
+                alt=""
+                style={{ width: '50px', height: '50px', borderRadius: '50%' }}
+              />
+            </div>
+            <div>{text}</div>
+          </div>
+        </>
+      ),
+    },
+    {
+      title: '商品分类',
+      dataIndex: 'ProductCategory',
+      key: 'ProductCategory',
+    },
+    {
+      title: '市场售价',
+      dataIndex: 'MarketPrice',
+      key: 'MarketPrice',
+    },
+    {
+      title: '最后更新时间',
+      dataIndex: 'LastUpdateTime',
+      key: 'LastUpdateTime',
+    },
+    {
+      title: '操作',
+      dataIndex: 'operation',
+      key: 'operation',
+      render: (text, record) => (
+        <>
+          <Button type="link" onClick={() => handleRestore(record)}>
+            恢复
+          </Button>
+          <Popconfirm
+            title="确定要永久删除该商品吗？"
+            icon={<ExclamationCircleOutlined style={{ color: 'red' }} />}
+            onConfirm={() => handlePermanentDelete(record)}
+            okText="确认"
+            cancelText="取消"
+          >
+            <Button type="link">删除</Button>
+          </Popconfirm>
+        </>
+      ),
+    },
+  ];
+
+  // 处理恢复商品
+  const handleRestore = (record) => {
+    console.log('restore', record);
+    record.isDeleted = false;
+
+    const updated = recycleData.filter(
+      (item) => item.ProductID !== record.ProductID
+    );
+    setRecycleData(updated);
   };
+  const [recycleData, setRecycleData] = useState(
+    data.list.filter((item) => item.isDeleted)
+  );
   const onParamChange = () => {};
   const [params, setparams] = useState({
     pageSize: 5,
     current: 1,
   });
-  return (
-    // <GoodsLayout>
-    <div className="List">
-      <div className="searchbar">
-        <SearchBar
-          formItemList={TrashformItemList}
-          getSearchParams={handleSearch}
-        />
-      </div>
-      <div className="OperationButton">
-        <div>
-          <></>
-        </div>
-        <div className="OperationButton-right">
-          <ul>
-            <li>
-              <Button
-                // type="primary"
-                shape="circle"
-                icon={
-                  <Icon component={RefreshSvg} />
-                  // <SvgIcon
-                  //   name="refresh"
-                  //   width="16"
-                  //   height="16"
-                  //   color="#1890ff"
-                  // ></SvgIcon>
-                }
-              />
-            </li>
-            <li>
-              <Button
-                // type="primary"
-                shape="circle"
-                icon={<Icon component={SearchSvg} />}
-                // icon={
-                //   <SvgIcon
-                //     name="setting"
-                //     width="16"
-                //     height="16"
-                //     color="#1890ff"
-                //
-              />
-            </li>
-            <li>
-              <Button
-                // type="primary"
-                shape="circle"
-                icon={<Icon component={clipSvg}></Icon>}
-              />
-            </li>
-            <li>
-              <Button
-                // type="primary"
-                shape="circle"
-                icon={<Icon component={toggleSvg} />}
-              />
-            </li>
-          </ul>
-        </div>
-      </div>
-      <div className="GoodsList">
-        <CustomTable
-          columns={TrashColumns}
-          fetchMethod={fetchMethod}
-          requestParam={params}
-          // onParamsChange={setparams}
-        />
-      </div>
-    </div>
-  );
-};
+  // 处理永久删除
+  const handlePermanentDelete = (record) => {
+    console.log('永久删除商品:', record);
+    const updated = recycleData.filter(
+      (item) => item.ProductID !== record.ProductID
+    );
+    setRecycleData(updated);
+  };
+  const handleClearRecycleBin = () => {
+    console.log('清空回收站');
+    setRecycleData([]);
+  };
 
-export default Trash;
+  // 计算统计数据
+  const totalDeleted = recycleData.length;
+  const electronicsCount = recycleData.filter(
+    (item) => item.category === '电子产品'
+  ).length;
+  const clothingCount = recycleData.filter(
+    (item) => item.category === '服装'
+  ).length;
+
+  return (
+    <GoodsLayout>
+      <div className="Trash" style={{ padding: '24px' }}>
+        <Title level={2} style={{ marginBottom: '24px' }}>
+          <DeleteOutlined style={{ marginRight: '8px' }} />
+          回收站
+        </Title>
+
+        <Row gutter={16} style={{ marginBottom: '24px' }}>
+          <Col span={6}>
+            <Card>
+              <Statistic
+                title="已删除商品"
+                value={totalDeleted}
+                prefix={<DeleteOutlined />}
+                valueStyle={{ color: '#ff4d4f' }}
+              />
+            </Card>
+          </Col>
+          <Col span={6}>
+            <Card>
+              <Statistic
+                title="电子产品"
+                value={electronicsCount}
+                prefix={<ShoppingCartOutlined />}
+                valueStyle={{ color: '#1890ff' }}
+              />
+            </Card>
+          </Col>
+          <Col span={6}>
+            <Card>
+              <Statistic
+                title="服装类"
+                value={clothingCount}
+                prefix={<ShoppingCartOutlined />}
+                valueStyle={{ color: '#52c41a' }}
+              />
+            </Card>
+          </Col>
+          <Col span={6}>
+            <Card>
+              <Statistic
+                title="可恢复商品"
+                value={totalDeleted}
+                // prefix={<RestoreOutlined />}
+                valueStyle={{ color: '#722ed1' }}
+              />
+            </Card>
+          </Col>
+        </Row>
+
+        <Card
+          title="已删除商品列表"
+          extra={
+            <Space>
+              <Popconfirm
+                title="确定要清空回收站吗？"
+                icon={<ExclamationCircleOutlined style={{ color: 'red' }} />}
+                onConfirm={handleClearRecycleBin}
+                okText="确认"
+                cancelText="取消"
+              >
+                <Button danger icon={<DeleteOutlined />}>
+                  清空回收站
+                </Button>
+              </Popconfirm>
+              {/* <Button type="primary" icon={<RestoreOutlined />}>
+              批量恢复
+            </Button> */}
+            </Space>
+          }
+        >
+          <Table
+            columns={TrashColumns}
+            dataSource={recycleData}
+            pagination={{
+              pageSize: 10,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total, range) =>
+                `第 ${range[0]}-${range[1]} 条/总共 ${total} 条`,
+            }}
+          />
+        </Card>
+      </div>
+    </GoodsLayout>
+  );
+}

@@ -124,19 +124,34 @@ const ListOfCommodities = () => {
           >
             {record.status === '1' ? '下架' : '上架'}
           </Button>
-          <Button type="link">加入回收站</Button>
+          <Button type="link" onClick={() => AddtoRecycleBin(record.id)}>
+            加入回收站
+          </Button>
         </Space>
       ),
     },
   ];
-
+  const AddtoRecycleBin = (id) => {
+    Modal.confirm({
+      title: '确认加入回收站',
+      content: '确定将该商品移入回收站吗？',
+      onOk: () => {
+        const updatedList = data.list.map((item) =>
+          item.id === id ? { ...item, isDeleted: true } : item
+        );
+        data.list = updatedList; // 覆盖原 mock 数据
+        message.success('已加入回收站');
+        loadData(); // 重新加载数据
+      },
+    });
+  };
   // 加载数据
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
       // 这里应该调用实际的API
       setTimeout(() => {
-        setDataSource(data.list || []);
+        setDataSource((data.list || []).filter((item) => !item.isDeleted));
         setPagination((prev) => ({
           ...prev,
           total: data.length,

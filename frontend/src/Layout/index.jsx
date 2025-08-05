@@ -190,7 +190,7 @@ const LayoutApp = () => {
     [navigate]
   );
   // 格式化路由数组
-  const Home = lazy(() => import('@/pages/Home'));
+  const Home = lazy(() => import('@/pages/Home_X'));
   const Shops = lazy(() => import('@/pages/Shops'));
   const Goods = lazy(() => import('@/pages/Goods'));
   const Orders = lazy(() => import('@/pages/Orders'));
