@@ -34,6 +34,12 @@ const TabsView = React.memo(({ pathname, formatRoutes, selectTab }) => {
   };
 
   useEffect(() => {
+    // 处理根路径重定向
+    if (pathname === '/') {
+      navigate('/home')
+      return
+    }
+    
     if (pathname !== '/') {
       // 如果是二级导航，使用父级路径作为activeKey
       const tabKey = isSecondaryRoute(pathname)

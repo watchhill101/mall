@@ -21,6 +21,10 @@ export default function App() {
     
     if (disableAuth) {
       console.log('🔓 Token 验证已禁用 (开发模式)')
+      // 在禁用认证的情况下，如果是根路径，重定向到首页
+      if (location.pathname === '/') {
+        navigate('/home')
+      }
       return
     }
     
@@ -28,7 +32,11 @@ export default function App() {
     if (getToken()) {
       // 有token，如果在登录页则跳转到首页
       if (location.pathname === '/login') {
-        navigate('/')
+        navigate('/home')
+      }
+      // 如果在根路径，重定向到首页
+      else if (location.pathname === '/') {
+        navigate('/home')
       }
       // 可选：获取用户信息
       dispatch(getUserInfoAsync()).catch(() => {

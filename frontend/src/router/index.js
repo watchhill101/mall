@@ -48,7 +48,7 @@ const constantRoutes = [
     hidden: true,
     element: <Layout />,
     children: [
-      { index: true, element: <Navigate to={'/home'} replace /> },
+      { index: true, element: <Navigate to={'/home'} replace /> }, // 根路径重定向到首页
       {
         path: 'home',
         title: '首页',
@@ -269,7 +269,7 @@ const constantRoutes = [
             element: <SortingList />,
             hidden: false,
             icon: 'component',
-            menuPath: '/orders/SortingList '
+            menuPath: '/orders/SortingList'
           }
         ]
       },
