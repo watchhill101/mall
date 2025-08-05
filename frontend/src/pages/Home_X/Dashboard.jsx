@@ -2057,7 +2057,7 @@ const Dashboard = ({ onRegionClick }) => {
 
   // 地图点击事件（防抖处理）
   const onMapClick = debounce((params) => {
-    console.log('地图点击事件:', params) // 调试用
+    console.log('🖱️ 地图点击事件触发:', params.name) // 调试用
     
     if (currentView === 'china' && !loading) {
       // 处理3D和2D模式的不同数据结构
@@ -2476,7 +2476,7 @@ const Dashboard = ({ onRegionClick }) => {
               lineWidth: 3
             }}
             showLoading={loading}
-            key={`${currentView}-${currentProvince}-${is3D ? '3d' : '2d'}-${Date.now()}`}
+            key={`${currentView}-${currentProvince}-${is3D ? '3d' : '2d'}`}
             opts={{
               renderer: 'canvas',
               useDirtyRect: false,

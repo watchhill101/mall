@@ -80,14 +80,14 @@ const TabsView = React.memo(({ pathname, formatRoutes, selectTab }) => {
   const onAddTab = (pathname) => {
     const menu = formatRoutes.find((item) => item.menuPath === pathname)
     if (menu)
-      dispatch(
-        addTab({
-          label: menu.title,
-          key: menu.menuPath,
-          children: menu.element,
-          outline: false
-        })
-      )
+              dispatch(
+          addTab({
+            label: menu.title,
+            key: menu.menuPath,
+            children: null, // 移除重复渲染，内容由Outlet负责渲染
+            outline: false
+          })
+        )
   }
 
   const closeTab = (targetKey) => {
@@ -151,7 +151,7 @@ const TabsView = React.memo(({ pathname, formatRoutes, selectTab }) => {
       key: '/home',  // 使用 /home 作为key
       label: '首页',
       closable: false,
-      children: formatRoutes.find((item) => item.menuPath === '/home')?.element  // 查找 /home 路径的元素
+      children: null  // 移除重复渲染，内容由Outlet负责渲染
     };
     
     // 设置新的标签数组

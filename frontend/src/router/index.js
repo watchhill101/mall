@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom'
 
 const Layout = lazy(() => import('@/Layout'))
 const Home = lazy(() => import('@/pages/Home_X'))
+const Lbt = lazy(() => import('@/pages/Home_X/lbt'))
 const Shops = lazy(() => import('@/pages/Shops'))
 const Goods = lazy(() => import('@/pages/Goods'))
 const Orders = lazy(() => import('@/pages/Orders'))
@@ -26,6 +27,13 @@ const constantRoutes = [
         hidden: false,
         icon: 'HomeOutlined',    // 确认图标名称正确
         menuPath: '/home'
+      },
+      { 
+        path: 'lbt', 
+        title: '轮播图管理', 
+        element: <Lbt />, 
+        hidden: true,           // 隐藏在菜单中，只能通过代码跳转
+        menuPath: '/lbt'
       },
       { 
         path: 'shops', 

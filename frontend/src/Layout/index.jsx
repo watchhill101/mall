@@ -269,7 +269,7 @@ const LayoutApp = () => {
             // background: colorBgContainer
           }}>
           <TabsView pathname={pathname} formatRoutes={formatRoutes} selectTab={selectTab} />
-          {/* <Outlet></Outlet> */}
+          <Outlet></Outlet>
         </Content>
       </Layout>
       <CustomModal title="个人中心" ref={userCenterRef}>
