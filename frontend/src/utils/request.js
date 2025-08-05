@@ -12,15 +12,18 @@ const instance = Axios.create({
 console.log(process.env.NODE_ENV, '获取环境变量')
 // 不需要token的接口白名单
 const whiteList = [
-  '/auth/login', 
-  '/auth/refresh', 
-  '/captcha/generate', 
-  '/captcha/verify', 
+  '/auth/login',
+  '/auth/refresh',
+  '/captcha/generate',
+  '/captcha/verify',
   '/captcha/refresh',
   '/merchant/list',              // 临时添加，用于测试
   '/merchant/test',              // 测试接口
   '/merchant-account/list',      // 临时添加，用于测试
-  '/merchant-account/test'       // 测试接口
+  '/merchant-account/test',      // 测试接口
+  '/account-detail/list',        // 账户明细列表，用于测试
+  '/account-detail/stats',       // 账户明细统计，用于测试
+  '/account-detail/test'         // 账户明细测试接口
 ]
 
 // 添加请求拦截器
