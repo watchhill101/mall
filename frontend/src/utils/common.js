@@ -40,6 +40,17 @@ export const getBreadcrumbNameMap = (routes) => {
     { path: 'settlement-bill', menuPath: '/shops/settlement-bill', title: '结账单' },
     { path: 'merchant-application', menuPath: '/shops/merchant-application', title: '商家申请' },
     { path: 'device-management', menuPath: '/shops/device-management', title: '设备管理' },
+    // 添加商品子路由映射
+    { path: 'product-list', menuPath: '/goods/product-list', title: '商品列表' },
+    { path: 'audit-list', menuPath: '/goods/audit-list', title: '审核列表' },
+    { path: 'recycle-bin', menuPath: '/goods/recycle-bin', title: '回收站' },
+    { path: 'product-category', menuPath: '/goods/product-category', title: '商品分类' },
+    { path: 'external-product', menuPath: '/goods/external-product', title: '外部商品库' },
+    { path: 'current-stock', menuPath: '/goods/inventory/current-stock', title: '当前库存' },
+    { path: 'stock-in', menuPath: '/goods/inventory/stock-in', title: '入库' },
+    { path: 'stock-out', menuPath: '/goods/inventory/stock-out', title: '出库' },
+    { path: 'stocktake', menuPath: '/goods/inventory/stocktake', title: '盘点' },
+    { path: 'stock-details', menuPath: '/goods/inventory/stock-details', title: '出入库明细' },
     ...routes
   ]
   let breadcrumbNameObj = {}

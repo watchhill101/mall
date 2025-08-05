@@ -1,0 +1,56 @@
+.GoodsNav {
+  display: flex;
+  height: 100vh;
+
+  .menu {
+    height: 100vh;
+    margin-right: 20px;
+
+    Menu {
+      height: 100vh;
+    }
+  }
+
+  .main-goods {
+    width: 100%;
+    background-color: #ffff;
+  }
+}
+
+// 二级侧导航栏样式
+.ant-layout-sider {
+  .ant-menu {
+    .ant-menu-item {
+      &:hover {
+        background-color: #f0f8ff;
+      }
+
+      &.ant-menu-item-selected {
+        background-color: #e6f7ff;
+        border-right: 3px solid #1890ff;
+      }
+    }
+
+    .ant-menu-submenu {
+      .ant-menu-submenu-title {
+        &:hover {
+          background-color: #f0f8ff;
+        }
+      }
+
+      &.ant-menu-submenu-open {
+        > .ant-menu-submenu-title {
+          background-color: #f0f8ff;
+        }
+      }
+    }
+  }
+}
+
+// 主内容区域样式
+.ant-layout-content {
+  background: #fff;
+  border-radius: 8px;
+  margin: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}

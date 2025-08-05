@@ -1,5 +1,5 @@
-import React from 'react'
-import { Typography, Layout, Menu } from 'antd'
+import React from 'react';
+import { Typography, Layout, Menu } from 'antd';
 import {
   ShopOutlined,
   TeamOutlined,
@@ -10,16 +10,17 @@ import {
   CalculatorOutlined,
   FileOutlined,
   AuditOutlined,
-  DesktopOutlined
-} from '@ant-design/icons'
-import { useNavigate, useLocation } from 'react-router-dom'
+  DesktopOutlined,
+} from '@ant-design/icons';
+import { useNavigate, useLocation } from 'react-router-dom';
 
-const { Title } = Typography
-const { Sider, Content } = Layout
+const { Title } = Typography;
+const { Sider, Content } = Layout;
 
 const MerchantLayout = ({ children }) => {
-  const navigate = useNavigate()
-  const location = useLocation()
+  console.log(children);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // 二级导航菜单项
   const menuItems = [
@@ -67,17 +68,17 @@ const MerchantLayout = ({ children }) => {
       key: '/shops/device-management',
       icon: <DesktopOutlined />,
       label: '设备管理',
-    }
-  ]
+    },
+  ];
 
   // 获取当前选中的菜单
-  const selectedKey = location.pathname
+  const selectedKey = location.pathname;
 
   // 菜单点击处理
   const handleMenuClick = ({ key }) => {
-    navigate(key)
-  }
-
+    console.log(key);
+    navigate(key);
+  };
   return (
     <div style={{ background: '#f0f2f5', minHeight: 'calc(100vh - 64px)' }}>
       <Layout style={{ background: '#fff', borderRadius: '8px' }}>
@@ -86,7 +87,7 @@ const MerchantLayout = ({ children }) => {
           width={200}
           style={{
             background: '#fff',
-            borderRight: '1px solid #f0f0f0'
+            borderRight: '1px solid #f0f0f0',
           }}
         >
           <div style={{ padding: '16px', borderBottom: '1px solid #f0f0f0' }}>
@@ -102,18 +103,16 @@ const MerchantLayout = ({ children }) => {
             onClick={handleMenuClick}
             style={{
               border: 'none',
-              height: 'calc(100vh - 200px)'
+              height: 'calc(100vh - 200px)',
             }}
           />
         </Sider>
 
         {/* 主内容区域 */}
-        <Content style={{ padding: '0' }}>
-          {children}
-        </Content>
+        <Content style={{ padding: '0' }}>{children}</Content>
       </Layout>
     </div>
-  )
-}
+  );
+};
 
-export default MerchantLayout 
+export default MerchantLayout;

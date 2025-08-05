@@ -1,0 +1,68 @@
+.OrderS {
+  padding: 24px;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+.OrderS .header {
+  margin-bottom: 16px;
+}
+
+.OrderS .header .searchBox {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.OrderS .header .searchBox .ant-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.OrderS .header .searchBox .ant-form .ant-form-item {
+  margin-bottom: 0;
+}
+
+.OrderS .header .searchBox .ant-form .ant-btn {
+  margin-left: 8px;
+}
+
+.OrderS .operation-section {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
+.OrderS .operation-section .ant-btn {
+  border-radius: 6px;
+  padding: 0 20px;
+}
+
+.OrderS .table-section {
+  background-color: #ffffff;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.OrderS .table-section .ant-table-wrapper .ant-table-thead > tr > th {
+  background-color: #fafafa;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.OrderS .table-section .ant-table-wrapper .ant-table-tbody > tr > td {
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.OrderS .table-section .ant-table-wrapper .ant-space a {
+  color: #1890ff;
+  transition: all 0.3s;
+}
+
+.OrderS .table-section .ant-table-wrapper .ant-space a:hover {
+  color: #40a9ff;
+}

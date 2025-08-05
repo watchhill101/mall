@@ -1,58 +1,117 @@
 .login {
-  width: 100%;
-  height: 100%;
-  position: fixed;
-  left: 0;
-  top: 0;
-  background: center/cover no-repeat
-    url("../../assets/images/login/login-background.jpg");
-}
-
-.loginCard {
-  /* 为 Card 组件添加样式 */
-  background-color: rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  width: 500px;
-  height: 360px;
-  padding: 20px;
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  box-shadow: 0 0 2px #eee;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
-  flex-direction: column;
   align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+
+  // 背景装饰
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+    background-size: 50px 50px;
+    animation: float 20s ease-in-out infinite;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, rgba(120, 119, 198, 0.2) 0%, transparent 50%);
+  }
+
+  .loginContainer {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 400px;
+    padding: 20px;
+  }
+
+  .loginCard {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.1),
+      0 0 0 1px rgba(255, 255, 255, 0.2);
+    padding: 40px 32px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 
+        0 12px 40px rgba(0, 0, 0, 0.15),
+        0 0 0 1px rgba(255, 255, 255, 0.3);
+    }
+  }
+
+  .loginHeader {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  .loginTitle {
+    font-size: 24px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+    letter-spacing: 0.5px;
+  }
+
+  .loginContent {
+    // 内容样式在登录组件中定义
+  }
 }
 
-.loginContent {
-  /* 为内容区域添加样式 */
-  text-align: center;
-  padding: 20px;
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-20px) rotate(180deg);
+  }
 }
 
-.loginText {
-  font-size: 26px;
-  color: #333;
-  margin-bottom: 40px;
+// 响应式设计
+@media (max-width: 768px) {
+  .login {
+    padding: 20px;
+    
+    .loginCard {
+      padding: 32px 24px;
+    }
+    
+    .loginTitle {
+      font-size: 20px;
+    }
+  }
 }
 
-.loginForm {
-  width: 100%;
-  padding-right: 100px;
-}
-
-.loginCaptcha {
-  width: 100px;
-  height: 32px;
-  cursor: pointer;
-}
-
-.loginTip {
-  position: absolute;
-  right: 80px;
-  bottom: 72px;
-  font-size: 12px;
-  line-height: 20px;
-  color: #4a4949;
+@media (max-width: 480px) {
+  .login {
+    padding: 16px;
+    
+    .loginCard {
+      padding: 24px 20px;
+    }
+    
+    .loginTitle {
+      font-size: 18px;
+    }
+  }
 }

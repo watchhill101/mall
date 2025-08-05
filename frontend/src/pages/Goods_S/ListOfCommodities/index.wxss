@@ -1,0 +1,73 @@
+.search-bar {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 24px;
+}
+
+.search-bar .ant-row {
+  row-gap: 12px;
+}
+
+.operation-button {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.operation-button .addBtn {
+  background-color: #eaf4fe !important;
+  color: #448ef7 !important;
+  border: 1px solid #448ef7 !important;
+  margin-right: 20px !important;
+}
+
+.operation-button .addBtn:hover {
+  background-color: #448ef7 !important;
+  color: #fff !important;
+}
+
+.operation-button .Export {
+  background-color: #fef8e7;
+  border: 1px solid #f6ca54;
+  color: #f6ca54;
+}
+
+.operation-button .Export:hover {
+  background-color: #f6ca54;
+  color: #fff;
+}
+
+.custom-table {
+  background: #fff;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.custom-table .ant-table-thead > tr > th {
+  background-color: #fafafa;
+  font-weight: 600;
+}
+
+.custom-table .ant-btn-link {
+  padding: 0 6px;
+}
+
+.custom-table .ant-btn-link.danger {
+  color: red;
+}
+
+.custom-table .ant-btn-link.primary {
+  color: #1677ff;
+}
+
+.custom-table .ant-btn-link:hover {
+  text-decoration: underline;
+}
+
+.custom-table img {
+  border-radius: 6px;
+  margin-right: 10px;
+}

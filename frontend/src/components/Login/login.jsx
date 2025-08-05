@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import { Button, Checkbox, Form, Input, message } from "antd";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -7,10 +7,10 @@ import CaptchaComponent from "@/components/Captcha";
 import styles from "./login.module.scss"; // 引入样式模块
 
 const LoginMine = () => {
-  const [formSheet, setFormSheet] = useState(true);
   const [loading, setLoading] = useState(false);
   const [captchaData, setCaptchaData] = useState(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const refreshTimeoutRef = useRef(null);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -57,8 +57,16 @@ const LoginMine = () => {
       console.error("❌ 登录失败:", error);
       message.error(error.message || "登录失败，请检查用户名和密码");
       
-      // 登录失败后刷新验证码
-      setRefreshTrigger(prev => prev + 1);
+      // 登录失败后刷新验证码（防抖处理）
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
+      }
+      
+      refreshTimeoutRef.current = setTimeout(() => {
+        console.log('🔄 登录失败，触发验证码刷新');
+        setRefreshTrigger(prev => prev + 1);
+      }, 100); // 100ms 防抖
+      
     } finally {
       setLoading(false);
     }
@@ -67,33 +75,20 @@ const LoginMine = () => {
   const onFinishFailed = (errorInfo) => {
     console.log("Failed:", errorInfo);
   };
+
+  // 组件卸载时清理定时器
+  React.useEffect(() => {
+    return () => {
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
+      }
+    };
+  }, []);
   return (
-    <>
-      <div className={styles.loginTip}>
-        <span
-          className={styles.loginSpan}
-          onClick={() => {
-            setFormSheet(true);
-          }}
-        >
-          密码登录
-        </span>
-        &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
-        <span
-          className={styles.loginSpan}
-          onClick={() => {
-            setFormSheet(false);
-          }}
-        >
-          手机号码登录
-        </span>
-      </div>
-      {formSheet ? (
+    <div className={styles.loginForm}>
         <Form
           name="basic"
-          labelCol={{ span: 8 }}
-          wrapperCol={{ span: 16 }}
-          style={{ maxWidth: 600 }}
+          layout="vertical"
           initialValues={{
             remember: true,
             username: "admin",
@@ -102,22 +97,30 @@ const LoginMine = () => {
           onFinish={onFinish}
           onFinishFailed={onFinishFailed}
           autoComplete="off"
-          className={styles.loginForm}
+          className={styles.form}
         >
           <Form.Item
-            label="账&nbsp;号"
+            label="用户名"
             name="username"
-            rules={[{ required: true, message: "请输入账号!" }]}
+            rules={[{ required: true, message: "请输入用户名!" }]}
           >
-            <Input placeholder="请输入登录账号" />
+            <Input 
+              placeholder="请输入用户名" 
+              size="large"
+              className={styles.input}
+            />
           </Form.Item>
 
           <Form.Item
-            label="密&nbsp;码"
+            label="密码"
             name="password"
             rules={[{ required: true, message: "请输入密码!" }]}
           >
-            <Input.Password placeholder="请输入密码" />
+            <Input.Password 
+              placeholder="请输入密码" 
+              size="large"
+              className={styles.input}
+            />
           </Form.Item>
 
           <Form.Item
@@ -125,79 +128,40 @@ const LoginMine = () => {
             name="captcha"
             rules={[{ required: true, message: "请输入验证码!" }]}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className={styles.captchaInputContainer}>
               <Input 
                 placeholder="请输入验证码" 
-                style={{ flex: 1 }}
+                size="large"
                 maxLength={4}
+                className={styles.captchaInput}
               />
-              <CaptchaComponent 
-                onCaptchaChange={handleCaptchaChange}
-                refreshTrigger={refreshTrigger}
-                style={{ flexShrink: 0 }}
-              />
+              <div className={styles.captchaImageContainer}>
+                <CaptchaComponent 
+                  onCaptchaChange={handleCaptchaChange}
+                  refreshTrigger={refreshTrigger}
+                />
+              </div>
             </div>
           </Form.Item>
 
-          <Form.Item name="remember" valuePropName="checked" label={null}>
-            <Checkbox>记住我</Checkbox>
+          <Form.Item name="remember" valuePropName="checked">
+            <Checkbox className={styles.checkbox}>记住密码</Checkbox>
           </Form.Item>
 
-          <Form.Item label={null}>
-            <Button type="primary" htmlType="submit" loading={loading} block>
+          <Form.Item>
+            <Button 
+              type="primary" 
+              htmlType="submit" 
+              loading={loading} 
+              size="large"
+              block
+              className={styles.submitButton}
+            >
               登录
             </Button>
           </Form.Item>
         </Form>
-      ) : (
-        <Form
-          name="phoneLogin"
-          labelCol={{ span: 8 }}
-          wrapperCol={{ span: 16 }}
-          style={{ maxWidth: 600 }}
-          initialValues={{ remember: true }}
-          onFinish={(values) => {
-            message.info("手机号登录功能暂未开放，请使用密码登录");
-          }}
-          autoComplete="off"
-          className={styles.loginForm}
-        >
-          <Form.Item
-            label="手机号"
-            name="phone"
-            rules={[
-              { required: true, message: "请输入手机号!" },
-              { pattern: /^1[3-9]\d{9}$/, message: "请输入正确的手机号格式!" },
-            ]}
-          >
-            <Input placeholder="请输入手机号" />
-          </Form.Item>
-
-          <Form.Item
-            label="验证码"
-            name="code"
-            rules={[{ required: true, message: "请输入验证码!" }]}
-          >
-            <Input.Group compact>
-              <Input style={{ width: "60%" }} placeholder="请输入验证码" />
-              <Button type="primary" style={{ width: "40%" }} disabled>
-                获取验证码
-              </Button>
-            </Input.Group>
-          </Form.Item>
-
-          <Form.Item name="remember" valuePropName="checked" label={null}>
-            <Checkbox>记住我</Checkbox>
-          </Form.Item>
-
-          <Form.Item label={null}>
-            <Button type="primary" htmlType="submit" block>
-              登录 (暂未开放)
-            </Button>
-          </Form.Item>
-        </Form>
-      )}
-    </>
+    </div>
   );
 };
 
