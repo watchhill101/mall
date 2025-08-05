@@ -52,158 +52,16 @@ const AccountDetail = () => {
     commission: 0
   })
 
-  // 原模拟数据（保留用于导出Excel时的示例）
-  const [mockData] = useState([
-    {
-      key: '1',
-      merchantType: '家政',
-      merchantName: '张三家政服务',
-      accountBalance: 2400,
-      withdrawn: 1200,
-      unwithdraw: 800,
-      withdrawing: 400,
-      serviceFee: 200,
-      createTime: '2023-12-20',
-      contactPhone: '13800138001',
-      businessLicense: 'GL123456789',
-      address: '北京市朝阳区XXX街道'
-    },
-    {
-      key: '2',
-      merchantType: '食品',
-      merchantName: '李四餐饮店',
-      accountBalance: 3600,
-      withdrawn: 2000,
-      unwithdraw: 1200,
-      withdrawing: 400,
-      serviceFee: 300,
-      createTime: '2023-12-18',
-      contactPhone: '13800138002',
-      businessLicense: 'GL123456790',
-      address: '上海市浦东新区XXX路'
-    },
-    {
-      key: '3',
-      merchantType: '服装',
-      merchantName: '王五服装店',
-      accountBalance: 5200,
-      withdrawn: 3000,
-      unwithdraw: 1800,
-      withdrawing: 400,
-      serviceFee: 450,
-      createTime: '2023-12-15',
-      contactPhone: '13800138003',
-      businessLicense: 'GL123456791',
-      address: '广州市天河区XXX大道'
-    },
-    {
-      key: '4',
-      merchantType: '电子',
-      merchantName: '赵六电子商城',
-      accountBalance: 8900,
-      withdrawn: 5000,
-      unwithdraw: 3200,
-      withdrawing: 700,
-      serviceFee: 680,
-      createTime: '2023-12-25',
-      contactPhone: '13800138004',
-      businessLicense: 'GL123456792',
-      address: '深圳市南山区XXX路'
-    },
-    {
-      key: '5',
-      merchantType: '家政',
-      merchantName: '钱七清洁公司',
-      accountBalance: 1800,
-      withdrawn: 800,
-      unwithdraw: 600,
-      withdrawing: 400,
-      serviceFee: 150,
-      createTime: '2023-12-22',
-      contactPhone: '13800138005',
-      businessLicense: 'GL123456793',
-      address: '杭州市西湖区XXX街'
-    },
-    {
-      key: '6',
-      merchantType: '食品',
-      merchantName: '孙八小吃店',
-      accountBalance: 2900,
-      withdrawn: 1500,
-      unwithdraw: 1000,
-      withdrawing: 400,
-      serviceFee: 220,
-      createTime: '2023-12-26',
-      contactPhone: '13800138006',
-      businessLicense: 'GL123456794',
-      address: '成都市高新区XXX道'
-    },
-    {
-      key: '7',
-      merchantType: '服装',
-      merchantName: '周九时装店',
-      accountBalance: 4200,
-      withdrawn: 2500,
-      unwithdraw: 1300,
-      withdrawing: 400,
-      serviceFee: 350,
-      createTime: '2023-12-19',
-      contactPhone: '13800138007',
-      businessLicense: 'GL123456795',
-      address: '武汉市武昌区XXX街'
-    },
-    {
-      key: '8',
-      merchantType: '电子',
-      merchantName: '吴十数码店',
-      accountBalance: 6800,
-      withdrawn: 4000,
-      unwithdraw: 2200,
-      withdrawing: 600,
-      serviceFee: 520,
-      createTime: '2023-12-21',
-      contactPhone: '13800138008',
-      businessLicense: 'GL123456796',
-      address: '西安市雁塔区XXX路'
-    },
-    {
-      key: '9',
-      merchantType: '家政',
-      merchantName: '郑十一保洁',
-      accountBalance: 3100,
-      withdrawn: 1800,
-      unwithdraw: 900,
-      withdrawing: 400,
-      serviceFee: 280,
-      createTime: '2023-12-23',
-      contactPhone: '13800138009',
-      businessLicense: 'GL123456797',
-      address: '南京市鼓楼区XXX街'
-    },
-    {
-      key: '10',
-      merchantType: '食品',
-      merchantName: '王十二烘焙店',
-      accountBalance: 7500,
-      withdrawn: 4200,
-      unwithdraw: 2700,
-      withdrawing: 600,
-      serviceFee: 580,
-      createTime: '2023-12-24',
-      contactPhone: '13800138010',
-      businessLicense: 'GL123456798',
-      address: '天津市和平区XXX路'
-    }
-  ])
+
 
   // API调用函数
-  const fetchAccountDetailList = useCallback(async (params = {}) => {
+  const fetchAccountDetailList = useCallback(async (customParams = {}) => {
     try {
       setLoading(true)
       const queryParams = {
         page: pagination.current,
         pageSize: pagination.pageSize,
-        ...params
+        ...customParams
       }
 
       // 添加筛选条件
@@ -214,6 +72,7 @@ const AccountDetail = () => {
         queryParams.endDate = dateRange[1].format('YYYY-MM-DD')
       }
 
+      console.log('📤 发送账户明细列表请求:', queryParams)
       const response = await accountDetailAPI.getAccountDetailList(queryParams)
 
       if (response && response.data) {
@@ -222,19 +81,20 @@ const AccountDetail = () => {
           ...prev,
           total: response.data.pagination?.total || 0
         }))
+        console.log('✅ 获取账户明细列表成功，共', response.data.list?.length || 0, '条记录')
       }
     } catch (error) {
-      console.error('获取账户明细列表失败:', error)
-      message.error('获取账户明细列表失败')
+      console.error('❌ 获取账户明细列表失败:', error)
+      message.error('获取账户明细列表失败: ' + (error.message || '网络错误'))
       setAccountDetailData([])
     } finally {
       setLoading(false)
     }
-  }, [pagination.current, pagination.pageSize, merchantType, merchantName, dateRange])
+  }, [])
 
-  const fetchAccountDetailStats = useCallback(async (params = {}) => {
+  const fetchAccountDetailStats = useCallback(async (customParams = {}) => {
     try {
-      const queryParams = { ...params }
+      const queryParams = { ...customParams }
 
       // 添加筛选条件
       if (merchantType) queryParams.merchantType = merchantType
@@ -244,28 +104,29 @@ const AccountDetail = () => {
         queryParams.endDate = dateRange[1].format('YYYY-MM-DD')
       }
 
+      console.log('📤 发送统计信息请求:', queryParams)
       const response = await accountDetailAPI.getAccountDetailStats(queryParams)
 
       if (response && response.data) {
         setStatisticsData(response.data)
+        console.log('✅ 获取统计信息成功:', response.data)
       }
     } catch (error) {
-      console.error('获取账户统计信息失败:', error)
-      message.error('获取账户统计信息失败')
+      console.error('❌ 获取账户统计信息失败:', error)
+      message.error('获取账户统计信息失败: ' + (error.message || '网络错误'))
     }
-  }, [merchantType, merchantName, dateRange])
-
-  // 组件加载时获取数据
-  useEffect(() => {
-    fetchAccountDetailList()
-    fetchAccountDetailStats()
   }, [])
 
-  // 当筛选条件或分页变化时重新获取数据
+  // 初始化数据获取
   useEffect(() => {
-    fetchAccountDetailList()
-    fetchAccountDetailStats()
-  }, [pagination.current, pagination.pageSize, merchantType, merchantName, dateRange])
+    const initData = async () => {
+      await Promise.all([
+        fetchAccountDetailList(),
+        fetchAccountDetailStats()
+      ])
+    }
+    initData()
+  }, []) // 移除依赖，避免无限循环
 
   // 表格列配置
   const columns = [
@@ -347,18 +208,52 @@ const AccountDetail = () => {
 
   // 查询处理
   const handleQuery = async () => {
-    setPagination(prev => ({ ...prev, current: 1 })) // 重置到第一页
-    await Promise.all([fetchAccountDetailList(), fetchAccountDetailStats()])
-    message.success(`查询完成，共找到 ${accountDetailData.length} 条记录`)
+    try {
+      setLoading(true)
+      setPagination(prev => ({ ...prev, current: 1 })) // 重置到第一页
+
+      // 立即使用当前的筛选条件进行查询
+      const queryParams = { page: 1, pageSize: pagination.pageSize }
+      if (merchantType) queryParams.merchantType = merchantType
+      if (merchantName) queryParams.merchantName = merchantName
+      if (dateRange && dateRange.length === 2) {
+        queryParams.startDate = dateRange[0].format('YYYY-MM-DD')
+        queryParams.endDate = dateRange[1].format('YYYY-MM-DD')
+      }
+
+      await Promise.all([
+        fetchAccountDetailList(queryParams),
+        fetchAccountDetailStats(queryParams)
+      ])
+      message.success('查询完成')
+    } catch (error) {
+      message.error('查询失败: ' + error.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   // 重置处理
-  const handleReset = () => {
-    setDateRange([])
-    setMerchantType('')
-    setMerchantName('')
-    setPagination(prev => ({ ...prev, current: 1 }))
-    message.info('已重置搜索条件')
+  const handleReset = async () => {
+    try {
+      setLoading(true)
+      setDateRange([])
+      setMerchantType('')
+      setMerchantName('')
+      setPagination(prev => ({ ...prev, current: 1 }))
+
+      // 使用空的筛选条件重新获取数据
+      const queryParams = { page: 1, pageSize: pagination.pageSize }
+      await Promise.all([
+        fetchAccountDetailList(queryParams),
+        fetchAccountDetailStats(queryParams)
+      ])
+      message.info('已重置搜索条件')
+    } catch (error) {
+      message.error('重置失败: ' + error.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   // 分页处理
@@ -368,6 +263,20 @@ const AccountDetail = () => {
       current: paginationConfig.current,
       pageSize: paginationConfig.pageSize
     }))
+
+    // 使用新的分页参数立即获取数据
+    const queryParams = {
+      page: paginationConfig.current,
+      pageSize: paginationConfig.pageSize
+    }
+    if (merchantType) queryParams.merchantType = merchantType
+    if (merchantName) queryParams.merchantName = merchantName
+    if (dateRange && dateRange.length === 2) {
+      queryParams.startDate = dateRange[0].format('YYYY-MM-DD')
+      queryParams.endDate = dateRange[1].format('YYYY-MM-DD')
+    }
+
+    fetchAccountDetailList(queryParams)
   }
 
   // 导出处理
@@ -695,6 +604,17 @@ const AccountDetail = () => {
                   current: 1,
                   pageSize: size
                 }))
+
+                // 使用新的页面大小立即获取数据
+                const queryParams = { page: 1, pageSize: size }
+                if (merchantType) queryParams.merchantType = merchantType
+                if (merchantName) queryParams.merchantName = merchantName
+                if (dateRange && dateRange.length === 2) {
+                  queryParams.startDate = dateRange[0].format('YYYY-MM-DD')
+                  queryParams.endDate = dateRange[1].format('YYYY-MM-DD')
+                }
+
+                fetchAccountDetailList(queryParams)
               }
             }}
             onChange={handleTableChange}

@@ -46,7 +46,7 @@ router.get('/list', async (req, res) => {
       // 关联商家信息
       {
         $lookup: {
-          from: 'merchants',
+          from: 'merchant',
           localField: 'merchant',
           foreignField: '_id',
           as: 'merchantInfo'
@@ -167,7 +167,7 @@ router.get('/stats', async (req, res) => {
       // 关联商家信息
       {
         $lookup: {
-          from: 'merchants',
+          from: 'merchant',
           localField: 'merchant',
           foreignField: '_id',
           as: 'merchantInfo'
