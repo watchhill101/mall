@@ -1,7 +1,14 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect, useCallback } from 'react'
 import { Card, Typography, Table, Button, Space, Input, Select, Tag, message, Popconfirm, Modal, Form, Row, Col, Descriptions } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, SearchOutlined } from '@ant-design/icons'
 import MerchantLayout from './MerchantLayout'
+import merchantAPI, {
+    MERCHANT_STATUS,
+    MERCHANT_STATUS_LABELS,
+    MERCHANT_STATUS_COLORS,
+    MERCHANT_TYPES,
+    MERCHANT_TYPE_LABELS
+} from '@/api/merchant'
 
 const { Title } = Typography
 const { Search } = Input
@@ -24,129 +31,59 @@ const Merchant = () => {
         total: 0
     })
 
-    // 模拟商家数据 - 增加更多数据来测试分页
-    const [merchantData, setMerchantData] = useState([
-        {
-            key: '1',
-            id: 'M001',
-            name: '张三商店',
-            contact: '张三',
-            phone: '13800138001',
-            email: 'zhangsan@example.com',
-            status: 'active',
-            createTime: '2023-01-15',
-            address: '北京市朝阳区XXX街道'
-        },
-        {
-            key: '2',
-            id: 'M002',
-            name: '李四超市',
-            contact: '李四',
-            phone: '13800138002',
-            email: 'lisi@example.com',
-            status: 'inactive',
-            createTime: '2023-02-20',
-            address: '上海市浦东新区XXX路'
-        },
-        {
-            key: '3',
-            id: 'M003',
-            name: '王五百货',
-            contact: '王五',
-            phone: '13800138003',
-            email: 'wangwu@example.com',
-            status: 'active',
-            createTime: '2023-03-10',
-            address: '广州市天河区XXX大道'
-        },
-        {
-            key: '4',
-            id: 'M004',
-            name: '赵六便利店',
-            contact: '赵六',
-            phone: '13800138004',
-            email: 'zhaoliu@example.com',
-            status: 'active',
-            createTime: '2023-04-05',
-            address: '深圳市南山区XXX路'
-        },
-        {
-            key: '5',
-            id: 'M005',
-            name: '钱七商贸',
-            contact: '钱七',
-            phone: '13800138005',
-            email: 'qianqi@example.com',
-            status: 'inactive',
-            createTime: '2023-05-12',
-            address: '杭州市西湖区XXX街'
-        },
-        {
-            key: '6',
-            id: 'M006',
-            name: '孙八零售',
-            contact: '孙八',
-            phone: '13800138006',
-            email: 'sunba@example.com',
-            status: 'active',
-            createTime: '2023-06-18',
-            address: '成都市高新区XXX道'
-        },
-        {
-            key: '7',
-            id: 'M007',
-            name: '周九商城',
-            contact: '周九',
-            phone: '13800138007',
-            email: 'zhoujiu@example.com',
-            status: 'active',
-            createTime: '2023-07-25',
-            address: '武汉市武昌区XXX街'
-        },
-        {
-            key: '8',
-            id: 'M008',
-            name: '吴十购物',
-            contact: '吴十',
-            phone: '13800138008',
-            email: 'wushi@example.com',
-            status: 'inactive',
-            createTime: '2023-08-30',
-            address: '西安市雁塔区XXX路'
+    // 商户数据状态
+    const [merchantData, setMerchantData] = useState([])
+
+    // 加载商户数据
+    const loadMerchantData = useCallback(async () => {
+        try {
+            setLoading(true)
+            const params = {
+                page: pagination.current,
+                pageSize: pagination.pageSize,
+                searchText,
+                status: statusFilter
+            }
+
+            const response = await merchantAPI.getMerchantList(params)
+
+            if (response.code === 200) {
+                const merchants = response.data.list.map(item => ({
+                    ...item,
+                    key: item._id,
+                    id: item._id,
+                    contact: item.personInCharge?.name || '未设置',
+                    createTime: new Date(item.createdAt).toLocaleDateString()
+                }))
+
+                setMerchantData(merchants)
+                setPagination(prev => ({
+                    ...prev,
+                    total: response.data.pagination.total
+                }))
+            }
+        } catch (error) {
+            console.error('获取商户列表失败:', error)
+            message.error('获取商户列表失败：' + (error.message || '未知错误'))
+        } finally {
+            setLoading(false)
         }
-    ])
+    }, [pagination.current, pagination.pageSize, searchText, statusFilter])
 
-    // 筛选后的数据
-    const filteredData = useMemo(() => {
-        return merchantData.filter(item => {
-            // 搜索文本筛选
-            const matchSearch = !searchText ||
-                item.name.toLowerCase().includes(searchText.toLowerCase()) ||
-                item.contact.toLowerCase().includes(searchText.toLowerCase()) ||
-                item.phone.includes(searchText)
+    // 初始化加载数据
+    useEffect(() => {
+        loadMerchantData()
+    }, [loadMerchantData])
 
-            // 状态筛选
-            const matchStatus = !statusFilter || item.status === statusFilter
+    // 由于使用API分页，不需要前端筛选和分页逻辑
+    // 搜索和筛选变化时重新加载数据
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setPagination(prev => ({ ...prev, current: 1 }))
+        }, 500) // 防抖500ms
 
-            return matchSearch && matchStatus
-        })
-    }, [merchantData, searchText, statusFilter])
-
-    // 当前页数据
-    const currentPageData = useMemo(() => {
-        const startIndex = (pagination.current - 1) * pagination.pageSize
-        const endIndex = startIndex + pagination.pageSize
-        return filteredData.slice(startIndex, endIndex)
-    }, [filteredData, pagination.current, pagination.pageSize])
-
-    // 当筛选条件变化时，重置分页并更新总数
-    React.useEffect(() => {
-        setPagination(prev => ({
-            ...prev,
-            current: 1,
-            total: filteredData.length
-        }))
-    }, [filteredData.length])
+        return () => clearTimeout(timer)
+    }, [searchText, statusFilter])
 
     // 表格列配置
     const columns = [
@@ -186,8 +123,8 @@ const Merchant = () => {
             key: 'status',
             width: 100,
             render: (status) => (
-                <Tag color={status === 'active' ? 'green' : 'red'}>
-                    {status === 'active' ? '启用' : '禁用'}
+                <Tag color={MERCHANT_STATUS_COLORS[status]}>
+                    {MERCHANT_STATUS_LABELS[status]}
                 </Tag>
             )
         },
@@ -253,11 +190,7 @@ const Merchant = () => {
         ]
     }
 
-    // 生成商家ID
-    const generateMerchantId = () => {
-        const maxId = Math.max(...merchantData.map(item => parseInt(item.id.substring(1))), 0)
-        return `M${String(maxId + 1).padStart(3, '0')}`
-    }
+
 
     // 处理函数
     const handleAdd = () => {
@@ -279,35 +212,54 @@ const Merchant = () => {
         form.setFieldsValue(record)
     }
 
-    const handleDelete = (record) => {
-        const updatedData = merchantData.filter(item => item.key !== record.key)
-        setMerchantData(updatedData)
-        // 清除已删除项的选中状态
-        setSelectedRowKeys(prev => prev.filter(key => key !== record.key))
-        message.success(`删除商家：${record.name}`)
+    const handleDelete = async (record) => {
+        try {
+            const response = await merchantAPI.deleteMerchant(record._id)
+            if (response.code === 200) {
+                message.success(`删除商户成功：${record.name}`)
+                // 清除已删除项的选中状态
+                setSelectedRowKeys(prev => prev.filter(key => key !== record.key))
+                // 重新加载数据
+                loadMerchantData()
+            }
+        } catch (error) {
+            console.error('删除商户失败:', error)
+            message.error('删除商户失败：' + (error.message || '未知错误'))
+        }
     }
 
-    const handleBatchDelete = () => {
+    const handleBatchDelete = async () => {
         if (selectedRowKeys.length === 0) {
-            message.warning('请选择要删除的商家')
+            message.warning('请选择要删除的商户')
             return
         }
-        const updatedData = merchantData.filter(item => !selectedRowKeys.includes(item.key))
-        setMerchantData(updatedData)
-        message.success(`批量删除 ${selectedRowKeys.length} 个商家`)
-        setSelectedRowKeys([])
+
+        try {
+            // 获取选中的商户ID（使用_id而不是key）
+            const selectedMerchants = merchantData.filter(item => selectedRowKeys.includes(item.key))
+            const merchantIds = selectedMerchants.map(item => item._id)
+
+            const response = await merchantAPI.batchDeleteMerchants(merchantIds)
+            if (response.code === 200) {
+                message.success(`批量删除成功：${response.data.deletedCount} 个商户`)
+                setSelectedRowKeys([])
+                // 重新加载数据
+                loadMerchantData()
+            }
+        } catch (error) {
+            console.error('批量删除商户失败:', error)
+            message.error('批量删除商户失败：' + (error.message || '未知错误'))
+        }
     }
 
     // 搜索处理
     const handleSearch = (value) => {
         setSearchText(value)
-        message.info(value ? `搜索：${value}` : '已清空搜索条件')
     }
 
     // 状态筛选处理
     const handleStatusFilter = (value) => {
         setStatusFilter(value)
-        message.info(value ? `筛选状态：${value === 'active' ? '启用' : '禁用'}` : '已清空状态筛选')
     }
 
     // 分页处理
@@ -322,32 +274,50 @@ const Merchant = () => {
     // 模态框确认处理（新增和编辑）
     const handleModalOk = () => {
         form.validateFields()
-            .then(values => {
-                if (modalType === 'add') {
-                    // 新增逻辑
-                    const newMerchant = {
-                        key: Date.now().toString(),
-                        id: generateMerchantId(),
-                        ...values,
-                        createTime: new Date().toLocaleDateString()
-                    }
-                    setMerchantData([...merchantData, newMerchant])
-                    message.success('添加商家成功')
-                } else {
-                    // 编辑逻辑
-                    const updatedData = merchantData.map(item =>
-                        item.key === currentRecord.key
-                            ? { ...item, ...values }
-                            : item
-                    )
-                    setMerchantData(updatedData)
-                    message.success('编辑商家成功')
-                }
+            .then(async (values) => {
+                try {
+                    setLoading(true)
 
-                setModalVisible(false)
-                setEditModalVisible(false)
-                form.resetFields()
-                setCurrentRecord(null)
+                    if (modalType === 'add') {
+                        // 新增逻辑
+                        const merchantData = {
+                            name: values.name,
+                            merchantType: values.merchantType || MERCHANT_TYPES.RETAIL,
+                            isSelfOperated: values.isSelfOperated || false,
+                            phone: values.phone,
+                            address: values.address,
+                            logoUrl: values.logoUrl || 'https://via.placeholder.com/100',
+                            personInCharge: values.personInCharge,
+                            role: values.role,
+                            serviceCharge: values.serviceCharge || 0.1,
+                            businessLicense: values.businessLicense,
+                            taxNumber: values.taxNumber
+                        }
+
+                        const response = await merchantAPI.createMerchant(merchantData)
+                        if (response.code === 201) {
+                            message.success('添加商户成功')
+                            setModalVisible(false)
+                            loadMerchantData()
+                        }
+                    } else {
+                        // 编辑逻辑
+                        const response = await merchantAPI.updateMerchant(currentRecord._id, values)
+                        if (response.code === 200) {
+                            message.success('编辑商户成功')
+                            setEditModalVisible(false)
+                            loadMerchantData()
+                        }
+                    }
+
+                    form.resetFields()
+                    setCurrentRecord(null)
+                } catch (error) {
+                    console.error('操作失败:', error)
+                    message.error('操作失败：' + (error.message || '未知错误'))
+                } finally {
+                    setLoading(false)
+                }
             })
             .catch(info => {
                 console.log('表单验证失败:', info)
@@ -397,8 +367,9 @@ const Merchant = () => {
                                 onChange={handleStatusFilter}
                                 value={statusFilter || undefined}
                             >
-                                <Option value="active">启用</Option>
-                                <Option value="inactive">禁用</Option>
+                                {Object.entries(MERCHANT_STATUS_LABELS).map(([value, label]) => (
+                                    <Option key={value} value={value}>{label}</Option>
+                                ))}
                             </Select>
                         </Space>
 
@@ -425,9 +396,9 @@ const Merchant = () => {
                     <div style={{ marginBottom: '16px', color: '#666' }}>
                         {(searchText || statusFilter) && (
                             <span>
-                                筛选结果：共找到 {filteredData.length} 条记录
+                                筛选结果：共找到 {pagination.total} 条记录
                                 {searchText && <span>（关键词："{searchText}"）</span>}
-                                {statusFilter && <span>（状态：{statusFilter === 'active' ? '启用' : '禁用'}）</span>}
+                                {statusFilter && <span>（状态：{MERCHANT_STATUS_LABELS[statusFilter]}）</span>}
                             </span>
                         )}
                     </div>
@@ -435,7 +406,7 @@ const Merchant = () => {
                     {/* 数据表格 */}
                     <Table
                         columns={columns}
-                        dataSource={currentPageData}
+                        dataSource={merchantData}
                         rowSelection={rowSelection}
                         loading={loading}
                         pagination={{
