@@ -59,7 +59,7 @@ const settlementOrderSchema = new mongoose.Schema(
 settlementOrderSchema.index({ merchant: 1 });
 settlementOrderSchema.index({ product: 1 });
 settlementOrderSchema.index({ status: 1 });
-settlementOrderSchema.index({ orderNumber: 1 });
+// settlementOrderSchema.index({ orderNumber: 1 }); // 移除重复索引，orderNumber 已经通过 unique: true 自动创建
 settlementOrderSchema.index({ createdAt: -1 });
 
 // 中间件：保存前计算总金额

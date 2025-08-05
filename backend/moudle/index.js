@@ -1,8 +1,8 @@
 var mongoose = require("mongoose");
+const config = require("../config");
+
 mongoose
-  .connect(
-    "mongodb+srv://grh991221:AaKU8nle060TcZRs@cluster0.diduzgp.mongodb.net/mall"
-  )
+  .connect(config.mongodb.uri)
   .then(() => {
     console.log("MongoDB connected successfully");
   })

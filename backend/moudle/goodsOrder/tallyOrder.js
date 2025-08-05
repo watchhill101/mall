@@ -168,7 +168,7 @@ const tallyOrderSchema = new mongoose.Schema(
 );
 
 // 索引
-tallyOrderSchema.index({ tallyOrderId: 1 });
+// tallyOrderSchema.index({ tallyOrderId: 1 }); // 移除重复索引，tallyOrderId 已经通过 unique: true 自动创建
 tallyOrderSchema.index({ merchant: 1 });
 tallyOrderSchema.index({ status: 1 });
 tallyOrderSchema.index({ tallyType: 1 });

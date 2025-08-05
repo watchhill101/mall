@@ -1,22 +1,22 @@
-import React from 'react'
-import { Card } from 'antd'
-import './Login.module.scss'
+import React from "react";
+import styles from "./Login.module.scss";
+import LoginMine from "@/components/Login/login";
 
 const Login = () => {
   return (
-    <div className="login-container">
-      <Card 
-        title="用户登录" 
-        className="login-card"
-        style={{ width: 400, margin: '100px auto' }}
-      >
-        <div className="login-content">
-          <p>请在此处实现您的登录功能</p>
-          <p>这里是一个空白的登录页面模板</p>
+    <div className={styles.login}>
+      <div className={styles.loginContainer}>
+        <div className={styles.loginCard}>
+          <div className={styles.loginHeader}>
+            <h2 className={styles.loginTitle}>后台管理系统</h2>
+          </div>
+          <div className={styles.loginContent}>
+            <LoginMine />
+          </div>
         </div>
-      </Card>
+      </div>
     </div>
-  )
-}
+  );
+};
 
-export default Login
+export default Login;

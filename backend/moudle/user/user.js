@@ -10,7 +10,7 @@ const userSchema = new mongoose.Schema({
     {
       type: mongoose.Schema.Types.ObjectId,
       ref: "FirstLevelNavigation",
-    }
+    },
   ], // ✅ 修正：对象数组引用的正确写法
 });
 
@@ -30,9 +30,9 @@ userSchema.pre("save", async function (next) {
 });
 
 // 验证密码的实例方法
-// userSchema.methods.comparePassword = async function (candidatePassword) {
-//   return bcrypt.compare(candidatePassword, this.password);
-// };
+userSchema.methods.comparePassword = async function (candidatePassword) {
+  return bcrypt.compare(candidatePassword, this.password);
+};
 
 const User = mongoose.model("user", userSchema, "user");
 

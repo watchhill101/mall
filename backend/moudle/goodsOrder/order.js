@@ -185,7 +185,7 @@ const orderSchema = new mongoose.Schema(
 );
 
 // 索引
-orderSchema.index({ orderId: 1 });
+// orderSchema.index({ orderId: 1 }); // 移除重复索引，orderId 已经通过 unique: true 自动创建
 orderSchema.index({ merchant: 1 });
 orderSchema.index({ orderStatus: 1 });
 orderSchema.index({ "customer.customerPhone": 1 });

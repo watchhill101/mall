@@ -157,7 +157,7 @@ const stocktakingOrderSchema = new mongoose.Schema(
 );
 
 // 索引
-stocktakingOrderSchema.index({ orderId: 1 });
+// stocktakingOrderSchema.index({ orderId: 1 }); // 移除重复索引，orderId 已经通过 unique: true 自动创建
 stocktakingOrderSchema.index({ merchant: 1 });
 stocktakingOrderSchema.index({ planDate: -1 });
 stocktakingOrderSchema.index({ status: 1 });

@@ -52,38 +52,84 @@ const userSlice = createSlice({
 })
 // 导出经过redux包装的action对象
 export const { login, setUserinfo, logout } = userSlice.actions
-// 登录方法（简化版）
+// 登录方法
 export const loginAsync = (payload) => async (dispatch) => {
   try {
-    // 这里您可以实现自己的登录逻辑
-    console.log('登录参数:', payload)
+    console.log('🚀 发起登录请求:', payload);
     
-    // 模拟登录成功
-    const mockLoginData = {
-      token: 'your-token-here',
-      refreshToken: 'your-refresh-token-here'
+    const authAPI = await import('@/api/auth')
+    const response = await authAPI.default.login(payload)
+    
+    console.log('📡 登录响应:', response);
+    
+    if (response.code === 200) {
+      const loginData = {
+        token: response.data.accessToken,
+        refreshToken: response.data.refreshToken
+      }
+      
+      console.log('💾 保存登录数据:', loginData);
+      dispatch(login(loginData))
+      
+      // 同时获取用户信息
+      if (response.data.user) {
+        const userInfo = {
+          username: response.data.user.loginAccount,
+          email: response.data.user.email,
+          avatar: null,
+          userId: response.data.user._id
+        };
+        
+        console.log('👤 保存用户信息:', userInfo);
+        dispatch(setUserinfo(userInfo))
+      }
+      
+      return loginData
+    } else {
+      throw new Error(response.message || '登录失败')
     }
-    
-    dispatch(login(mockLoginData))
-    return mockLoginData
   } catch (error) {
-    console.error('登录失败:', error)
-    throw error
+    console.error('❌ 登录失败:', error);
+    
+    // 如果是网络错误，提供更友好的错误信息
+    if (error.code === 'ECONNABORTED') {
+      throw new Error('请求超时，请检查网络连接');
+    } else if (error.response) {
+      const status = error.response.status;
+      if (status === 401) {
+        throw new Error('用户名或密码错误');
+      } else if (status === 500) {
+        throw new Error('服务器内部错误，请稍后重试');
+      } else {
+        throw new Error(`请求失败 (${status}): ${error.response.data?.message || '未知错误'}`);
+      }
+    } else if (error.message) {
+      throw error;
+    } else {
+      throw new Error('网络连接失败，请检查网络设置');
+    }
   }
 }
 
-// 获取用户信息方法（简化版）
+// 获取用户信息方法
 export const getUserInfoAsync = () => async (dispatch) => {
   try {
-    // 这里您可以实现自己的获取用户信息逻辑
-    const mockUserInfo = {
-      username: 'Admin',
-      email: 'admin@example.com',
-      avatar: null
-    }
+    const authAPI = await import('@/api/auth')
+    const response = await authAPI.default.getUserInfo()
     
-    dispatch(setUserinfo(mockUserInfo))
-    return mockUserInfo
+    if (response.code === 200) {
+      const userInfo = {
+        username: response.data.loginAccount,
+        email: response.data.email,
+        avatar: null,
+        userId: response.data._id
+      }
+      
+      dispatch(setUserinfo(userInfo))
+      return userInfo
+    } else {
+      throw new Error(response.message || '获取用户信息失败')
+    }
   } catch (error) {
     console.error('获取用户信息失败:', error)
     return null

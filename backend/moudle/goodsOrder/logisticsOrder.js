@@ -278,7 +278,7 @@ const logisticsOrderSchema = new mongoose.Schema(
 );
 
 // 索引
-logisticsOrderSchema.index({ logisticsOrderId: 1 });
+// logisticsOrderSchema.index({ logisticsOrderId: 1 }); // 移除重复索引，logisticsOrderId 已经通过 unique: true 自动创建
 logisticsOrderSchema.index({ merchant: 1 });
 logisticsOrderSchema.index({ status: 1 });
 logisticsOrderSchema.index({ logisticsType: 1 });

@@ -185,7 +185,7 @@ const paymentRecordSchema = new mongoose.Schema(
 );
 
 // 索引
-paymentRecordSchema.index({ paymentId: 1 });
+// paymentRecordSchema.index({ paymentId: 1 }); // 移除重复索引，paymentId 已经通过 unique: true 自动创建
 paymentRecordSchema.index({ order: 1 });
 paymentRecordSchema.index({ merchant: 1 });
 paymentRecordSchema.index({ paymentStatus: 1 });

@@ -57,7 +57,7 @@ const merchantWithdrawSchema = new mongoose.Schema(
 // 添加索引
 merchantWithdrawSchema.index({ merchant: 1 });
 merchantWithdrawSchema.index({ status: 1 });
-merchantWithdrawSchema.index({ orderNumber: 1 });
+// merchantWithdrawSchema.index({ orderNumber: 1 }); // 移除重复索引，orderNumber 已经通过 unique: true 自动创建
 merchantWithdrawSchema.index({ applicationTime: -1 });
 
 // 中间件：保存前计算实际金额

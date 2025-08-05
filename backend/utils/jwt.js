@@ -5,9 +5,9 @@ const User = require("../moudle/user/user"); // 引入用户模型
 
 // 创建 Redis 客户端
 const redisClient = redis.createClient({
-  host: config.url,
-  port: config.port,
-  password: config.password,
+  host: config.redis.host,
+  port: config.redis.port,
+  password: config.redis.password,
 });
 
 redisClient.connect().catch((err) => {

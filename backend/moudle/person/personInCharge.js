@@ -32,9 +32,9 @@ const personInChargeSchema = new mongoose.Schema(
   }
 );
 
-// 添加索引
-personInChargeSchema.index({ phone: 1 });
-personInChargeSchema.index({ email: 1 });
+// 添加索引 (phone 和 email 已经通过 unique: true 自动创建了唯一索引)
+// personInChargeSchema.index({ phone: 1 }); // 移除重复索引
+// personInChargeSchema.index({ email: 1 }); // 移除重复索引
 
 const PersonInCharge = mongoose.model("PersonInCharge", personInChargeSchema, "personInCharge");
 module.exports = PersonInCharge;

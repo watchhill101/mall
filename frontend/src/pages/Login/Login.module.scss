@@ -1,46 +1,117 @@
-.login-container {
+.login {
   min-height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  position: relative;
+  overflow: hidden;
+
+  // 背景装饰
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+    background-size: 50px 50px;
+    animation: float 20s ease-in-out infinite;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, rgba(120, 119, 198, 0.2) 0%, transparent 50%);
+  }
+
+  .loginContainer {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 400px;
+    padding: 20px;
+  }
+
+  .loginCard {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.1),
+      0 0 0 1px rgba(255, 255, 255, 0.2);
+    padding: 40px 32px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 
+        0 12px 40px rgba(0, 0, 0, 0.15),
+        0 0 0 1px rgba(255, 255, 255, 0.3);
+    }
+  }
+
+  .loginHeader {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  .loginTitle {
+    font-size: 24px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+    letter-spacing: 0.5px;
+  }
+
+  .loginContent {
+    // 内容样式在登录组件中定义
+  }
 }
 
-.login-card {
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-  
-  .ant-card-head {
-    text-align: center;
-    border-bottom: 1px solid #f0f0f0;
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-20px) rotate(180deg);
+  }
+}
+
+// 响应式设计
+@media (max-width: 768px) {
+  .login {
+    padding: 20px;
     
-    .ant-card-head-title {
+    .loginCard {
+      padding: 32px 24px;
+    }
+    
+    .loginTitle {
       font-size: 20px;
-      font-weight: 600;
-      color: #333;
     }
   }
 }
 
-.login-content {
-  text-align: center;
-  padding: 20px 0;
-  color: #666;
-  
-  p {
-    margin: 10px 0;
-    line-height: 1.6;
-  }
-}
-
-@media (max-width: 768px) {
-  .login-container {
-    padding: 10px;
-  }
-  
-  .login-card {
-    width: 100% !important;
-    max-width: 400px;
+@media (max-width: 480px) {
+  .login {
+    padding: 16px;
+    
+    .loginCard {
+      padding: 24px 20px;
+    }
+    
+    .loginTitle {
+      font-size: 18px;
+    }
   }
 }

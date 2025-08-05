@@ -127,7 +127,7 @@ const productRecycleBinSchema = new mongoose.Schema(
 productRecycleBinSchema.index({ merchant: 1 });
 productRecycleBinSchema.index({ deletedAt: -1 });
 productRecycleBinSchema.index({ "restoreInfo.isRestored": 1 });
-productRecycleBinSchema.index({ autoDeleteAt: 1 });
+// productRecycleBinSchema.index({ autoDeleteAt: 1 }); // 移除重复索引，下面的 TTL 索引已经包含了这个字段
 productRecycleBinSchema.index({ isRestorable: 1 });
 
 // 自动删除过期数据的TTL索引

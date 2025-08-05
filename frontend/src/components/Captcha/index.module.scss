@@ -1,0 +1,47 @@
+.captchaContainer {
+  width: 120px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f9fa;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background: #e9ecef;
+  }
+  
+  .loading {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8f9fa;
+  }
+  
+  .captchaImage {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    :global(svg) {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 4px;
+    }
+  }
+}
+
+// 响应式设计
+@media (max-width: 768px) {
+  .captchaContainer {
+    width: 110px;
+    height: 36px;
+  }
+}
