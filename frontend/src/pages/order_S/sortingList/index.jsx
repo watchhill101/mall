@@ -1,5 +1,9 @@
 import React from 'react';
-
+import OrderLayout from '../Order_layout/Order_layout';
 export default function index() {
-  return <div>分拣单</div>;
+  return (
+    <OrderLayout>
+      <div>分拣单</div>
+    </OrderLayout>
+  );
 }

@@ -15,6 +15,7 @@ import {
   DatePicker,
 } from 'antd';
 import dayjs from 'dayjs';
+import OrderLayout from '../Order_layout/Order_layout';
 const { RangePicker } = DatePicker;
 export default function Index() {
   const [form] = Form.useForm();
@@ -187,97 +188,99 @@ export default function Index() {
     return current && current < dayjs().endOf('day');
   };
   return (
-    <div className="OrderS">
-      {/* 顶部按钮切换 */}
-      <div className="header">
-        <ul className="btn-list">
-          {btnList.map((item, index) => (
-            <li key={index}>
-              <a
-                href="#!"
-                className={curIdx === index ? 'active' : ''}
-                onClick={() => setCurIdx(index)}
-              >
-                {item}
-              </a>
-            </li>
-          ))}
-        </ul>
-        <div className="searchBox">
-          {/* <Space></Space> */}
-          <Form
-            layout={formLayout}
-            form={form}
-            initialValues={{ layout: formLayout }}
-            onValuesChange={onFormLayoutChange}
-            style={{ maxWidth: 'inline' }}
-          >
-            <Form.Item label="订单编号">
-              <Input placeholder="请输入" />
-            </Form.Item>
-            <Form.Item label="所属店铺">
-              <Select
-                defaultValue="店铺1"
-                style={{ width: 120 }}
-                onChange={handleChange}
-                options={[
-                  { value: '店铺1', label: '店铺1' },
-                  { value: '店铺2', label: '店铺2' },
-                ]}
-              />
-            </Form.Item>
-            <Form.Item label="支付时间">
-              <RangePicker disabledDate={disabledDate} />
-            </Form.Item>
-            <Form.Item label="联系电话">
-              <Input placeholder="请输入" />
-            </Form.Item>
-            <Form.Item label="交易类型">
-              <Select
-                defaultValue="消费"
-                style={{ width: 120 }}
-                onChange={handleChange}
-                options={[
-                  { value: '消费', label: '消费' },
-                  { value: '退款', label: '退款' },
-                ]}
-              />
-            </Form.Item>
-            <Form.Item label="支付方式">
-              <Select
-                defaultValue="微信"
-                style={{ width: 120 }}
-                onChange={handleChange}
-                options={[
-                  { value: '微信', label: '微信' },
-                  { value: '支付宝', label: '支付宝' },
-                  { value: '银行卡', label: '银行卡' },
-                ]}
-              ></Select>
-            </Form.Item>
-            <Form.Item>
-              <Button type="primary">搜索</Button>
-              <Button>重置</Button>
-            </Form.Item>
-          </Form>
+    <OrderLayout>
+      <div className="OrderS">
+        {/* 顶部按钮切换 */}
+        <div className="header">
+          <ul className="btn-list">
+            {btnList.map((item, index) => (
+              <li key={index}>
+                <a
+                  href="#!"
+                  className={curIdx === index ? 'active' : ''}
+                  onClick={() => setCurIdx(index)}
+                >
+                  {item}
+                </a>
+              </li>
+            ))}
+          </ul>
+          <div className="searchBox">
+            {/* <Space></Space> */}
+            <Form
+              layout={formLayout}
+              form={form}
+              initialValues={{ layout: formLayout }}
+              onValuesChange={onFormLayoutChange}
+              style={{ maxWidth: 'inline' }}
+            >
+              <Form.Item label="订单编号">
+                <Input placeholder="请输入" />
+              </Form.Item>
+              <Form.Item label="所属店铺">
+                <Select
+                  defaultValue="店铺1"
+                  style={{ width: 120 }}
+                  onChange={handleChange}
+                  options={[
+                    { value: '店铺1', label: '店铺1' },
+                    { value: '店铺2', label: '店铺2' },
+                  ]}
+                />
+              </Form.Item>
+              <Form.Item label="支付时间">
+                <RangePicker disabledDate={disabledDate} />
+              </Form.Item>
+              <Form.Item label="联系电话">
+                <Input placeholder="请输入" />
+              </Form.Item>
+              <Form.Item label="交易类型">
+                <Select
+                  defaultValue="消费"
+                  style={{ width: 120 }}
+                  onChange={handleChange}
+                  options={[
+                    { value: '消费', label: '消费' },
+                    { value: '退款', label: '退款' },
+                  ]}
+                />
+              </Form.Item>
+              <Form.Item label="支付方式">
+                <Select
+                  defaultValue="微信"
+                  style={{ width: 120 }}
+                  onChange={handleChange}
+                  options={[
+                    { value: '微信', label: '微信' },
+                    { value: '支付宝', label: '支付宝' },
+                    { value: '银行卡', label: '银行卡' },
+                  ]}
+                ></Select>
+              </Form.Item>
+              <Form.Item>
+                <Button type="primary">搜索</Button>
+                <Button>重置</Button>
+              </Form.Item>
+            </Form>
+          </div>
+        </div>
+
+        {/* 搜索栏 */}
+        <div className="search-bar">
+          {/* <SearchBar formItemList={[]} onSearch={(v) => console.log(v)} /> */}
+        </div>
+
+        {/* 表格部分 */}
+        <div className="table-section">
+          <Table
+            dataSource={expandedData}
+            columns={columns}
+            pagination={{ pageSize: 5 }}
+            rowKey={(record, index) => `${record.OrderNumber}-${index}`}
+            bordered
+          />
         </div>
       </div>
-
-      {/* 搜索栏 */}
-      <div className="search-bar">
-        {/* <SearchBar formItemList={[]} onSearch={(v) => console.log(v)} /> */}
-      </div>
-
-      {/* 表格部分 */}
-      <div className="table-section">
-        <Table
-          dataSource={expandedData}
-          columns={columns}
-          pagination={{ pageSize: 5 }}
-          rowKey={(record, index) => `${record.OrderNumber}-${index}`}
-          bordered
-        />
-      </div>
-    </div>
+    </OrderLayout>
   );
 }

@@ -42,6 +42,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
 app.use("/auth", authRouter);
+app.use("/goods")
 
 // 需要认证的路由 - 使用express-jwt
 app.use("/api/protected", jwtAuth, verifyTokenType); // 需要强制验证的路由

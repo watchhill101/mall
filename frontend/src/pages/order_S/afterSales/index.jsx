@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import './index.scss';
 import { OrderData } from '@/db_S/data.mjs';
 import SearchBar from '@/components/SearchBar';
-
+import Orderlayout from '../Order_layout/Order_layout';
 import { afterSaleOrder } from '@/db_S/data.mjs';
 import {
   Button,
@@ -123,56 +123,58 @@ export default function Index() {
     return current && current < dayjs().endOf('day');
   };
   return (
-    <div className="OrderS">
-      {/* 顶部按钮切换 */}
-      <div className="header">
-        <div className="searchBox">
-          {/* <Space></Space> */}
-          <Form
-            layout={formLayout}
-            form={form}
-            initialValues={{ layout: formLayout }}
-            // onValuesChange={onFormLayoutChange}
-            style={{ maxWidth: 'inline' }}
-          >
-            <Form.Item label="售后时间">
-              <RangePicker disabledDate={disabledDate} />
-            </Form.Item>
-            <Form.Item label="处理时间">
-              <RangePicker disabledDate={disabledDate} />
-            </Form.Item>
-            <Form.Item label="售后订单">
-              <Input placeholder="请输入" />
-            </Form.Item>
-            <Form.Item label="原订单">
-              <Input placeholder="请输入" />
-            </Form.Item>
-            <Form.Item label="会员电话">
-              <Input placeholder="请输入" />
-            </Form.Item>
-            <Form.Item>
-              <Button type="primary">搜索</Button>
-              <Button>重置</Button>
-            </Form.Item>
-          </Form>
+    <Orderlayout>
+      <div className="OrderS">
+        {/* 顶部按钮切换 */}
+        <div className="header">
+          <div className="searchBox">
+            {/* <Space></Space> */}
+            <Form
+              layout={formLayout}
+              form={form}
+              initialValues={{ layout: formLayout }}
+              // onValuesChange={onFormLayoutChange}
+              style={{ maxWidth: 'inline' }}
+            >
+              <Form.Item label="售后时间">
+                <RangePicker disabledDate={disabledDate} />
+              </Form.Item>
+              <Form.Item label="处理时间">
+                <RangePicker disabledDate={disabledDate} />
+              </Form.Item>
+              <Form.Item label="售后订单">
+                <Input placeholder="请输入" />
+              </Form.Item>
+              <Form.Item label="原订单">
+                <Input placeholder="请输入" />
+              </Form.Item>
+              <Form.Item label="会员电话">
+                <Input placeholder="请输入" />
+              </Form.Item>
+              <Form.Item>
+                <Button type="primary">搜索</Button>
+                <Button>重置</Button>
+              </Form.Item>
+            </Form>
+          </div>
+        </div>
+
+        {/* 操作按钮*/}
+        <div className="operation-section">
+          <Button type="primary">导出</Button>
+        </div>
+
+        {/* 表格部分 */}
+        <div className="table-section">
+          <Table
+            dataSource={afterSaleOrder.data}
+            columns={columns}
+            pagination={{ pageSize: 5 }}
+            rowKey={(record) => record['After-salesOrder']}
+            bordered
+          />
         </div>
       </div>
-
-      {/* 操作按钮*/}
-      <div className="operation-section">
-        <Button type="primary">导出</Button>
-      </div>
-
-      {/* 表格部分 */}
-      <div className="table-section">
-        <Table
-          dataSource={afterSaleOrder.data}
-          columns={columns}
-          pagination={{ pageSize: 5 }}
-          rowKey={(record) => record['After-salesOrder']}
-          bordered
-        />
-      </div>
-    </div>
+    </Orderlayout>
   );
 }
