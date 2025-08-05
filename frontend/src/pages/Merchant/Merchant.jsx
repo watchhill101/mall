@@ -3,9 +3,9 @@ import { Card, Typography, Table, Button, Space, Input, Select, Tag, message, Po
 import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, SearchOutlined } from '@ant-design/icons'
 import MerchantLayout from './MerchantLayout'
 
-const { Title } = Typography
-const { Search } = Input
-const { Option } = Select
+const { Title } = Typography;
+const { Search } = Input;
+const { Option } = Select;
 
 const Merchant = () => {
     const [form] = Form.useForm()
@@ -148,99 +148,95 @@ const Merchant = () => {
         }))
     }, [filteredData.length])
 
-    // 表格列配置
-    const columns = [
-        {
-            title: '商家ID',
-            dataIndex: 'id',
-            key: 'id',
-            width: 100
-        },
-        {
-            title: '商家名称',
-            dataIndex: 'name',
-            key: 'name',
-            width: 150
-        },
-        {
-            title: '联系人',
-            dataIndex: 'contact',
-            key: 'contact',
-            width: 100
-        },
-        {
-            title: '联系电话',
-            dataIndex: 'phone',
-            key: 'phone',
-            width: 120
-        },
-        {
-            title: '邮箱',
-            dataIndex: 'email',
-            key: 'email',
-            width: 180
-        },
-        {
-            title: '状态',
-            dataIndex: 'status',
-            key: 'status',
-            width: 100,
-            render: (status) => (
-                <Tag color={status === 'active' ? 'green' : 'red'}>
-                    {status === 'active' ? '启用' : '禁用'}
-                </Tag>
-            )
-        },
-        {
-            title: '创建时间',
-            dataIndex: 'createTime',
-            key: 'createTime',
-            width: 120
-        },
-        {
-            title: '地址',
-            dataIndex: 'address',
-            key: 'address',
-            ellipsis: true
-        },
-        {
-            title: '操作',
-            key: 'action',
-            width: 200,
-            render: (_, record) => (
-                <Space size="small">
-                    <Button
-                        type="link"
-                        icon={<EyeOutlined />}
-                        onClick={() => handleView(record)}
-                    >
-                        查看
-                    </Button>
-                    <Button
-                        type="link"
-                        icon={<EditOutlined />}
-                        onClick={() => handleEdit(record)}
-                    >
-                        编辑
-                    </Button>
-                    <Popconfirm
-                        title="确定要删除这个商家吗？"
-                        onConfirm={() => handleDelete(record)}
-                        okText="确定"
-                        cancelText="取消"
-                    >
-                        <Button
-                            type="link"
-                            danger
-                            icon={<DeleteOutlined />}
-                        >
-                            删除
-                        </Button>
-                    </Popconfirm>
-                </Space>
-            )
-        }
-    ]
+  // 表格列配置
+  const columns = [
+    {
+      title: '商家ID',
+      dataIndex: 'id',
+      key: 'id',
+      width: 100,
+    },
+    {
+      title: '商家名称',
+      dataIndex: 'name',
+      key: 'name',
+      width: 150,
+    },
+    {
+      title: '联系人',
+      dataIndex: 'contact',
+      key: 'contact',
+      width: 100,
+    },
+    {
+      title: '联系电话',
+      dataIndex: 'phone',
+      key: 'phone',
+      width: 120,
+    },
+    {
+      title: '邮箱',
+      dataIndex: 'email',
+      key: 'email',
+      width: 180,
+    },
+    {
+      title: '状态',
+      dataIndex: 'status',
+      key: 'status',
+      width: 100,
+      render: (status) => (
+        <Tag color={status === 'active' ? 'green' : 'red'}>
+          {status === 'active' ? '启用' : '禁用'}
+        </Tag>
+      ),
+    },
+    {
+      title: '创建时间',
+      dataIndex: 'createTime',
+      key: 'createTime',
+      width: 120,
+    },
+    {
+      title: '地址',
+      dataIndex: 'address',
+      key: 'address',
+      ellipsis: true,
+    },
+    {
+      title: '操作',
+      key: 'action',
+      width: 200,
+      render: (_, record) => (
+        <Space size="small">
+          <Button
+            type="link"
+            icon={<EyeOutlined />}
+            onClick={() => handleView(record)}
+          >
+            查看
+          </Button>
+          <Button
+            type="link"
+            icon={<EditOutlined />}
+            onClick={() => handleEdit(record)}
+          >
+            编辑
+          </Button>
+          <Popconfirm
+            title="确定要删除这个商家吗？"
+            onConfirm={() => handleDelete(record)}
+            okText="确定"
+            cancelText="取消"
+          >
+            <Button type="link" danger icon={<DeleteOutlined />}>
+              删除
+            </Button>
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ];
 
     // 行选择配置
     const rowSelection = {
@@ -363,14 +359,17 @@ const Merchant = () => {
         setCurrentRecord(null)
     }
 
-    return (
-        <MerchantLayout>
-            <div style={{ padding: '24px' }}>
-                <Card>
-                    <div style={{ marginBottom: '16px' }}>
-                        <Title level={3} style={{ margin: 0 }}>商家管理</Title>
-                        <p style={{ color: '#666', margin: '8px 0 0 0' }}>管理平台所有商家信息</p>
-                    </div>
+  return (
+    <div style={{ padding: '24px' }}>
+      <Card>
+        <div style={{ marginBottom: '16px' }}>
+          <Title level={3} style={{ margin: 0 }}>
+            商家管理
+          </Title>
+          <p style={{ color: '#666', margin: '8px 0 0 0' }}>
+            管理平台所有商家信息
+          </p>
+        </div>
 
                     {/* 搜索和操作区域 */}
                     <div style={{
@@ -718,4 +717,4 @@ const Merchant = () => {
     )
 }
 
-export default Merchant
+export default Merchant;

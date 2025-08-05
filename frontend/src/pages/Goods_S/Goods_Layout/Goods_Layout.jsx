@@ -1,73 +1,76 @@
 import React from 'react';
 import { Typography, Layout, Menu } from 'antd';
 import {
-  ShopOutlined,
-  TeamOutlined,
-  UserOutlined,
-  BankOutlined,
-  FileTextOutlined,
-  MoneyCollectOutlined,
-  CalculatorOutlined,
-  FileOutlined,
+  ShoppingCartOutlined,
   AuditOutlined,
-  DesktopOutlined,
+  DeleteOutlined,
+  AppstoreOutlined,
+  DatabaseOutlined,
+  CheckSquareOutlined,
+  ImportOutlined,
+  ExportOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const { Title } = Typography;
 const { Sider, Content } = Layout;
 
-const MerchantLayout = ({ children }) => {
-  console.log(children);
+const GoodsLayout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
   // 二级导航菜单项
   const menuItems = [
     {
-      key: '/shops/merchants',
-      icon: <TeamOutlined />,
-      label: '商家管理',
+      key: '/goods/product-list',
+      icon: <ShoppingCartOutlined />,
+      label: '商品列表',
     },
     {
-      key: '/shops/merchant-account',
-      icon: <UserOutlined />,
-      label: '商家账号',
-    },
-    {
-      key: '/shops/withdraw-account',
-      icon: <BankOutlined />,
-      label: '提现账号',
-    },
-    {
-      key: '/shops/account-detail',
-      icon: <FileTextOutlined />,
-      label: '账户明细',
-    },
-    {
-      key: '/shops/merchant-withdraw',
-      icon: <MoneyCollectOutlined />,
-      label: '商家提现',
-    },
-    {
-      key: '/shops/settlement-order',
-      icon: <CalculatorOutlined />,
-      label: '结算订单',
-    },
-    {
-      key: '/shops/settlement-bill',
-      icon: <FileOutlined />,
-      label: '结账单',
-    },
-    {
-      key: '/shops/merchant-application',
+      key: '/goods/audit-list',
       icon: <AuditOutlined />,
-      label: '商家申请',
+      label: '审核列表',
     },
     {
-      key: '/shops/device-management',
-      icon: <DesktopOutlined />,
-      label: '设备管理',
+      key: '/goods/recycle-bin',
+      icon: <DeleteOutlined />,
+      label: '回收站',
+    },
+    {
+      key: '/goods/product-category',
+      icon: <AppstoreOutlined />,
+      label: '商品分类',
+    },
+    {
+      key: '/goods/external-product',
+      icon: <DatabaseOutlined />,
+      label: '外部商品库',
+    },
+    {
+      key: '/goods/inventory/current-stock',
+      icon: <CheckSquareOutlined />,
+      label: '当前库存',
+    },
+    {
+      key: '/goods/inventory/stock-in',
+      icon: <ImportOutlined />,
+      label: '入库',
+    },
+    {
+      key: '/goods/inventory/stock-out',
+      icon: <ExportOutlined />,
+      label: '出库',
+    },
+    {
+      key: '/goods/inventory/stocktake',
+      icon: <CheckSquareOutlined />,
+      label: '盘点',
+    },
+    {
+      key: '/goods/inventory/stock-details',
+      icon: <FileTextOutlined />,
+      label: '出入库明细',
     },
   ];
 
@@ -76,9 +79,10 @@ const MerchantLayout = ({ children }) => {
 
   // 菜单点击处理
   const handleMenuClick = ({ key }) => {
-    console.log(key);
+    console.log(key, '111111000000');
     navigate(key);
   };
+
   return (
     <div style={{ background: '#f0f2f5', minHeight: 'calc(100vh - 64px)' }}>
       <Layout style={{ background: '#fff', borderRadius: '8px' }}>
@@ -92,8 +96,8 @@ const MerchantLayout = ({ children }) => {
         >
           <div style={{ padding: '16px', borderBottom: '1px solid #f0f0f0' }}>
             <Title level={4} style={{ margin: 0, color: '#1890ff' }}>
-              <ShopOutlined style={{ marginRight: '8px' }} />
-              商家管理
+              <ShoppingCartOutlined style={{ marginRight: '8px' }} />
+              商品管理
             </Title>
           </div>
           <Menu
@@ -109,10 +113,12 @@ const MerchantLayout = ({ children }) => {
         </Sider>
 
         {/* 主内容区域 */}
-        <Content style={{ padding: '0' }}>{children}</Content>
+        <Content style={{ padding: '0' }}>
+          {children}
+        </Content>
       </Layout>
     </div>
   );
 };
 
-export default MerchantLayout;
+export default GoodsLayout;

@@ -1,0 +1,48 @@
+.OrderS {
+  border: 1px solid black;
+  width: 1200px;
+  height: 100vh;
+}
+
+.OrderS .header ul {
+  display: flex;
+  list-style: none;
+  width: 450px;
+}
+
+.OrderS .header ul li {
+  border: 1px solid #ececec;
+  padding: 5px 10px;
+}
+
+.OrderS .header ul li a {
+  color: black;
+}
+
+.OrderS .header ul li .active {
+  color: #549bf8;
+}
+
+.OrderS .OperationButton {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.OrderS .OperationButton .OperationButton-left Button {
+  margin-left: 20px;
+}
+
+.OrderS .OperationButton .OperationButton-right {
+  margin-right: 20px;
+}
+
+.OrderS .OperationButton .OperationButton-right ul {
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 200px;
+  height: 50px;
+  padding: 20px 10px;
+}

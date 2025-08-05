@@ -1,0 +1,23 @@
+.Goods {
+  .OperationButton {
+    // margin-top: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    .OperationButton-left {
+      Button {
+        margin-right: 15px;
+      }
+    }
+    .OperationButton-right {
+      //   border: 1px solid red;
+      width: 300px;
+      ul {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        list-style: none;
+      }
+    }
+  }
+}

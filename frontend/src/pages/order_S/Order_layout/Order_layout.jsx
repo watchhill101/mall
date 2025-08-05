@@ -12,62 +12,38 @@ import {
   AuditOutlined,
   DesktopOutlined,
 } from '@ant-design/icons';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 
 const { Title } = Typography;
 const { Sider, Content } = Layout;
 
-const MerchantLayout = ({ children }) => {
+const OrderLayout = ({ children }) => {
   console.log(children);
   const navigate = useNavigate();
   const location = useLocation();
 
   // 二级导航菜单项
+
   const menuItems = [
     {
-      key: '/shops/merchants',
+      key: '/orders/orders-list',
       icon: <TeamOutlined />,
-      label: '商家管理',
+      label: '订单',
     },
     {
-      key: '/shops/merchant-account',
+      key: '/orders/afterSales',
       icon: <UserOutlined />,
-      label: '商家账号',
+      label: '售后',
     },
     {
-      key: '/shops/withdraw-account',
+      key: '/orders/tallySheet',
       icon: <BankOutlined />,
-      label: '提现账号',
+      label: '理货单',
     },
     {
-      key: '/shops/account-detail',
+      key: '/orders/SortingList',
       icon: <FileTextOutlined />,
-      label: '账户明细',
-    },
-    {
-      key: '/shops/merchant-withdraw',
-      icon: <MoneyCollectOutlined />,
-      label: '商家提现',
-    },
-    {
-      key: '/shops/settlement-order',
-      icon: <CalculatorOutlined />,
-      label: '结算订单',
-    },
-    {
-      key: '/shops/settlement-bill',
-      icon: <FileOutlined />,
-      label: '结账单',
-    },
-    {
-      key: '/shops/merchant-application',
-      icon: <AuditOutlined />,
-      label: '商家申请',
-    },
-    {
-      key: '/shops/device-management',
-      icon: <DesktopOutlined />,
-      label: '设备管理',
+      label: '分拣单',
     },
   ];
 
@@ -93,7 +69,7 @@ const MerchantLayout = ({ children }) => {
           <div style={{ padding: '16px', borderBottom: '1px solid #f0f0f0' }}>
             <Title level={4} style={{ margin: 0, color: '#1890ff' }}>
               <ShopOutlined style={{ marginRight: '8px' }} />
-              商家管理
+              订单管理
             </Title>
           </div>
           <Menu
@@ -109,10 +85,14 @@ const MerchantLayout = ({ children }) => {
         </Sider>
 
         {/* 主内容区域 */}
-        <Content style={{ padding: '0' }}>{children}</Content>
+        <Content style={{ padding: '0' }}>
+          {children}
+
+          {/* <Outlet></Outlet> */}
+        </Content>
       </Layout>
     </div>
   );
 };
 
-export default MerchantLayout;
+export default OrderLayout;

@@ -9,6 +9,8 @@ const Orders = lazy(() => import('@/pages/Orders'))
 const Users = lazy(() => import('@/pages/Users'))
 const Login = lazy(() => import('@/pages/Login'))
 const NotFound = lazy(() => import('@/pages/NotFound'))
+
+// 商家相关页面
 const Merchants = lazy(() => import('@/pages/Merchant/Merchant'))
 const MerchantAccount = lazy(() => import('@/pages/Merchant/MerchantAccount'))
 const WithdrawAccount = lazy(() => import('@/pages/Merchant/WithdrawAccount'))
@@ -19,6 +21,25 @@ const SettlementBill = lazy(() => import('@/pages/Merchant/SettlementBill'))
 const MerchantApplication = lazy(() => import('@/pages/Merchant/MerchantApplication'))
 const DeviceManagement = lazy(() => import('@/pages/Merchant/DeviceManagement'))
 
+// 商品相关页面
+const ListOfCommodities = lazy(() => import('@/pages/Goods_S/ListOfCommodities'))
+
+const AuditList = lazy(() => import('@/pages/Goods_S/ListOfCommodities')) // 暂时使用商品列表组件
+const RecycleBin = lazy(() => import('@/pages/Goods_S/Trash/Trash')) // 回收站
+const ProductCategory = lazy(() => import('@/pages/Goods_S/Classification of Commodities/index'))
+const ExternalProduct = lazy(() => import('@/pages/Goods_S/ListOfCommodities')) // 暂时使用商品列表组件
+
+// 库存相关页面
+const CurrentStock = lazy(() => import('@/pages/Goods_S/inventory/CurrentInventory/CurrentInventory'))
+const StockIn = lazy(() => import('@/pages/Goods_S/inventory/enterTheWarehouse/enterTheWarehouse'))
+const StockOut = lazy(() => import('@/pages/Goods_S/inventory/exWarehouse/exWarehouse'))
+const Stocktake = lazy(() => import('@/pages/Goods_S/inventory/stocktaking/stocktaking'))
+const StockDetails = lazy(() => import('@/pages/Goods_S/inventory/DetailsOfStockInAndstockOut/DetailsOfStockInAndstockOut'))
+// 订单相关页面
+const OrdersList = lazy(() => import('@/pages/order_S/Orders'))
+const AfterSales = lazy(() => import('@/pages/order_S/afterSales'))
+const TallySheet = lazy(() => import('@/pages/order_S/tallySheet'))
+const SortingList = lazy(() => import('@/pages/order_S/sortingList'))
 const constantRoutes = [
   { path: '/login', title: '登录', element: <Login /> },
   {
@@ -125,7 +146,90 @@ const constantRoutes = [
         element: <Goods />,
         hidden: false,
         icon: 'GoodsOutlined',    // 商品图标
-        menuPath: '/goods'
+        menuPath: '/goods',
+        children: [
+          { index: true, element: <Navigate to={'/goods/product-list'} replace /> },
+          {
+            path: 'product-list',
+            title: '商品列表',
+            element: <ListOfCommodities />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/goods/product-list'
+          },
+          {
+            path: 'audit-list',
+            title: '审核列表',
+            element: <AuditList />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/goods/audit-list'
+          },
+          {
+            path: 'recycle-bin',
+            title: '回收站',
+            element: <RecycleBin />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/goods/recycle-bin'
+          },
+          {
+            path: 'product-category',
+            title: '商品分类',
+            element: <ProductCategory />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/goods/product-category'
+          },
+          {
+            path: 'external-product',
+            title: '外部商品库',
+            element: <ExternalProduct />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/goods/external-product'
+          },
+          {
+            path: 'inventory/current-stock',
+            title: '当前库存',
+            element: <CurrentStock />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/goods/inventory/current-stock'
+          },
+          {
+            path: 'inventory/stock-in',
+            title: '入库',
+            element: <StockIn />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/goods/inventory/stock-in'
+          },
+          {
+            path: 'inventory/stock-out',
+            title: '出库',
+            element: <StockOut />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/goods/inventory/stock-out'
+          },
+          {
+            path: 'inventory/stocktake',
+            title: '盘点',
+            element: <Stocktake />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/goods/inventory/stocktake'
+          },
+          {
+            path: 'inventory/stock-details',
+            title: '出入库明细',
+            element: <StockDetails />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/goods/inventory/stock-details'
+          }
+        ]
       },
       {
         path: 'orders',
@@ -133,7 +237,41 @@ const constantRoutes = [
         element: <Orders />,
         hidden: false,
         icon: 'OrdersOutlined',    // 订单图标
-        menuPath: '/orders'
+        menuPath: '/orders',
+        children: [
+          {
+            path: 'orders-list',
+            title: '订单',
+            element: <OrdersList />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/orders/orders-list'
+          },
+          {
+            path: 'afterSales',
+            title: '售后',
+            element: <AfterSales />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/orders/afterSales'
+          },
+          {
+            path: 'tallySheet',
+            title: '理货单',
+            element: <TallySheet />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/orders/tallySheet'
+          },
+          {
+            path: 'SortingList',
+            title: '分拣单',
+            element: <SortingList />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/orders/SortingList '
+          }
+        ]
       },
       {
         path: 'users',

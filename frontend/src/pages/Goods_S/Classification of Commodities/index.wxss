@@ -1,0 +1,23 @@
+.List .OperationButton {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.List .OperationButton .OperationButton-left Button {
+  margin-left: 20px;
+}
+
+.List .OperationButton .OperationButton-right {
+  margin-right: 20px;
+}
+
+.List .OperationButton .OperationButton-right ul {
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 200px;
+  height: 50px;
+  padding: 20px 10px;
+}
