@@ -4,26 +4,27 @@ const mongoose = require("mongoose");
 const merchantAccountSchema = new mongoose.Schema(
   {
     loginAccount: { type: String, required: true, unique: true }, //登录账号
-    nickname: { type: String, required: true }, //用户昵称
+    userNickname: { type: String, required: true }, //用户昵称 (更新字段名)
+    contactPhone: { type: String, required: true }, //联系电话 (新增字段)
     password: { type: String, required: true }, //密码
-    
+
     // 多重关联关系
-    role: { type: mongoose.Schema.Types.ObjectId, ref: "Role", required: true }, //角色
+    role: { type: mongoose.Schema.Types.ObjectId, ref: "role", required: true }, //角色 (修正ref)
     merchant: { type: mongoose.Schema.Types.ObjectId, ref: "merchant", required: true }, //关联商家
     personInCharge: { type: mongoose.Schema.Types.ObjectId, ref: "PersonInCharge", required: true }, //关联负责人
-    
+
     // 账号安全
     lastLoginTime: { type: Date }, //最后登录时间
     lastLoginIP: { type: String }, //最后登录IP
     loginAttempts: { type: Number, default: 0 }, //登录尝试次数
     lockUntil: { type: Date }, //锁定到期时间
-    
+
     status: {
       type: String,
-      default: "normal",
-      enum: ["normal", "disabled", "locked", "pending"]
-    }, //状态
-    
+      default: "active",
+      enum: ["active", "disabled", "locked", "pending"]
+    }, //状态 (更新枚举值)
+
     // 权限控制
     permissions: [{
       module: { type: String, required: true }, //模块名
