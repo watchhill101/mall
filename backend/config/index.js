@@ -6,7 +6,7 @@ module.exports = {
     secretKeyExpire: parseInt(process.env.JWT_ACCESS_TOKEN_EXPIRE) || 15 * 60, // Access Token: 15分钟
     refreshSecretKeyExpire: parseInt(process.env.JWT_REFRESH_TOKEN_EXPIRE) || 7 * 24 * 60 * 60, // Refresh Token: 7天
     mongodb: {
-        uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/mall'
+        uri: process.env.MONGODB_URI || 'mongodb+srv://grh991221:AaKU8nle060TcZRs@cluster0.diduzgp.mongodb.net/mall'
     },
     redis: {
         host: process.env.REDIS_HOST || '127.0.0.1',
