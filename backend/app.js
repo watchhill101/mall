@@ -11,6 +11,7 @@ var authRouter = require("./routes/auth");
 var merchantRouter = require("./routes/merchant");
 var merchantAccountRouter = require("./routes/merchantAccount");
 var accountDetailRouter = require("./routes/accountDetail");
+var withdrawAccountRouter = require("./routes/withdrawAccount");
 var captchaRouter = require("./routes/captcha");
 
 // 导入数据库模型（确保数据库连接和模型初始化）
@@ -64,6 +65,7 @@ app.use("/auth", authRouter);
 app.use("/merchant", merchantRouter);
 app.use("/merchant-account", merchantAccountRouter);
 app.use("/account-detail", accountDetailRouter);
+app.use("/withdraw-account", withdrawAccountRouter);
 app.use("/captcha", captchaRouter);
 
 // 需要认证的路由 - 使用express-jwt
