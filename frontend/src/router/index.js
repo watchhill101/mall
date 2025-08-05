@@ -2,7 +2,7 @@ import { lazy } from 'react'
 import { Navigate } from 'react-router-dom'
 
 const Layout = lazy(() => import('@/Layout'))
-const Home = lazy(() => import('@/pages/Home'))
+const Home = lazy(() => import('@/pages/Home_X'))
 const Shops = lazy(() => import('@/pages/Shops'))
 const Goods = lazy(() => import('@/pages/Goods'))
 const Orders = lazy(() => import('@/pages/Orders'))
