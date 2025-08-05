@@ -1,4 +1,5 @@
 import { Tag, Space, Button } from 'antd'
+
 // 三级分类数据
 export const categoryData = [
     {
@@ -376,53 +377,4 @@ export const items = [
         // icon: <MailOutlined />,
     },
 
-]
-// 回收站字段
-export const TrashColumns = [
-    {
-        title: '商品ID',
-        dataIndex: 'ProductID',
-        key: 'ProductID',
-    },
-    {
-        title: '商品名称',
-        dataIndex: 'ProductName',
-        key: 'ProductName',
-        render: (text, record) => <>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-                <div>
-                    <img src={record.src} alt="" />
-                </div>
-                <div>
-                    {text}
-                </div>
-
-            </div>
-
-        </>,
-    },
-    {
-        title: '商品分类',
-        dataIndex: 'ProductCategory',
-        key: 'ProductCategory',
-    },
-    {
-        title: '市场售价',
-        dataIndex: 'MarketPrice',
-        key: 'MarketPrice',
-    },
-    {
-        title: "最后更新时间",
-        dataIndex: 'LastUpdateTime',
-        key: 'LastUpdateTime',
-    },
-    {
-        title: '操作',
-        dataIndex: 'operation',
-        key: 'operation',
-        render: (text, record) => <>
-            <Button type="link">恢复</Button>
-            <Button type="link">删除</Button>
-        </>
-    }
 ]

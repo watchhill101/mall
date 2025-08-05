@@ -1,48 +1,38 @@
 .OrderS {
-  border: 1px solid black;
-  width: 1200px;
-  height: 100vh;
+  padding: 16px;
 }
 
-.OrderS .header ul {
+.OrderS .header {
+  margin-bottom: 16px;
+}
+
+.OrderS .header .btn-list {
   display: flex;
+  gap: 10px;
   list-style: none;
-  width: 450px;
+  padding: 0;
 }
 
-.OrderS .header ul li {
-  border: 1px solid #ececec;
-  padding: 5px 10px;
+.OrderS .header .btn-list a {
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  text-decoration: none;
+  color: #333;
 }
 
-.OrderS .header ul li a {
-  color: black;
+.OrderS .header .btn-list a.active {
+  background-color: #1677ff;
+  color: #fff;
+  border-color: #1677ff;
 }
 
-.OrderS .header ul li .active {
-  color: #549bf8;
+.OrderS .search-bar {
+  margin-bottom: 16px;
 }
 
-.OrderS .OperationButton {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.OrderS .OperationButton .OperationButton-left Button {
-  margin-left: 20px;
-}
-
-.OrderS .OperationButton .OperationButton-right {
-  margin-right: 20px;
-}
-
-.OrderS .OperationButton .OperationButton-right ul {
-  list-style: none;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 200px;
-  height: 50px;
-  padding: 20px 10px;
+.OrderS .table-section {
+  background-color: #fff;
+  padding: 16px;
+  border-radius: 8px;
 }

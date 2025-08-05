@@ -2,19 +2,25 @@ import React, { useState } from 'react';
 import './index.scss';
 import { OrderData } from '@/db_S/data.mjs';
 import SearchBar from '@/components/SearchBar';
-import Icon, { SearchOutlined } from '@ant-design/icons';
-import { Table } from 'antd';
+import './index.scss';
 import {
-  RefreshSvg,
-  SearchSvg,
-  clipSvg,
-  toggleSvg,
-} from '@/pages/Goods_S/icons_svg/IconCom';
-import { Button } from 'antd';
-import CustomTable from '@/components/CustomTable';
-import OrderLayout from '../Order_layout/Order_layout';
+  Button,
+  Popconfirm,
+  Space,
+  Upload,
+  Table,
+  Form,
+  Input,
+  Select,
+  DatePicker,
+} from 'antd';
+import dayjs from 'dayjs';
+const { RangePicker } = DatePicker;
 export default function Index() {
-  const [btnList, setBtnlist] = useState([
+  const [form] = Form.useForm();
+  const [formLayout, setFormLayout] = useState('inline');
+
+  const [btnList] = useState([
     '全部',
     '零售',
     '家政',
@@ -24,165 +30,67 @@ export default function Index() {
     '养老',
     '食堂',
   ]);
-  const [curIdx, setCurIdx] = useState(0);
-  const formItemList = [
-    {
-      formItemProps: { name: 'OrderNumber', label: '订单编号' },
-      valueCompProps: {
-        placeholder: '请输入',
-      },
-    },
-    {
-      formItemProps: { name: 'BelongingStore', label: '所属店铺' },
-      valueCompProps: {
-        placeholder: '请选择',
-        type: 'select',
-        options: [
-          {
-            label: '店铺1',
-            value: 0,
-          },
-          {
-            label: '店铺2',
-            value: 1,
-          },
-        ],
-      },
-    },
-    {
-      formItemProps: { name: 'PaymentTime', label: '支付时间' },
-      valueCompProps: {
-        type: 'rangePicker',
-      },
-    },
-    {
-      formItemProps: { name: 'ContactNumber', label: '联系电话' },
-      valueCompProps: {
-        placeholder: '请输入',
-      },
-    },
-    {
-      formItemProps: { name: 'TransactionType', label: '交易类型' },
-      valueCompProps: {
-        type: 'select',
-        placeholder: '请选择',
-        options: [
-          {
-            label: '消费',
-            value: 'consumption',
-          },
-          {
-            label: '退款',
-            value: 'refund',
-          },
-        ],
-      },
-    },
-    {
-      formItemProps: { name: 'PaymentMethod', label: '支付方式' },
-      valueCompProps: {
-        type: 'select',
-        placeholder: '请选择',
-        options: [
-          {
-            label: '钱包',
-            value: 'wallet',
-          },
-          {
-            label: '微信',
-            value: 'WeChat',
-          },
-          {
-            label: '支付宝',
-            value: 'Alipay',
-          },
-          {
-            label: '余额',
-            value: 'balance',
-          },
-        ],
-      },
-    },
-  ];
-  const handleSearch = (values) => {
-    console.log(values);
+  const onFormLayoutChange = ({ layout }) => {
+    setFormLayout(layout);
   };
 
-  const onParamChange = () => {};
-  const [params, setparams] = useState({
+  const [curIdx, setCurIdx] = useState(0);
+
+  const [params, setParams] = useState({
     pageSize: 5,
     current: 1,
   });
-  const fetchMethod = async (requesParams) => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // 模拟分页（你需要根据实际接口分页）
-    const { current = 1, pageSize = 5 } = requesParams;
-    const startIdx = (current - 1) * pageSize;
-    const endIdx = startIdx + pageSize;
-
-    const currentOrders = OrderData.list.slice(startIdx, endIdx);
-
-    const expandedData = currentOrders.flatMap((order) => {
-      return order.ProductInformation.map((product, index) => ({
-        ...order,
-        product,
-        rowSpan: index === 0 ? order.ProductInformation.length : 0,
-        isFirstRow: index === 0,
-      }));
-    });
-
-    return {
-      data: {
-        count: OrderData.list.length, // 这里是总订单数
-        rows: expandedData, // 展示用的扁平化行
-      },
-    };
+  const handleChange = (value: string) => {
+    console.log(`selected ${value}`);
   };
-  const expandedData = OrderData.list.flatMap((order) => {
-    return order.ProductInformation.map((product, index) => ({
-      ...order,
-      product,
-      rowSpan: index === 0 ? order.ProductInformation.length : 0, // 用于跨行显示
-      isFirstRow: index === 0,
-    }));
-  });
+  // const fetchMethod = async (requesParams) => {
+  //   await new Promise((resolve) => setTimeout(resolve, 500));
+  //   const { current = 1, pageSize = 5 } = requesParams;
+  //   const startIdx = (current - 1) * pageSize;
+  //   const endIdx = startIdx + pageSize;
+
+  //   const currentOrders = OrderData.list.slice(startIdx, endIdx);
+
+  //   const expandedData = currentOrders.flatMap((order) => {
+  //     return order.ProductInformation.map((product, index) => ({
+  //       ...order,
+  //       product,
+  //       rowSpan: index === 0 ? order.ProductInformation.length : 0,
+  //       isFirstRow: index === 0,
+  //     }));
+  //   });
+
+  //   return {
+  //     data: {
+  //       count: OrderData.list.length,
+  //       rows: expandedData,
+  //     },
+  //   };
+  // };
+
   const columns = [
     {
       title: '订单编号',
       dataIndex: 'OrderNumber',
-      render: (value, row) => ({
-        children: row.isFirstRow ? value : null,
-        props: {
-          rowSpan: row.rowSpan,
-        },
-      }),
+      render: (val, row) => renderMergedCell(val, row),
     },
     {
       title: '商品信息',
-      dataIndex: 'ProductInformation',
-      key: 'ProductInformation',
-      render: (productList) => (
-        <div>
-          {productList.map((product) => (
-            <div key={product.id}>
-              {product.ProductName} - {product.Specification}
-            </div>
-          ))}
+      render: (_, row) => (
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <img src={row.product?.ImageUrl} alt="" width={40} height={40} />
+          <div>
+            <div>{row.product?.ProductName}</div>
+            <div style={{ color: '#999' }}>{row.product?.Specification}</div>
+          </div>
         </div>
       ),
     },
     {
       title: '价格(元)/数量',
-      dataIndex: 'ProductInformation',
-      key: 'Price (yuan) / Quantity',
-      render: (productList) => (
+      render: (text, row) => (
         <div>
-          {productList.map((product) => (
-            <div key={product.id}>
-              ￥{product.price} / {product.quantity}
-            </div>
-          ))}
+          ￥{row.product.price} / {row.product.quantity}
         </div>
       ),
     },
@@ -204,7 +112,7 @@ export default function Index() {
         children: row.isFirstRow
           ? row.CustomerInformation.map(
               (c) => `${c.CustomerName} - ${c.ContactInformation}`
-            ).join('\n')
+            ).join(' / ')
           : null,
         props: { rowSpan: row.rowSpan },
       }),
@@ -229,20 +137,16 @@ export default function Index() {
     {
       title: '分销佣金',
       dataIndex: 'Commission',
-      key: 'DistributionCommission',
-      render: (value) => `￥${value}`,
+      render: (val, row) => renderMergedCell(`￥${val}`, row),
     },
     {
       title: '所属店铺',
       dataIndex: 'StoreName',
-      key: 'AffiliatedStore',
     },
     {
       title: '所属网点',
       dataIndex: 'OutletName',
-      key: 'AffiliatedNetwork',
     },
-
     {
       title: '操作',
       render: (_, row) => ({
@@ -252,7 +156,7 @@ export default function Index() {
             {row.OrderStatus !== 4 && (
               <>
                 <Button type="link">完成</Button>
-                <Button type="link" style={{ color: 'red' }}>
+                <Button type="link" danger>
                   退款
                 </Button>
               </>
@@ -264,101 +168,116 @@ export default function Index() {
     },
   ];
 
+  const formatOrderData = (orderList) =>
+    orderList.flatMap((order) =>
+      order.ProductInformation.map((product, index) => ({
+        ...order,
+        product,
+        rowSpan: index === 0 ? order.ProductInformation.length : 0,
+        isFirstRow: index === 0,
+      }))
+    );
+  const expandedData = formatOrderData(OrderData.list);
+  const renderMergedCell = (content, row) => ({
+    children: row.isFirstRow ? content : null,
+    props: { rowSpan: row.rowSpan },
+  });
+  const disabledDate = (current) => {
+    // Can not select days before today and today
+    return current && current < dayjs().endOf('day');
+  };
   return (
-    // <OrderLayout>
     <div className="OrderS">
+      {/* 顶部按钮切换 */}
       <div className="header">
-        <ul>
-          {btnList.map((item, index) => {
-            return (
-              <li key={index}>
-                <a
-                  href="javascript:;"
-                  className={curIdx === index ? 'active' : ''}
-                  onClick={() => setCurIdx(index)}
-                >
-                  {item}
-                </a>
-              </li>
-            );
-          })}
+        <ul className="btn-list">
+          {btnList.map((item, index) => (
+            <li key={index}>
+              <a
+                href="#!"
+                className={curIdx === index ? 'active' : ''}
+                onClick={() => setCurIdx(index)}
+              >
+                {item}
+              </a>
+            </li>
+          ))}
         </ul>
-        <div className="searchbar">
-          <SearchBar
-            formItemList={formItemList}
-            getSearchParams={handleSearch}
-          />
-        </div>
-      </div>
-      <div className="OperationButton">
-        <div className="OperationButton-left">
-          <Button
-            color="primary"
-            style={{
-              backgroundColor: '#FEF8E7',
-              border: '1px solid #FAE096',
-              color: '#F7CC59',
-            }}
+        <div className="searchBox">
+          {/* <Space></Space> */}
+          <Form
+            layout={formLayout}
+            form={form}
+            initialValues={{ layout: formLayout }}
+            onValuesChange={onFormLayoutChange}
+            style={{ maxWidth: 'inline' }}
           >
-            导出
-          </Button>
-        </div>
-        <div className="OperationButton-right">
-          <ul>
-            <li>
-              <Button
-                // type="primary"
-                shape="circle"
-                icon={
-                  <Icon component={RefreshSvg} />
-                  // <SvgIcon
-                  //   name="refresh"
-                  //   width="16"
-                  //   height="16"
-                  //   color="#1890ff"
-                  // ></SvgIcon>
-                }
+            <Form.Item label="订单编号">
+              <Input placeholder="请输入" />
+            </Form.Item>
+            <Form.Item label="所属店铺">
+              <Select
+                defaultValue="店铺1"
+                style={{ width: 120 }}
+                onChange={handleChange}
+                options={[
+                  { value: '店铺1', label: '店铺1' },
+                  { value: '店铺2', label: '店铺2' },
+                ]}
               />
-            </li>
-            <li>
-              <Button
-                // type="primary"
-                shape="circle"
-                icon={<Icon component={SearchSvg} />}
-                // icon={
-                //   <SvgIcon
-                //     name="setting"
-                //     width="16"
-                //     height="16"
-                //     color="#1890ff"
-                //
+            </Form.Item>
+            <Form.Item label="支付时间">
+              <RangePicker disabledDate={disabledDate} />
+            </Form.Item>
+            <Form.Item label="联系电话">
+              <Input placeholder="请输入" />
+            </Form.Item>
+            <Form.Item label="交易类型">
+              <Select
+                defaultValue="消费"
+                style={{ width: 120 }}
+                onChange={handleChange}
+                options={[
+                  { value: '消费', label: '消费' },
+                  { value: '退款', label: '退款' },
+                ]}
               />
-            </li>
-            <li>
-              <Button
-                // type="primary"
-                shape="circle"
-                icon={<Icon component={clipSvg}></Icon>}
-              />
-            </li>
-            <li>
-              <Button
-                // type="primary"
-                shape="circle"
-                icon={<Icon component={toggleSvg} />}
-              />
-            </li>
-          </ul>
+            </Form.Item>
+            <Form.Item label="支付方式">
+              <Select
+                defaultValue="微信"
+                style={{ width: 120 }}
+                onChange={handleChange}
+                options={[
+                  { value: '微信', label: '微信' },
+                  { value: '支付宝', label: '支付宝' },
+                  { value: '银行卡', label: '银行卡' },
+                ]}
+              ></Select>
+            </Form.Item>
+            <Form.Item>
+              <Button type="primary">搜索</Button>
+              <Button>重置</Button>
+            </Form.Item>
+          </Form>
         </div>
       </div>
-      <div>
-        <CustomTable
+
+      {/* 搜索栏 */}
+      <div className="search-bar">
+        {/* <SearchBar formItemList={[]} onSearch={(v) => console.log(v)} /> */}
+      </div>
+
+      {/* 表格部分 */}
+      <div className="table-section">
+        <Table
+          dataSource={expandedData}
           columns={columns}
-          fetchMethod={fetchMethod}
-          requestParam={params}
+          pagination={{ pageSize: 5 }}
+          rowKey={(record, index) => `${record.OrderNumber}-${index}`}
+          bordered
         />
       </div>
     </div>
-    // </OrderLayout>
   );
 }
