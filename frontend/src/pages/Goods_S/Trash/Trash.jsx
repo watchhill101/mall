@@ -31,7 +31,6 @@ import {
   RiseOutlined,
   TagOutlined,
 } from '@ant-design/icons';
-import component from 'element-plus/es/components/tree-select/src/tree-select-option.mjs';
 import GoodsLayout from '../Goods_Layout/Goods_Layout';
 const Trash = () => {
   const handleSearch = () => {};

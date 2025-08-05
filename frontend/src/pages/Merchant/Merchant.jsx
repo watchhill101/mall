@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { Card, Typography, Table, Button, Space, Input, Select, Tag, message, Popconfirm, Modal, Form, Row, Col, Descriptions } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, SearchOutlined } from '@ant-design/icons'
-import MerchantLayout from './MerchantLayout'
 
 const { Title } = Typography;
 const { Search } = Input;
@@ -713,7 +712,6 @@ const Merchant = () => {
                     </Form>
                 </Modal>
             </div>
-        </MerchantLayout>
     )
 }
 
