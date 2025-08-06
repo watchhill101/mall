@@ -23,6 +23,7 @@
     "morgan": "~1.9.1",
     "nodemon": "^3.1.10",
     "redis": "^5.6.1",
+    "socket.io": "^4.8.1",
     "svg-captcha": "^1.4.0"
   }
 }
