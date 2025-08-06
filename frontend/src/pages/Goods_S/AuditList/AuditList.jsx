@@ -23,7 +23,9 @@ const { TextArea } = Input;
 
 export default function AuditList() {
   const [form] = Form.useForm();
-  const [data, setData] = useState([]);
+  const [auditForm] = Form.useForm();
+  const [allData, setAllData] = useState([]); // 原始数据
+  const [data, setData] = useState([]); // 筛选后数据
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -31,13 +33,12 @@ export default function AuditList() {
   });
   const [visible, setVisible] = useState(false);
   const [currentRecord, setCurrentRecord] = useState(null);
-  const [auditForm] = Form.useForm();
 
   const getProductAuditList = async () => {
     try {
       const { success, data } = await ProductApi.Product.getAudit();
-      console.log(success, data, '审核列表数据');
       if (success) {
+        setAllData(data);
         setData(data);
         setPagination((prev) => ({
           ...prev,
@@ -54,33 +55,26 @@ export default function AuditList() {
     getProductAuditList();
   }, []);
 
-  // 打开审核弹窗
   const handleAudit = (record) => {
     setCurrentRecord(record);
     auditForm.resetFields();
     setVisible(true);
   };
 
-  // 提交审核
   const handleSubmitAudit = async () => {
     try {
       const values = await auditForm.validateFields();
-      const { auditStatus, auditComments } = values;
-
-      // 调用审核API
       const result = await ProductApi.Product.updateAuditStatus({
         auditId: currentRecord.auditId,
-        auditStatus,
-        auditComments,
+        auditStatus: values.auditStatus,
+        auditComments: values.auditComments,
         auditTime: new Date(),
-        // 假设当前用户ID可以从全局状态获取
-        auditor: '6891c594711bbd8f373159c3',
+        auditor: '6891c594711bbd8f373159c3', // mock 审核人 ID
       });
 
       if (result.success) {
         message.success('审核成功');
         setVisible(false);
-        // 刷新列表
         getProductAuditList();
       } else {
         message.error('审核失败: ' + result.message);
@@ -91,17 +85,71 @@ export default function AuditList() {
     }
   };
 
-  const statusColor = {
-    待审核: 'orange',
-    已通过: 'blue',
-    已拒绝: 'red',
+  const handleSearch = async () => {
+    const values = await form.validateFields();
+    const { dateRange, productName, status, reason } = values;
+
+    const filtered = allData.filter((item) => {
+      if (dateRange && dateRange.length === 2) {
+        const [start, end] = dateRange;
+        const submitTime = dayjs(item.submitTime);
+        if (!submitTime.isBetween(start, end, null, '[]')) return false;
+      }
+
+      if (
+        productName &&
+        !item.productInfo?.productName?.includes(productName)
+      ) {
+        return false;
+      }
+
+      if (status && item.auditStatus !== status) {
+        return false;
+      }
+
+      if (reason && !item.auditReason?.includes(reason)) {
+        return false;
+      }
+
+      return true;
+    });
+
+    setData(filtered);
+    setPagination((prev) => ({
+      ...prev,
+      current: 1,
+      total: filtered.length,
+    }));
   };
+
+  const handleReset = () => {
+    form.resetFields();
+    setData(allData);
+    setPagination((prev) => ({
+      ...prev,
+      current: 1,
+      total: allData.length,
+    }));
+  };
+
+  const handlePageChange = (paginationConfig) => {
+    setPagination((prev) => ({
+      ...prev,
+      current: paginationConfig.current,
+      pageSize: paginationConfig.pageSize,
+    }));
+  };
+
+  const currentPageData = data.slice(
+    (pagination.current - 1) * pagination.pageSize,
+    pagination.current * pagination.pageSize
+  );
 
   const columns = [
     {
       title: 'ID',
       dataIndex: 'auditId',
-      key: 'id',
+      key: 'auditId',
     },
     {
       title: '所属商家',
@@ -114,10 +162,10 @@ export default function AuditList() {
       dataIndex: 'productInfo',
       key: 'productInfo',
       width: 200,
-      render: (productInfo) => (
+      render: (info) => (
         <Space direction="vertical">
-          <span>{productInfo?.productName || '--'}</span>
-          <span>{productInfo?.productCategory || '--'}</span>
+          <span>{info?.productName || '--'}</span>
+          <span>{info?.productCategory || '--'}</span>
         </Space>
       ),
     },
@@ -125,7 +173,6 @@ export default function AuditList() {
       title: '审核原因',
       dataIndex: 'auditReason',
       key: 'auditReason',
-      render: (reason) => reason || '--',
     },
     {
       title: '状态',
@@ -134,16 +181,16 @@ export default function AuditList() {
       render: (status) => (
         <Tag
           color={
-            status == 'pending'
+            status === 'pending'
               ? 'orange'
-              : status == 'approved'
+              : status === 'approved'
               ? 'green'
               : 'red'
           }
         >
-          {status == 'pending'
+          {status === 'pending'
             ? '待审核'
-            : status == 'approved'
+            : status === 'approved'
             ? '已通过'
             : '已拒绝'}
         </Tag>
@@ -153,21 +200,19 @@ export default function AuditList() {
       title: '提交时间',
       dataIndex: 'submitTime',
       key: 'submitTime',
-      render: (submitTime) =>
-        submitTime ? dayjs(submitTime).format('YYYY-MM-DD HH:mm:ss') : '--',
+      render: (val) => (val ? dayjs(val).format('YYYY-MM-DD HH:mm:ss') : '--'),
     },
     {
       title: '操作人',
       dataIndex: 'auditor',
       key: 'auditor',
-      render: (auditor) => auditor?.loginAccount || '--',
+      render: (val) => val?.loginAccount || '--',
     },
     {
       title: '审核时间',
       dataIndex: 'auditTime',
       key: 'auditTime',
-      render: (auditTime) =>
-        auditTime ? dayjs(auditTime).format('YYYY-MM-DD HH:mm:ss') : '--',
+      render: (val) => (val ? dayjs(val).format('YYYY-MM-DD HH:mm:ss') : '--'),
     },
     {
       title: '操作',
@@ -178,24 +223,14 @@ export default function AuditList() {
             审核
           </Button>
         ) : (
-          <span>--</span>
+          '--'
         ),
     },
   ];
 
-  const handleSearch = () => {
-    form.validateFields().then((values) => {
-      console.log('搜索参数:', values);
-      // 可以在此调用后端接口获取搜索结果
-    });
-  };
-
-  const handleReset = () => {
-    form.resetFields();
-  };
-
   return (
     <GoodsLayout>
+      {/* 搜索栏 */}
       <Form
         form={form}
         layout="inline"
@@ -228,21 +263,23 @@ export default function AuditList() {
         </Form.Item>
       </Form>
 
+      {/* 表格 */}
       <Table
         rowKey="auditId"
         columns={columns}
-        dataSource={data}
+        dataSource={currentPageData}
         pagination={{
           ...pagination,
           showQuickJumper: true,
+          showTotal: (total) => `共 ${total} 条`,
         }}
-        onChange={(newPagination) => setPagination(newPagination)}
+        onChange={handlePageChange}
       />
 
       {/* 审核弹窗 */}
       <Modal
         title="商品审核"
-        visible={visible}
+        open={visible}
         onOk={handleSubmitAudit}
         onCancel={() => setVisible(false)}
         destroyOnClose
@@ -275,7 +312,7 @@ export default function AuditList() {
               {currentRecord.submitter?.loginAccount || '--'}
             </p>
 
-            <h3 style={{ marginTop: '20px' }}>审核操作</h3>
+            <h3 style={{ marginTop: 20 }}>审核操作</h3>
             <Form form={auditForm} layout="vertical">
               <Form.Item
                 name="auditStatus"

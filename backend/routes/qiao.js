@@ -12,7 +12,7 @@ var Merchant = require('../moudle/merchant/merchant');
 // 获取商品列表
 router.get('/products', async function (req, res) {
     try {
-        const products = await Product.find({}); // 获取全部商
+        const products = await Product.find({}); // 获取全部商'
         res.json({ success: true, data: products });
     } catch (err) {
 
@@ -262,17 +262,42 @@ router.put('/updateAuditStatus', async (req, res) => {
         res.status(500).json({ success: false, message: '服务器错误', error: error.message });
     }
 });
-// 分页版本
+
+
 router.get('/searchProducts', async function (req, res) {
     try {
-        const { name, category, status, page = 1, pageSize = 10 } = req.query;
+        const { name, category, status, inStock, page = 1, pageSize = 10 } = req.query;
+
         const query = {};
-        // ... 构建查询条件（同上）
+
+        // 商品名称模糊匹配
+        if (name) {
+            query.productName = { $regex: name, $options: 'i' };
+        }
+
+        // 分类精确匹配（后端字段是字符串，如 "A01"）
+        if (category) {
+            query.productCategory = category;
+        }
+
+        // 状态精确匹配
+        if (status) {
+            query.status = status;
+        }
+
+        // 是否有库存：判断 inventory.currentStock 字段
+        if (inStock === '1') {
+            query['inventory.currentStock'] = { $gt: 0 };
+        } else if (inStock === '0') {
+            query['inventory.currentStock'] = { $lte: 0 };
+        }
 
         const skip = (page - 1) * pageSize;
+
         const products = await Product.find(query)
             .skip(skip)
             .limit(Number(pageSize));
+
         const total = await Product.countDocuments(query);
 
         res.json({
@@ -282,12 +307,60 @@ router.get('/searchProducts', async function (req, res) {
                 total,
                 page: Number(page),
                 pageSize: Number(pageSize),
-                totalPages: Math.ceil(total / pageSize)
+                totalPages: Math.ceil(total / pageSize),
             },
-            message: '搜索成功'
+            message: '搜索成功',
         });
     } catch (error) {
-        // ... 错误处理（同上）
+        console.error('搜索商品失败:', error);
+        res.status(500).json({
+            success: false,
+            message: '服务器错误',
+            error: error.message,
+        });
     }
 });
+// 编辑商品列表
+router.put('/updateProductInfo', async (req, res) => {
+    try {
+        const { productId, ...updateData } = req.body;
+
+        if (!productId) {
+            return res.status(400).json({
+                success: false,
+                message: '商品ID不能为空'
+            });
+        }
+
+        // 查找商品
+        const product = await Product.findOne({ productId });
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                message: '未找到该商品'
+            });
+        }
+
+        // 更新商品信息
+        const updatedProduct = await Product.findOneAndUpdate(
+            { productId },
+            { $set: { ...updateData, updatedAt: new Date() } },
+            { new: true }
+        );
+
+        res.json({
+            success: true,
+            data: updatedProduct,
+            message: '商品信息更新成功'
+        });
+    } catch (error) {
+        console.error('更新商品信息失败:', error);
+        res.status(500).json({
+            success: false,
+            message: '服务器错误',
+            error: error.message
+        });
+    }
+});
+
 module.exports = router;

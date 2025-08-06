@@ -45,15 +45,13 @@ const ListOfCommodities = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const [list, setlist] = useState([]);
   const getGoodsList = async () => {
-    const { success, data } = await ProductApi.Product.getList({
-      page: 1,
-      pageSize: 1,
-    });
+    const { success, data } = await ProductApi.Product.getList();
     // console.log(success, data);
     if (success) {
       // 过滤掉已删除的商品
-      const filteredData = data.filter((item) => item.status !== 'deleted');
-      setlist(filteredData);
+      // const filteredData = data.filter((item) => item.status !== 'deleted');
+      // console.log(filteredData, '列表数据');
+      setlist(data);
     }
   };
   useEffect(() => {
@@ -159,7 +157,16 @@ const ListOfCommodities = () => {
       key: 'action',
       render: (text, record) => (
         <Space size="middle">
-          {/* <Button type="link">编辑</Button> */}
+          <Button
+            type="link"
+            onClick={() => {
+              setCurrentRecord(record);
+              setEditVisible(true);
+            }}
+          >
+            编辑
+          </Button>
+
           <Button
             type="link"
             style={{ color: record.status !== 'offSale' ? 'red' : 'green' }}
@@ -238,6 +245,30 @@ const ListOfCommodities = () => {
         console.error(err);
       }
     };
+    const handleEditSubmit = async (updatedRecord) => {
+      console.log(updatedRecord, '编辑提交的数据');
+      try {
+        // 确保updatedRecord中包含productId
+        if (!updatedRecord.productId) {
+          message.error('商品ID不能为空');
+          return;
+        }
+
+        const { success, message } = await ProductApi.Product.updateProductInfo(
+          updatedRecord
+        );
+        if (success) {
+          message.success('编辑成功');
+          setEditVisible(false);
+          getGoodsList(); // 刷新商品列表
+        } else {
+          message.error(message || '编辑失败');
+        }
+      } catch (err) {
+        console.error('编辑失败:', err);
+        message.error('编辑失败: ' + err.message);
+      }
+    };
 
     const modal = Modal.confirm({
       title: '确认加入回收站',
@@ -296,57 +327,15 @@ const ListOfCommodities = () => {
   //   }
   // }, []);
 
-  // 搜索处理
-  // const handleSearch = async () => {
-  //   try {
-  //     setLoading(true);
-  //     // 构建搜索参数，包含 inStock
-  //     const params = {
-  //       name: searchParams.name,
-  //       category: searchParams.category,
-  //       status: searchParams.status,
-  //       inStock: searchParams.inStock,
-  //       // page: pagination.current,
-  //       // pageSize: pagination.pageSize,
-  //     };
-
-  //     // 调用搜索 API
-  //     const {
-  //       success,
-  //       data,
-  //       pagination: resPagination,
-  //     } = await ProductApi.Product.getList(params);
-  //     console.log(success, data);
-  //     if (success) {
-  //       // 过滤掉已删除的商品
-  //       const filteredData = data.filter((item) => item.status !== 'deleted');
-  //       setlist(filteredData); // 更新表格使用的数据源
-  //       setPagination((prev) => ({
-  //         ...prev,
-  //         total: resPagination?.total || filteredData.length,
-  //       }));
-  //     }
-  //   } catch (error) {
-  //     message.error('搜索失败: ' + error.message);
-  //     console.error('搜索商品错误:', error);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
   // 重置搜索
   const handleReset = () => {
     setSearchParams({
       name: '',
       category: '',
       status: '',
-      inStock: '',
     });
-    setPagination((prev) => ({ ...prev, current: 1 }));
     getGoodsList(); // 重置后显示全部商品
   };
-
-  // 分页变化处理
 
   // 新增商品
 
@@ -356,13 +345,6 @@ const ListOfCommodities = () => {
     form.resetFields();
     // console.log('添加');
     // navigate('/goods/ProductEditor');
-  };
-
-  // 编辑商品
-  const handleEdit = (record) => {
-    // setEditingRecord(record);
-    // form.setFieldsValue(record);
-    // setModalVisible(true);
   };
 
   // 删除商品
@@ -379,42 +361,57 @@ const ListOfCommodities = () => {
 
   // 表单提交
   const handleSubmit = async (values) => {
-    // console.log(values, '999');
     try {
-      console.log('提交数据:', values);
-      if (!values) return;
-
-      // 生成审核ID
-      const auditId =
-        'AUDIT' +
-        Date.now().toString().slice(-8) +
-        Math.floor(Math.random() * 1000)
-          .toString()
-          .padStart(3, '0');
-
-      // 确保productInfo对象存在并有productName字段
       const productInfo = {
-        ...values.productInfo,
-        productName:
-          values.productInfo?.productName || values.productName || '未命名商品',
+        productName: values.productInfo || '未命名商品',
       };
 
-      // 构建完整的请求数据
       const submitData = {
         ...values,
-        auditId,
         productInfo,
-        submitTime: new Date().toISOString(),
+        submitTime: values.submitTime
+          ? values.submitTime.toISOString()
+          : new Date().toISOString(),
       };
 
-      const { success } = await ProductApi.Product.addProductAudit(submitData);
-      if (success) {
-        messageApi.success('审核记录创建成功');
-        addModalRef.current?.toggleShowStatus(false);
+      if (editingRecord) {
+        // 编辑模式
+        submitData.productId = editingRecord.productId;
+
+        const { success } = await ProductApi.Product.updateProductAudit(
+          editingRecord.productId,
+          submitData
+        );
+
+        if (success) {
+          messageApi.success('审核记录更新成功');
+          setEditingRecord(null);
+          addModalRef.current?.toggleShowStatus(false);
+          getGoodsList(); // 重新加载列表
+        }
+      } else {
+        // 新增模式
+        const auditId =
+          'AUDIT' +
+          Date.now().toString().slice(-8) +
+          Math.floor(Math.random() * 1000)
+            .toString()
+            .padStart(3, '0');
+
+        const { success } = await ProductApi.Product.addProductAudit({
+          ...submitData,
+          auditId,
+        });
+
+        if (success) {
+          messageApi.success('审核记录创建成功');
+          addModalRef.current?.toggleShowStatus(false);
+          getGoodsList(); // 刷新
+        }
       }
     } catch (error) {
       console.error('提交数据时出错:', error);
-      messageApi.error('提交数据时出错');
+      messageApi.error('提交失败');
     }
   };
 
@@ -435,7 +432,61 @@ const ListOfCommodities = () => {
     console.log(value);
   };
 
-  // 修改搜索区域组件
+  const handleSearch = async (page = 1, pageSize = pagination.pageSize) => {
+    try {
+      setLoading(true);
+      const params = {
+        name: searchParams.name,
+        category: searchParams.category,
+        status: searchParams.status,
+        inStock: searchParams.inStock,
+        page,
+        pageSize,
+      };
+
+      const {
+        success,
+        data,
+        pagination: serverPagination,
+      } = await ProductApi.Product.searchProducts(params);
+
+      if (success) {
+        // ✅ 用搜索返回的数据更新列表
+        setlist(data); // ← 这是关键
+
+        // ✅ 更新分页信息
+        setPagination({
+          current: serverPagination.page,
+          pageSize: serverPagination.pageSize,
+          total: serverPagination.total,
+        });
+      }
+    } catch (error) {
+      message.error('搜索失败: ' + error.message);
+      console.error('搜索商品错误:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const [editVisible, setEditVisible] = useState(false);
+  const [currentRecord, setCurrentRecord] = useState(null);
+  const handleEditSubmit = async (updatedRecord) => {
+    console.log(updatedRecord, 'ii');
+    try {
+      const { success } = await ProductApi.Product.updateProductInfo(
+        updatedRecord
+      ); // 模拟接口
+      if (success) {
+        message.success('编辑成功');
+        setEditVisible(false);
+        getGoodsList();
+      }
+    } catch (err) {
+      console.error('编辑失败:', err);
+      message.error('编辑失败');
+    }
+  };
+
   return (
     <GoodsLayout>
       <div style={{ padding: '24px' }}>
@@ -503,7 +554,7 @@ const ListOfCommodities = () => {
                 <Button
                   type="primary"
                   icon={<SearchOutlined />}
-                  // onClick={handleSearch}
+                  onClick={handleSearch}
                 >
                   搜索
                 </Button>
@@ -540,8 +591,9 @@ const ListOfCommodities = () => {
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total) => `共 ${total} 条记录`,
-            // onChange: handleTableChange,
-            // onShowSizeChange: handleTableChange,
+            onChange: (page, pageSize) => {
+              handleSearch(page, pageSize); // 分页触发搜索
+            },
           }}
         />
 
@@ -669,9 +721,79 @@ const ListOfCommodities = () => {
             </Form.Item>
           </Form>
         </CustomModal>
+        <CustomEditModal
+          visible={editVisible}
+          onClose={() => setEditVisible(false)}
+          onSubmit={handleEditSubmit}
+          record={currentRecord}
+        ></CustomEditModal>
       </div>
     </GoodsLayout>
   );
 };
 
 export default ListOfCommodities;
+const CustomEditModal = ({ visible, onClose, onSubmit, record }) => {
+  const [form] = Form.useForm();
+
+  useEffect(() => {
+    if (record) {
+      form.setFieldsValue(record);
+    }
+  }, [record]);
+
+  const handleOk = async () => {
+    try {
+      const values = await form.validateFields();
+      onSubmit({ ...record, ...values });
+    } catch (error) {
+      console.error('表单验证失败:', error);
+    }
+  };
+
+  return (
+    <Modal
+      title="编辑商品"
+      visible={visible}
+      onCancel={onClose}
+      onOk={handleOk}
+      destroyOnClose
+    >
+      <Form form={form} layout="vertical">
+        <Form.Item
+          name="productName"
+          label="商品名称"
+          rules={[{ required: true }]}
+        >
+          <Input />
+        </Form.Item>
+        <Form.Item
+          name="productCategory"
+          label="商品分类"
+          rules={[{ required: true }]}
+        >
+          <Input />
+        </Form.Item>
+        <Form.Item
+          name={['pricing', 'salePrice']}
+          label="销售价"
+          rules={[{ required: true }]}
+        >
+          <InputNumber style={{ width: '100%' }} />
+        </Form.Item>
+        <Form.Item name={['inventory', 'currentStock']} label="当前库存">
+          <InputNumber style={{ width: '100%' }} />
+        </Form.Item>
+        <Form.Item name={['inventory', 'totalStock']} label="库存总数">
+          <InputNumber style={{ width: '100%' }} />
+        </Form.Item>
+        <Form.Item name="status" label="商品状态">
+          <Select>
+            <Option value="onSale">在售</Option>
+            <Option value="offSale">下架</Option>
+          </Select>
+        </Form.Item>
+      </Form>
+    </Modal>
+  );
+};
