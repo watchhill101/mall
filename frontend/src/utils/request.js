@@ -27,6 +27,10 @@ const whiteList = [
   '/withdraw-account/list',      // 提现账号列表，用于测试
   '/withdraw-account/test',      // 提现账号测试接口
   '/withdraw-account/merchants', // 商家列表，用于测试
+  '/withdraw-account/create',    // 创建提现账号，用于测试
+  '/withdraw-account/update',    // 更新提现账号，用于测试
+  '/withdraw-account/delete',    // 删除提现账号，用于测试
+  '/withdraw-account/status',    // 更新账号状态，用于测试
   '/merchant-withdraw/list',     // 商家提现列表，用于测试
   '/merchant-withdraw/test',     // 商家提现测试接口
   '/merchant-withdraw/audit',    // 商家提现审核接口
@@ -78,7 +82,7 @@ export function setResponseInterceptor(store, login, logout) {
 
         // 处理后端返回的数据格式
         if (response.data && response.data.code !== undefined) {
-          if (response.data.code === 200) {
+          if (response.data.code === 200 || response.data.code === 201) {
             console.log('✅ 请求成功:', response.data);
             return response.data
           } else {

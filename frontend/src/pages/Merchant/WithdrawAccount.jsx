@@ -33,8 +33,11 @@ const { Title } = Typography
 const { Option } = Select
 
 const WithdrawAccount = () => {
+  // 表单实例
   const [form] = Form.useForm()
   const [modalForm] = Form.useForm()
+
+  // 数据状态
   const [loading, setLoading] = useState(false)
   const [withdrawAccountData, setWithdrawAccountData] = useState([])
   const [merchantList, setMerchantList] = useState([])
@@ -49,40 +52,54 @@ const WithdrawAccount = () => {
   const [modalVisible, setModalVisible] = useState(false)
   const [modalType, setModalType] = useState('add') // 'add' 或 'edit'
   const [selectedRecord, setSelectedRecord] = useState(null)
+  const [forceUpdate, setForceUpdate] = useState(0) // 用于确保状态更新后正确渲染
 
-  // API调用函数
-  const fetchWithdrawAccountList = useCallback(async (params = {}) => {
+
+
+
+
+
+  // 数据加载函数
+  const loadWithdrawAccountList = async (params = {}) => {
     try {
       setLoading(true)
+
       const queryParams = {
-        page: pagination.current,
-        pageSize: pagination.pageSize,
+        page: 1,
+        pageSize: 10,
         ...params
       }
 
-      // 添加搜索条件
-      if (searchParams.merchantName) queryParams.merchantName = searchParams.merchantName
-      if (searchParams.status) queryParams.status = searchParams.status
-
-      console.log('📤 发送提现账号列表请求:', queryParams)
       const response = await withdrawAccountAPI.getWithdrawAccountList(queryParams)
 
       if (response && response.data) {
-        setWithdrawAccountData(response.data.list || [])
-        setPagination(prev => ({
-          ...prev,
+        const newPagination = {
+          current: queryParams.page,
+          pageSize: queryParams.pageSize,
           total: response.data.pagination?.total || 0
-        }))
+        }
+
+        const dataList = response.data.list || []
+        setWithdrawAccountData(dataList)
+        setPagination(newPagination)
+        setForceUpdate(prev => prev + 1) // 确保组件重新渲染
+
         console.log('✅ 获取提现账号列表成功，共', response.data.list?.length || 0, '条记录')
+        return response.data
       }
     } catch (error) {
       console.error('❌ 获取提现账号列表失败:', error)
       message.error('获取提现账号列表失败: ' + (error.message || '网络错误'))
       setWithdrawAccountData([])
+      setPagination({
+        current: 1,
+        pageSize: 10,
+        total: 0
+      })
     } finally {
       setLoading(false)
     }
-  }, [])
+  }
 
   const fetchMerchantList = useCallback(async () => {
     try {
@@ -100,13 +117,20 @@ const WithdrawAccount = () => {
   // 初始化数据
   useEffect(() => {
     const initData = async () => {
-      await Promise.all([
-        fetchWithdrawAccountList(),
-        fetchMerchantList()
-      ])
+      try {
+        setLoading(true)
+
+        // 并行获取数据
+        await Promise.all([
+          loadWithdrawAccountList({ page: 1, pageSize: 10 }),
+          fetchMerchantList()
+        ])
+      } catch (error) {
+        console.error('❌ 初始化数据获取失败:', error)
+      }
     }
     initData()
-  }, [fetchWithdrawAccountList, fetchMerchantList])
+  }, [])
 
   // 搜索处理
   const handleSearch = async (values) => {
@@ -115,8 +139,8 @@ const WithdrawAccount = () => {
     setPagination(prev => ({ ...prev, current: 1 }))
 
     // 使用搜索条件重新获取数据
-    const queryParams = { page: 1, pageSize: pagination.pageSize, ...values }
-    await fetchWithdrawAccountList(queryParams)
+    const queryParams = { page: 1, pageSize: pagination.pageSize || 10, ...values }
+    await loadWithdrawAccountList(queryParams)
     message.success('搜索完成')
   }
 
@@ -127,26 +151,27 @@ const WithdrawAccount = () => {
     setPagination(prev => ({ ...prev, current: 1 }))
 
     // 获取所有数据
-    const queryParams = { page: 1, pageSize: pagination.pageSize }
-    await fetchWithdrawAccountList(queryParams)
+    const queryParams = { page: 1, pageSize: 10 }
+    await loadWithdrawAccountList(queryParams)
     message.info('已重置搜索条件')
   }
 
   // 分页处理
   const handlePaginationChange = (page, pageSize) => {
+    const newPageSize = pageSize || pagination.pageSize
     setPagination(prev => ({
       ...prev,
       current: page,
-      pageSize: pageSize || prev.pageSize
+      pageSize: newPageSize
     }))
 
     // 获取新页面的数据
     const queryParams = {
       page,
-      pageSize: pageSize || pagination.pageSize,
+      pageSize: newPageSize,
       ...searchParams
     }
-    fetchWithdrawAccountList(queryParams)
+    loadWithdrawAccountList(queryParams)
   }
 
   // 新增账号
@@ -180,11 +205,11 @@ const WithdrawAccount = () => {
 
           // 刷新数据
           const queryParams = {
-            page: pagination.current,
-            pageSize: pagination.pageSize,
+            page: pagination.current || 1,
+            pageSize: pagination.pageSize || 10,
             ...searchParams
           }
-          await fetchWithdrawAccountList(queryParams)
+          await loadWithdrawAccountList(queryParams)
         } catch (error) {
           message.error(`${actionText}失败: ` + error.message)
         }
@@ -206,11 +231,11 @@ const WithdrawAccount = () => {
 
           // 刷新数据
           const queryParams = {
-            page: pagination.current,
-            pageSize: pagination.pageSize,
+            page: pagination.current || 1,
+            pageSize: pagination.pageSize || 10,
             ...searchParams
           }
-          await fetchWithdrawAccountList(queryParams)
+          await loadWithdrawAccountList(queryParams)
         } catch (error) {
           message.error('删除失败: ' + error.message)
         }
@@ -233,11 +258,11 @@ const WithdrawAccount = () => {
 
       // 刷新数据
       const queryParams = {
-        page: pagination.current,
-        pageSize: pagination.pageSize,
+        page: pagination.current || 1,
+        pageSize: pagination.pageSize || 10,
         ...searchParams
       }
-      await fetchWithdrawAccountList(queryParams)
+      await loadWithdrawAccountList(queryParams)
     } catch (error) {
       message.error((modalType === 'add' ? '添加' : '修改') + '失败: ' + error.message)
     }
@@ -253,11 +278,11 @@ const WithdrawAccount = () => {
   // 刷新数据
   const handleRefresh = async () => {
     const queryParams = {
-      page: pagination.current,
-      pageSize: pagination.pageSize,
+      page: pagination.current || 1,
+      pageSize: pagination.pageSize || 10,
       ...searchParams
     }
-    await fetchWithdrawAccountList(queryParams)
+    await loadWithdrawAccountList(queryParams)
     message.success('刷新成功')
   }
 
@@ -426,6 +451,7 @@ const WithdrawAccount = () => {
               >
                 新增
               </Button>
+
             </div>
             <div className="table-actions">
               <Space>
@@ -451,6 +477,7 @@ const WithdrawAccount = () => {
           </div>
 
           <Table
+            key={`table-${forceUpdate}`}
             columns={columns}
             dataSource={withdrawAccountData}
             rowKey="id"
@@ -468,8 +495,8 @@ const WithdrawAccount = () => {
             alignItems: 'center',
             marginTop: '16px'
           }}>
-            <div className="pagination-info">
-              <span>共 {pagination.total} 条</span>
+            <div className="pagination-info" key={forceUpdate}>
+              <span>共 {withdrawAccountData.length} 条</span>
             </div>
             <Pagination
               current={pagination.current}

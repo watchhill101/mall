@@ -228,9 +228,6 @@ const LayoutApp = () => {
   const MerchantApplication = lazy(() =>
     import("@/pages/Merchant/MerchantApplication")
   );
-  const DeviceManagement = lazy(() =>
-    import("@/pages/Merchant/DeviceManagement")
-  );
 
   // 导入商品相关组件
   const ListOfCommodities = lazy(() =>
@@ -307,9 +304,6 @@ const LayoutApp = () => {
               break;
             case "/shops/merchant-application":
               element = <MerchantApplication />;
-              break;
-            case "/shops/device-management":
-              element = <DeviceManagement />;
               break;
 
             // 商品相关路由
