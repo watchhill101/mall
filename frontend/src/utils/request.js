@@ -81,7 +81,7 @@ export function setResponseInterceptor(store) {
 
         // 处理后端返回的数据格式
         if (response.data && response.data.code !== undefined) {
-          if (response.data.code === 200) {
+          if (response.data.code === 200 || response.data.code === 201) {
             console.log('✅ 请求成功:', response.data);
             return response.data
           } else {

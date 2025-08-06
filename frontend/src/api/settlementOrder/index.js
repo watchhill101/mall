@@ -24,6 +24,10 @@ export const testSettlementOrderAPI = () => {
  * @param {string} params.timeType - 时间类型 paymentTime|settlementTime
  * @param {string} params.startDate - 开始日期
  * @param {string} params.endDate - 结束日期
+ * @param {number} params.minAmount - 最小金额
+ * @param {number} params.maxAmount - 最大金额
+ * @param {number} params.minQuantity - 最小数量
+ * @param {number} params.maxQuantity - 最大数量
  */
 export const getSettlementOrderList = (params) => {
   return request({

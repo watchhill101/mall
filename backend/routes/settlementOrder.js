@@ -40,7 +40,11 @@ router.get('/list', async (req, res) => {
       status = '',
       timeType = '',
       startDate = '',
-      endDate = ''
+      endDate = '',
+      minAmount = '',
+      maxAmount = '',
+      minQuantity = '',
+      maxQuantity = ''
     } = req.query;
 
     // 构建聚合查询管道
@@ -93,6 +97,28 @@ router.get('/list', async (req, res) => {
           $gte: startDateTime,
           $lte: endDateTime
         };
+      }
+    }
+
+    // 添加金额范围筛选
+    if (minAmount !== '' || maxAmount !== '') {
+      matchConditions.totalAmount = {};
+      if (minAmount !== '') {
+        matchConditions.totalAmount.$gte = parseFloat(minAmount);
+      }
+      if (maxAmount !== '') {
+        matchConditions.totalAmount.$lte = parseFloat(maxAmount);
+      }
+    }
+
+    // 添加数量范围筛选
+    if (minQuantity !== '' || maxQuantity !== '') {
+      matchConditions.quantity = {};
+      if (minQuantity !== '') {
+        matchConditions.quantity.$gte = parseInt(minQuantity);
+      }
+      if (maxQuantity !== '') {
+        matchConditions.quantity.$lte = parseInt(maxQuantity);
       }
     }
 
@@ -162,6 +188,20 @@ router.get('/list', async (req, res) => {
 
     console.log(`📊 查询结果: 找到 ${orderList.length} 条结算订单，总计 ${total} 条`);
 
+    // 输出搜索条件统计
+    const searchConditions = [];
+    if (merchantName) searchConditions.push(`商家: ${merchantName}`);
+    if (orderNo) searchConditions.push(`订单号: ${orderNo}`);
+    if (productName) searchConditions.push(`商品: ${productName}`);
+    if (status) searchConditions.push(`状态: ${status}`);
+    if (timeType && startDate && endDate) searchConditions.push(`${timeType === 'paymentTime' ? '支付' : '结算'}时间: ${startDate} ~ ${endDate}`);
+    if (minAmount || maxAmount) searchConditions.push(`金额: ${minAmount || '0'} ~ ${maxAmount || '∞'}`);
+    if (minQuantity || maxQuantity) searchConditions.push(`数量: ${minQuantity || '0'} ~ ${maxQuantity || '∞'}`);
+
+    if (searchConditions.length > 0) {
+      console.log('🔍 应用的搜索条件:', searchConditions.join(', '));
+    }
+
     res.json({
       code: 200,
       message: '获取结算订单列表成功',
@@ -177,7 +217,8 @@ router.get('/list', async (req, res) => {
           pageSize: parseInt(pageSize),
           total,
           totalPages: Math.ceil(total / parseInt(pageSize))
-        }
+        },
+        searchConditions: searchConditions.length > 0 ? searchConditions : null
       }
     });
   } catch (error) {

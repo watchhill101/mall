@@ -70,14 +70,10 @@ const accountDetailAPI = {
 
 // 商家类型枚举（与后端保持一致）
 export const MERCHANT_TYPES = {
-  RETAIL: 'retail',           // 零售
-  WHOLESALE: 'wholesale',     // 批发
+  RETAIL: 'retail',           // 零售商
+  WHOLESALE: 'wholesale',     // 批发商
   MANUFACTURER: 'manufacturer', // 制造商
-  DISTRIBUTOR: 'distributor',  // 分销商
-  HOUSEKEEPING: '家政',       // 家政
-  FOOD: '食品',              // 食品
-  CLOTHING: '服装',          // 服装
-  ELECTRONICS: '电子'        // 电子
+  DISTRIBUTOR: 'distributor'  // 分销商
 };
 
 // 商家类型标签映射
@@ -85,11 +81,7 @@ export const MERCHANT_TYPE_LABELS = {
   [MERCHANT_TYPES.RETAIL]: '零售商',
   [MERCHANT_TYPES.WHOLESALE]: '批发商',
   [MERCHANT_TYPES.MANUFACTURER]: '制造商',
-  [MERCHANT_TYPES.DISTRIBUTOR]: '分销商',
-  [MERCHANT_TYPES.HOUSEKEEPING]: '家政',
-  [MERCHANT_TYPES.FOOD]: '食品',
-  [MERCHANT_TYPES.CLOTHING]: '服装',
-  [MERCHANT_TYPES.ELECTRONICS]: '电子'
+  [MERCHANT_TYPES.DISTRIBUTOR]: '分销商'
 };
 
 export default accountDetailAPI; 

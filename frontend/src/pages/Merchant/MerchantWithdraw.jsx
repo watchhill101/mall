@@ -44,50 +44,54 @@ const MerchantWithdraw = () => {
     pageSize: 10,
     total: 0
   })
+  const [forceUpdate, setForceUpdate] = useState(0) // 用于强制重新渲染
 
   // 审核模态框相关状态
   const [auditModalVisible, setAuditModalVisible] = useState(false)
   const [selectedRecord, setSelectedRecord] = useState(null)
   const [auditAction, setAuditAction] = useState('') // 'approve' 或 'reject'
 
-  // API调用函数
-  const fetchWithdrawList = useCallback(async (customParams = {}) => {
+  // 数据加载函数（不使用useCallback，避免依赖问题）
+  const loadWithdrawList = async (params = {}) => {
     try {
       setLoading(true)
+
+      // 构建查询参数
       const queryParams = {
-        page: customParams.page || pagination.current,
-        pageSize: customParams.pageSize || pagination.pageSize,
-        ...customParams
+        page: params.page || pagination.current,
+        pageSize: params.pageSize || pagination.pageSize
       }
 
-      // 删除 page 和 pageSize，避免重复
-      delete queryParams.page
-      delete queryParams.pageSize
-
-      // 重新设置分页参数
-      queryParams.page = customParams.page || pagination.current
-      queryParams.pageSize = customParams.pageSize || pagination.pageSize
-
-      // 添加筛选条件
-      const currentSearchParams = customParams.searchParams || searchParams
-      if (currentSearchParams.merchantName) queryParams.merchantName = currentSearchParams.merchantName
-      if (currentSearchParams.contactPhone) queryParams.contactPhone = currentSearchParams.contactPhone
-      if (currentSearchParams.status) queryParams.status = currentSearchParams.status
-      if (currentSearchParams.applicationTime && currentSearchParams.applicationTime.length === 2) {
-        queryParams.startDate = currentSearchParams.applicationTime[0].format('YYYY-MM-DD')
-        queryParams.endDate = currentSearchParams.applicationTime[1].format('YYYY-MM-DD')
+      // 添加搜索条件
+      const searchConditions = params.searchParams || searchParams
+      if (searchConditions.merchantName) queryParams.merchantName = searchConditions.merchantName
+      if (searchConditions.contactPhone) queryParams.contactPhone = searchConditions.contactPhone
+      if (searchConditions.status) queryParams.status = searchConditions.status
+      if (searchConditions.applicationTime && searchConditions.applicationTime.length === 2) {
+        queryParams.startDate = searchConditions.applicationTime[0].format('YYYY-MM-DD')
+        queryParams.endDate = searchConditions.applicationTime[1].format('YYYY-MM-DD')
       }
 
       console.log('📤 发送商家提现列表请求:', queryParams)
       const response = await merchantWithdrawAPI.getMerchantWithdrawList(queryParams)
 
       if (response && response.data) {
-        setWithdrawData(response.data.list || [])
+        // 处理数据，确保每条记录都有必要的字段
+        const processedData = response.data.list.map(item => ({
+          ...item,
+          key: item._id,
+          id: item._id,
+        }))
+
+        setWithdrawData(processedData)
         setPagination(prev => ({
           ...prev,
+          current: queryParams.page,
+          pageSize: queryParams.pageSize,
           total: response.data.pagination?.total || 0
         }))
-        console.log('✅ 获取商家提现列表成功，共', response.data.list?.length || 0, '条记录')
+        setForceUpdate(prev => prev + 1) // 强制重新渲染
+        console.log('✅ 获取商家提现列表成功，共', processedData.length, '条记录')
       }
     } catch (error) {
       console.error('❌ 获取商家提现列表失败:', error)
@@ -96,12 +100,12 @@ const MerchantWithdraw = () => {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }
 
   // 初始化数据获取
   useEffect(() => {
-    fetchWithdrawList()
-  }, []) // 移除依赖，避免无限循环
+    loadWithdrawList({ page: 1, pageSize: 10 })
+  }, []) // 空依赖数组，只在组件挂载时执行一次
 
   // 当前页数据就是从API获取的数据，不需要再次切片
   const currentPageData = withdrawData
@@ -114,7 +118,7 @@ const MerchantWithdraw = () => {
       setSearchParams(values)
       setPagination(prev => ({ ...prev, current: 1 })) // 重置到第一页
 
-      await fetchWithdrawList({
+      await loadWithdrawList({
         page: 1,
         pageSize: pagination.pageSize,
         searchParams: values
@@ -132,7 +136,7 @@ const MerchantWithdraw = () => {
       setSearchParams({})
       setPagination(prev => ({ ...prev, current: 1 }))
 
-      await fetchWithdrawList({
+      await loadWithdrawList({
         page: 1,
         pageSize: pagination.pageSize,
         searchParams: {}
@@ -151,7 +155,7 @@ const MerchantWithdraw = () => {
       pageSize: pageSize || prev.pageSize
     }))
 
-    fetchWithdrawList({
+    loadWithdrawList({
       page: page,
       pageSize: pageSize || pagination.pageSize,
       searchParams: searchParams
@@ -180,7 +184,11 @@ const MerchantWithdraw = () => {
       setSelectedRecord(null)
 
       // 刷新列表数据
-      await fetchWithdrawList()
+      await loadWithdrawList({
+        page: pagination.current,
+        pageSize: pagination.pageSize,
+        searchParams: searchParams
+      })
     } catch (error) {
       console.error('❌ 审核失败:', error)
       message.error('审核失败: ' + (error.message || '网络错误'))
@@ -198,7 +206,7 @@ const MerchantWithdraw = () => {
   // 刷新数据
   const handleRefresh = async () => {
     try {
-      await fetchWithdrawList({
+      await loadWithdrawList({
         page: pagination.current,
         pageSize: pagination.pageSize,
         searchParams: searchParams
@@ -410,6 +418,7 @@ const MerchantWithdraw = () => {
             </div>
             <div className="table-actions">
               <Space>
+
                 <Tooltip title="刷新">
                   <Button
                     type="text"
@@ -435,6 +444,7 @@ const MerchantWithdraw = () => {
             columns={columns}
             dataSource={currentPageData}
             rowKey="id"
+            key={forceUpdate} // 确保数据更新时重新渲染
             pagination={false}
             loading={loading}
             scroll={{ x: 1500 }}
@@ -449,7 +459,7 @@ const MerchantWithdraw = () => {
             alignItems: 'center',
             marginTop: '16px'
           }}>
-            <div className="pagination-info">
+            <div className="pagination-info" key={`pagination-${forceUpdate}`}>
               <span>共 {pagination.total} 条</span>
             </div>
             <Pagination

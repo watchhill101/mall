@@ -244,6 +244,11 @@ router.post('/create', async (req, res) => {
 
     // 验证必填字段
     if (!frontendData.merchantName || !frontendData.accountNumber || !frontendData.accountType) {
+      console.log('❌ 缺少必填字段:', {
+        merchantName: !!frontendData.merchantName,
+        accountNumber: !!frontendData.accountNumber,
+        accountType: !!frontendData.accountType
+      });
       return res.status(400).json({
         code: 400,
         message: '请填写必填字段：商家名称、账号、账户类型',
@@ -252,31 +257,42 @@ router.post('/create', async (req, res) => {
     }
 
     // 查找商家
+    console.log('🔍 正在查找商家:', frontendData.merchantName);
     const merchant = await Merchant.findOne({
       name: { $regex: frontendData.merchantName, $options: 'i' }
     });
 
     if (!merchant) {
+      console.log('❌ 未找到商家:', frontendData.merchantName);
+      console.log('📋 数据库中的商家列表:');
+      const allMerchants = await Merchant.find({}).select('name').limit(10);
+      allMerchants.forEach(m => console.log('  -', m.name));
       return res.status(400).json({
         code: 400,
         message: '未找到该商家，请确认商家名称',
         data: null
       });
     }
+    console.log('✅ 找到商家:', merchant.name, 'ID:', merchant._id);
 
     // 检查账号是否已存在
+    const dbAccountType = transformToDbFormat(frontendData).accountType;
+    console.log('🔍 检查账号是否已存在:', frontendData.accountNumber, '类型:', dbAccountType);
+
     const existingAccount = await WithdrawAccount.findOne({
       accountNumber: frontendData.accountNumber,
-      accountType: transformToDbFormat(frontendData).accountType
+      accountType: dbAccountType
     });
 
     if (existingAccount) {
+      console.log('❌ 账号已存在:', existingAccount._id);
       return res.status(400).json({
         code: 400,
         message: '该账号已存在',
         data: null
       });
     }
+    console.log('✅ 账号可用');
 
     // 转换数据格式并创建
     const dbData = transformToDbFormat(frontendData);
@@ -287,15 +303,22 @@ router.post('/create', async (req, res) => {
     });
 
     const savedAccount = await newAccount.save();
+    console.log('✅ 账号保存成功:', savedAccount._id);
 
     // 返回转换后的数据
     const populatedAccount = await WithdrawAccount.findById(savedAccount._id)
       .populate('merchant', 'name phone address')
       .lean();
 
+    if (!populatedAccount) {
+      console.error('❌ 无法查询到刚创建的账号');
+      throw new Error('创建成功但查询失败');
+    }
+
     const transformedData = transformWithdrawAccountData(populatedAccount);
     transformedData.merchantName = merchant.name;
 
+    console.log('✅ 返回创建结果:', transformedData);
     res.status(201).json({
       code: 201,
       message: '创建提现账号成功',

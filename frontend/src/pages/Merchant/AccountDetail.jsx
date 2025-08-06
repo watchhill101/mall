@@ -21,7 +21,7 @@ import { SearchOutlined, ReloadOutlined, EyeOutlined, FileExcelOutlined, Fullscr
 import dayjs from 'dayjs'
 import * as XLSX from 'xlsx'
 import MerchantLayout from './MerchantLayout'
-import accountDetailAPI, { MERCHANT_TYPE_LABELS } from '@/api/accountDetail'
+import accountDetailAPI, { MERCHANT_TYPES, MERCHANT_TYPE_LABELS } from '@/api/accountDetail'
 
 const { Title } = Typography
 const { RangePicker } = DatePicker
@@ -51,82 +51,131 @@ const AccountDetail = () => {
     serviceFee: 0,
     commission: 0
   })
+  const [forceUpdate, setForceUpdate] = useState(0) // 用于确保状态更新后正确渲染
+
+  // 监听统计数据变化
+  useEffect(() => {
+    console.log('📊 统计数据状态更新:', statisticsData)
+  }, [statisticsData])
 
 
 
-  // API调用函数
-  const fetchAccountDetailList = useCallback(async (customParams = {}) => {
+  // 数据加载函数
+  const loadAccountDetailList = async (params = {}) => {
     try {
       setLoading(true)
+
       const queryParams = {
-        page: pagination.current,
-        pageSize: pagination.pageSize,
-        ...customParams
+        page: 1,
+        pageSize: 10,
+        ...params
       }
 
-      // 添加筛选条件
-      if (merchantType) queryParams.merchantType = merchantType
-      if (merchantName) queryParams.merchantName = merchantName
-      if (dateRange && dateRange.length === 2) {
-        queryParams.startDate = dateRange[0].format('YYYY-MM-DD')
-        queryParams.endDate = dateRange[1].format('YYYY-MM-DD')
-      }
-
-      console.log('📤 发送账户明细列表请求:', queryParams)
       const response = await accountDetailAPI.getAccountDetailList(queryParams)
 
       if (response && response.data) {
-        setAccountDetailData(response.data.list || [])
-        setPagination(prev => ({
-          ...prev,
+        const newPagination = {
+          current: queryParams.page,
+          pageSize: queryParams.pageSize,
           total: response.data.pagination?.total || 0
-        }))
+        }
+
+        const dataList = response.data.list || []
+        setAccountDetailData(dataList)
+        setPagination(newPagination)
+        setForceUpdate(prev => prev + 1) // 确保组件重新渲染
+
         console.log('✅ 获取账户明细列表成功，共', response.data.list?.length || 0, '条记录')
+        console.log('🧪 列表API响应:', response.data)
+        return response.data
       }
     } catch (error) {
       console.error('❌ 获取账户明细列表失败:', error)
       message.error('获取账户明细列表失败: ' + (error.message || '网络错误'))
       setAccountDetailData([])
+      setPagination({
+        current: 1,
+        pageSize: 10,
+        total: 0
+      })
     } finally {
       setLoading(false)
     }
-  }, [])
+  }
 
-  const fetchAccountDetailStats = useCallback(async (customParams = {}) => {
+  const loadAccountDetailStats = async (params = {}) => {
     try {
-      const queryParams = { ...customParams }
-
-      // 添加筛选条件
-      if (merchantType) queryParams.merchantType = merchantType
-      if (merchantName) queryParams.merchantName = merchantName
-      if (dateRange && dateRange.length === 2) {
-        queryParams.startDate = dateRange[0].format('YYYY-MM-DD')
-        queryParams.endDate = dateRange[1].format('YYYY-MM-DD')
-      }
-
-      console.log('📤 发送统计信息请求:', queryParams)
-      const response = await accountDetailAPI.getAccountDetailStats(queryParams)
+      const response = await accountDetailAPI.getAccountDetailStats(params)
 
       if (response && response.data) {
         setStatisticsData(response.data)
+        setForceUpdate(prev => prev + 1) // 确保统计卡片重新渲染
         console.log('✅ 获取统计信息成功:', response.data)
+        return response.data
       }
     } catch (error) {
       console.error('❌ 获取账户统计信息失败:', error)
       message.error('获取账户统计信息失败: ' + (error.message || '网络错误'))
     }
-  }, [])
+  }
+
+  // 测试函数：直接调用API
+  const testDirectAPICall = async () => {
+    console.log('🧪 开始测试AccountDetail API调用...')
+    try {
+      console.log('🧪 测试列表接口...')
+      const listResponse = await accountDetailAPI.getAccountDetailList({ page: 1, pageSize: 10 })
+      console.log('🧪 列表API响应:', listResponse)
+
+      console.log('🧪 测试统计接口...')
+      const statsResponse = await accountDetailAPI.getAccountDetailStats({})
+      console.log('🧪 统计API响应:', statsResponse)
+
+      if (listResponse && listResponse.data && listResponse.data.list) {
+        console.log('🧪 手动设置列表数据...')
+        setAccountDetailData(listResponse.data.list)
+        setPagination(prev => ({
+          ...prev,
+          total: listResponse.data.pagination?.total || 0
+        }))
+      }
+
+      if (statsResponse && statsResponse.data) {
+        console.log('🧪 手动设置统计数据...')
+        setStatisticsData(statsResponse.data)
+      }
+
+      setForceUpdate(prev => prev + 1)
+      console.log('🧪 状态设置完成')
+    } catch (error) {
+      console.error('🧪 直接API调用失败:', error)
+    }
+  }
+
+
 
   // 初始化数据获取
   useEffect(() => {
     const initData = async () => {
-      await Promise.all([
-        fetchAccountDetailList(),
-        fetchAccountDetailStats()
-      ])
+      try {
+        console.log('🚀 AccountDetail组件初始化，开始获取数据...')
+        setLoading(true)
+
+        // 先获取统计数据
+        console.log('📊 获取统计数据...')
+        await loadAccountDetailStats()
+
+        // 再获取列表数据
+        console.log('📋 获取列表数据...')
+        await loadAccountDetailList({ page: 1, pageSize: 10 })
+
+        console.log('✅ 初始化完成')
+      } catch (error) {
+        console.error('❌ 初始化数据获取失败:', error)
+      }
     }
     initData()
-  }, []) // 移除依赖，避免无限循环
+  }, [])
 
   // 表格列配置
   const columns = [
@@ -134,7 +183,8 @@ const AccountDetail = () => {
       title: '商家类型',
       dataIndex: 'merchantType',
       key: 'merchantType',
-      width: 120
+      width: 120,
+      render: (merchantType) => MERCHANT_TYPE_LABELS[merchantType] || merchantType
     },
     {
       title: '商家名称',
@@ -213,7 +263,7 @@ const AccountDetail = () => {
       setPagination(prev => ({ ...prev, current: 1 })) // 重置到第一页
 
       // 立即使用当前的筛选条件进行查询
-      const queryParams = { page: 1, pageSize: pagination.pageSize }
+      const queryParams = { page: 1, pageSize: pagination.pageSize || 10 }
       if (merchantType) queryParams.merchantType = merchantType
       if (merchantName) queryParams.merchantName = merchantName
       if (dateRange && dateRange.length === 2) {
@@ -222,8 +272,8 @@ const AccountDetail = () => {
       }
 
       await Promise.all([
-        fetchAccountDetailList(queryParams),
-        fetchAccountDetailStats(queryParams)
+        loadAccountDetailList(queryParams),
+        loadAccountDetailStats(queryParams)
       ])
       message.success('查询完成')
     } catch (error) {
@@ -243,10 +293,10 @@ const AccountDetail = () => {
       setPagination(prev => ({ ...prev, current: 1 }))
 
       // 使用空的筛选条件重新获取数据
-      const queryParams = { page: 1, pageSize: pagination.pageSize }
+      const queryParams = { page: 1, pageSize: pagination.pageSize || 10 }
       await Promise.all([
-        fetchAccountDetailList(queryParams),
-        fetchAccountDetailStats(queryParams)
+        loadAccountDetailList(queryParams),
+        loadAccountDetailStats(queryParams)
       ])
       message.info('已重置搜索条件')
     } catch (error) {
@@ -276,7 +326,7 @@ const AccountDetail = () => {
       queryParams.endDate = dateRange[1].format('YYYY-MM-DD')
     }
 
-    fetchAccountDetailList(queryParams)
+    loadAccountDetailList(queryParams)
   }
 
   // 导出处理
@@ -316,7 +366,7 @@ const AccountDetail = () => {
       // 2. 创建详细数据工作表
       const detailData = accountDetailData.map((item, index) => ({
         '序号': index + 1,
-        '商家类型': item.merchantType,
+        '商家类型': MERCHANT_TYPE_LABELS[item.merchantType] || item.merchantType,
         '商家名称': item.merchantName,
         '联系电话': item.contactPhone,
         '营业执照号': item.businessLicense,
@@ -399,7 +449,7 @@ const AccountDetail = () => {
           </div>
 
           {/* 统计数据卡片 */}
-          <Row gutter={[16, 16]} style={{ marginBottom: '32px' }}>
+          <Row gutter={[16, 16]} style={{ marginBottom: '32px' }} key={`stats-${forceUpdate}`}>
             <Col span={3}>
               <Card size="small" style={{ textAlign: 'center' }}>
                 <Statistic
@@ -497,14 +547,10 @@ const AccountDetail = () => {
                     style={{ width: 120 }}
                     allowClear
                   >
-                    <Option value="家政">家政</Option>
-                    <Option value="食品">食品</Option>
-                    <Option value="服装">服装</Option>
-                    <Option value="电子">电子</Option>
-                    <Option value="零售商">零售商</Option>
-                    <Option value="批发商">批发商</Option>
-                    <Option value="制造商">制造商</Option>
-                    <Option value="分销商">分销商</Option>
+                    <Option value={MERCHANT_TYPES.RETAIL}>{MERCHANT_TYPE_LABELS[MERCHANT_TYPES.RETAIL]}</Option>
+                    <Option value={MERCHANT_TYPES.WHOLESALE}>{MERCHANT_TYPE_LABELS[MERCHANT_TYPES.WHOLESALE]}</Option>
+                    <Option value={MERCHANT_TYPES.MANUFACTURER}>{MERCHANT_TYPE_LABELS[MERCHANT_TYPES.MANUFACTURER]}</Option>
+                    <Option value={MERCHANT_TYPES.DISTRIBUTOR}>{MERCHANT_TYPE_LABELS[MERCHANT_TYPES.DISTRIBUTOR]}</Option>
                   </Select>
                 </Space>
               </Col>
@@ -568,6 +614,12 @@ const AccountDetail = () => {
               >
                 导出Excel
               </Button>
+              <Button
+                style={{ marginLeft: '8px' }}
+                onClick={testDirectAPICall}
+              >
+                🧪 测试API
+              </Button>
             </div>
             <div>
               <Space>
@@ -586,6 +638,7 @@ const AccountDetail = () => {
 
           {/* 数据表格 */}
           <Table
+            key={`table-${forceUpdate}`}
             columns={columns}
             dataSource={accountDetailData}
             loading={loading}
@@ -595,7 +648,7 @@ const AccountDetail = () => {
               total: pagination.total,
               showSizeChanger: true,
               showQuickJumper: true,
-              showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条/共 ${total} 条`,
+              showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条/共 ${total} 条 (实际数据: ${accountDetailData.length} 条)`,
               pageSizeOptions: ['5', '10', '20', '50', '100'],
               defaultPageSize: 10,
               onShowSizeChange: (current, size) => {
@@ -614,7 +667,7 @@ const AccountDetail = () => {
                   queryParams.endDate = dateRange[1].format('YYYY-MM-DD')
                 }
 
-                fetchAccountDetailList(queryParams)
+                loadAccountDetailList(queryParams)
               }
             }}
             onChange={handleTableChange}
@@ -642,7 +695,7 @@ const AccountDetail = () => {
                 {selectedRecord.merchantName}
               </Descriptions.Item>
               <Descriptions.Item label="商家类型">
-                {selectedRecord.merchantType}
+                {MERCHANT_TYPE_LABELS[selectedRecord.merchantType] || selectedRecord.merchantType}
               </Descriptions.Item>
               <Descriptions.Item label="联系电话">
                 {selectedRecord.contactPhone}

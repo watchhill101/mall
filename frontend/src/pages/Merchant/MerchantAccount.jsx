@@ -63,6 +63,7 @@ const MerchantAccount = () => {
   const [merchantOptions, setMerchantOptions] = useState([])
   const [roleOptions, setRoleOptions] = useState([])
   const [personOptions, setPersonOptions] = useState([])
+  const [forceUpdate, setForceUpdate] = useState(0) // 用于确保状态更新后正确渲染
 
   // 加载商户账号数据
   const loadAccountData = useCallback(async () => {
@@ -83,8 +84,8 @@ const MerchantAccount = () => {
         const accounts = response.data.list.map(item => ({
           ...item,
           key: item._id,
-          id: item._id,
-          merchantId: item.merchant?._id || '',
+          id: item._id, // 确保使用后端返回的 _id 作为 id
+          merchantId: item.merchant?._id || item.merchant || '未设置', // 商户ID（用于内部逻辑）
           merchantName: item.merchant?.name || '未设置',
           roleName: item.role?.name || '未设置',
           personName: item.personInCharge?.name || '未设置',
@@ -97,6 +98,7 @@ const MerchantAccount = () => {
           ...prev,
           total: response.data.pagination.total
         }));
+        setForceUpdate(prev => prev + 1); // 强制重新渲染
       }
     } catch (error) {
       console.error('获取商户账号列表失败:', error);
@@ -338,10 +340,11 @@ const MerchantAccount = () => {
   // 表格列定义
   const columns = [
     {
-      title: '商户ID',
-      dataIndex: 'merchantId',
-      key: 'merchantId',
-      width: 100,
+      title: '商户名称',
+      dataIndex: 'merchantName',
+      key: 'merchantName',
+      width: 160,
+      ellipsis: true,
       render: (text) => text || '未设置'
     },
     {
@@ -366,14 +369,14 @@ const MerchantAccount = () => {
       title: '角色',
       dataIndex: 'roleName',
       key: 'roleName',
-      width: 120,
+      width: 110,
       render: (text) => text || '未设置'
     },
     {
-      title: '商家',
-      dataIndex: 'merchantName',
-      key: 'merchantName',
-      width: 150,
+      title: '负责人',
+      dataIndex: 'personName',
+      key: 'personName',
+      width: 110,
       render: (text) => text || '未设置'
     },
     {
@@ -405,7 +408,7 @@ const MerchantAccount = () => {
     {
       title: '操作',
       key: 'action',
-      width: 280,
+      width: 260,
       align: 'center',
       fixed: 'right',
       render: (_, record) => (
@@ -448,8 +451,8 @@ const MerchantAccount = () => {
           <Form form={form} onFinish={handleSearch} layout="vertical">
             <Row gutter={16}>
               <Col span={6}>
-                <Form.Item label="商户ID" name="merchantId">
-                  <Input placeholder="请输入" />
+                <Form.Item label="登录账号" name="merchantId">
+                  <Input placeholder="请输入登录账号" />
                 </Form.Item>
               </Col>
               <Col span={6}>
@@ -458,8 +461,8 @@ const MerchantAccount = () => {
                 </Form.Item>
               </Col>
               <Col span={6}>
-                <Form.Item label="商家" name="merchant">
-                  <Input placeholder="搜索" />
+                <Form.Item label="商户名称" name="merchant">
+                  <Input placeholder="搜索商户名称" />
                 </Form.Item>
               </Col>
               <Col span={6}>
@@ -508,6 +511,9 @@ const MerchantAccount = () => {
           }}>
             <div className="table-title" style={{ fontSize: '16px', fontWeight: 'bold' }}>
               商家账号管理
+              <span style={{ fontSize: '12px', fontWeight: 'normal', color: '#666', marginLeft: '8px' }}>
+                (包含完整的商户、角色、负责人信息)
+              </span>
             </div>
             <div className="table-actions">
               <Space>
@@ -518,6 +524,8 @@ const MerchantAccount = () => {
                 >
                   新增
                 </Button>
+
+
                 <Tooltip title="刷新">
                   <Button
                     type="text"
@@ -543,9 +551,10 @@ const MerchantAccount = () => {
             columns={columns}
             dataSource={accountData}
             rowKey="id"
+            key={forceUpdate} // 确保数据更新时重新渲染
             pagination={false}
             loading={loading}
-            scroll={{ x: 1200 }}
+            scroll={{ x: 1400 }}
             size="middle"
             className="data-table"
             locale={{
@@ -560,7 +569,7 @@ const MerchantAccount = () => {
             alignItems: 'center',
             marginTop: '16px'
           }}>
-            <div className="pagination-info">
+            <div className="pagination-info" key={`pagination-${forceUpdate}`}>
               <span>共 {pagination.total} 条</span>
             </div>
             <Pagination
