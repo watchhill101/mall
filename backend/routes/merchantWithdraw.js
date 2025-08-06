@@ -66,7 +66,10 @@ router.get('/list', async (req, res) => {
         }
       },
       {
-        $unwind: '$withdrawAccountInfo'
+        $unwind: {
+          path: '$withdrawAccountInfo',
+          preserveNullAndEmptyArrays: true // 保留没有关联提现账号的记录
+        }
       }
     ];
 
@@ -102,7 +105,9 @@ router.get('/list', async (req, res) => {
         orderNo: '$orderNumber',
         merchantName: '$merchantInfo.name',
         contactPhone: '$merchantInfo.phone',
-        accountType: '$withdrawAccountInfo.accountType',
+        accountType: {
+          $ifNull: ['$withdrawAccountInfo.accountType', '未设置'] // 处理空的提现账号
+        },
         serviceFeeRate: { $multiply: ['$serviceFeeRate', 100] }, // 转换为百分比
         receivedAmount: '$actualAmount'
       }
