@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Table,
   Button,
@@ -12,11 +12,14 @@ import {
   Modal,
   Form,
   InputNumber,
+  DatePicker,
   Switch,
   Upload,
   message,
   Cascader,
 } from 'antd';
+import CustomModal from '@/components/CustomModal';
+import dayjs from 'dayjs';
 import {
   PlusOutlined,
   EditOutlined,
@@ -29,11 +32,31 @@ import { categoryData } from '../data/data';
 import './index.scss';
 import { ExportSvg } from '@/pages/Goods_S/icons_svg/IconCom';
 import { data } from '@/db_S/data.mjs';
+import ProductApi from '@/api/Product';
+import { useNavigate } from 'react-router-dom';
+
 // console.log(data);
 
 const { Option } = Select;
 
 const ListOfCommodities = () => {
+  const addModalRef = useRef(null);
+  const navigate = useNavigate();
+  const [messageApi, contextHolder] = message.useMessage();
+  const [list, setlist] = useState([]);
+  const getGoodsList = async () => {
+    const { success, data } = await ProductApi.Product.getList();
+    // console.log(success, data);
+    if (success) {
+      // 过滤掉已删除的商品
+      const filteredData = data.filter((item) => item.status !== 'deleted');
+      setlist(filteredData);
+    }
+  };
+  useEffect(() => {
+    getGoodsList();
+  }, []);
+
   const [loading, setLoading] = useState(false);
   const [dataSource, setDataSource] = useState([]);
   const [pagination, setPagination] = useState({
@@ -54,14 +77,14 @@ const ListOfCommodities = () => {
   const columns = [
     {
       title: '商品ID',
-      dataIndex: 'ProductID',
-      key: 'ProductID',
+      dataIndex: 'productId',
+      key: 'productId',
       width: 80,
     },
     {
       title: '商品名称',
-      dataIndex: 'ProductName',
-      key: 'ProductName',
+      dataIndex: 'productName',
+      key: 'productName',
       width: 200,
       render: (text, record) => {
         return (
@@ -74,25 +97,26 @@ const ListOfCommodities = () => {
     },
     {
       title: '商品分类',
-      dataIndex: 'ProductCategory',
-      key: 'ProductCategory',
+      dataIndex: 'productCategory',
+      key: 'productCategory',
       width: 100,
     },
     {
       title: '销售价',
-      dataIndex: 'SellingPrice',
-      key: 'SellingPrice',
+      dataIndex: ['pricing', 'salePrice'],
+      key: 'pricing',
       width: 100,
     },
     {
       title: '库存商品',
-      dataIndex: 'StockCommodities',
-      key: 'StockCommodities',
+      dataIndex: ['inventory', 'currentStock'],
+      key: 'currentStock',
+      width: 100,
     },
     {
       title: '库存总数',
-      dataIndex: 'TotalInventory',
-      key: 'TotalInventory',
+      dataIndex: ['inventory', 'totalStock'],
+      key: 'totalStock',
       width: 100,
     },
     {
@@ -100,97 +124,204 @@ const ListOfCommodities = () => {
       dataIndex: 'status',
       key: 'status',
       width: 100,
-      render: (text, record) => (
-        <Tag color={record.status === '1' ? 'green' : 'red'}>
-          {record.status === '1' ? '在售' : '未售'}
-        </Tag>
-      ),
+      render: (text, record) => {
+        // 状态映射：英文状态 -> [中文状态, 标签颜色]
+        const statusMap = {
+          pending: ['待审核', 'default'],
+          approved: ['已通过', 'success'],
+          rejected: ['已拒绝', 'error'],
+          onSale: ['在售', 'primary'],
+          offSale: ['下架', 'warning'],
+          deleted: ['已删除', 'danger'],
+        };
+
+        // 获取当前状态对应的中文和颜色
+        const [statusText, color] = statusMap[record.status] || [
+          '未知状态',
+          'default',
+        ];
+        return <Tag color={color}>{statusText}</Tag>;
+      },
     },
     {
       title: '最后更新时间',
-      dataIndex: 'LastUpdateTime',
-      key: 'LastUpdateTime',
+      dataIndex: 'updatedAt',
+      key: 'updatedAt',
+      width: 180,
+      render: (text) => dayjs(text).format('YYYY-MM-DD HH:mm:ss'),
     },
     {
       title: '操作',
       key: 'action',
       render: (text, record) => (
         <Space size="middle">
-          <Button type="link">复制</Button>
           <Button type="link">编辑</Button>
           <Button
             type="link"
-            style={{ color: record.status === '1' ? 'red' : 'green' }}
+            style={{ color: record.status !== 'offSale' ? 'red' : 'green' }}
+            onClick={() => {
+              handleChangeStatus(record);
+            }}
           >
-            {record.status === '1' ? '下架' : '上架'}
+            {record.status === 'offSale' ? '上架' : '下架'}
           </Button>
-          <Button type="link" onClick={() => AddtoRecycleBin(record.id)}>
+          <Button type="link" onClick={() => AddtoRecycleBin(record)}>
             加入回收站
           </Button>
         </Space>
       ),
     },
   ];
-  const AddtoRecycleBin = (id) => {
-    Modal.confirm({
-      title: '确认加入回收站',
-      content: '确定将该商品移入回收站吗？',
-      onOk: () => {
-        const updatedList = data.list.map((item) =>
-          item.id === id ? { ...item, isDeleted: true } : item
+  //修改商品状态
+  const handleChangeStatus = async ({ productId, status }) => {
+    console.log(productId, status);
+    const statusList = [
+      'pending',
+      'approved',
+      'rejected',
+      'onSale',
+      'offSale',
+      'deleted',
+    ];
+    const RadomStatus =
+      statusList[Math.floor(Math.random() * statusList.length)];
+
+    const { success, message, data } =
+      await ProductApi.Product.updateProductSta(productId, RadomStatus);
+    // console.log(response);
+    if (success) {
+      messageApi.open({
+        type: 'success',
+        content: 'This is a success message',
+      });
+
+      getGoodsList();
+    }
+  };
+  // 加入回收站
+  const AddtoRecycleBin = (record) => {
+    let modalFormRef = null;
+
+    const handleSubmit = async () => {
+      try {
+        const formValues = await modalFormRef.validateFields(); // 获取表单值
+
+        const formData = {
+          originalProduct: record._id || record.id,
+          merchant: record.merchant?._id || record.merchantId,
+          productSnapshot: {
+            productId: record.productId,
+            productName: record.productName,
+            productCategory: record.productCategory,
+            businessType: record.businessType,
+            pricing: record.pricing,
+            inventory: record.inventory,
+            productInfo: record.productInfo,
+          },
+          deleteReason: formValues.deleteReason,
+          deleteReasonDetail: formValues.deleteReasonDetail,
+          autoDeleteAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30天后
+        };
+
+        const { success, message } = await ProductApi.Product.addToRecycleBin(
+          formData
         );
-        data.list = updatedList; // 覆盖原 mock 数据
-        message.success('已加入回收站');
-        loadData(); // 重新加载数据
-      },
+        if (success) {
+          messageApi.success('成功加入回收站');
+          getGoodsList(); // 刷新列表
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    const modal = Modal.confirm({
+      title: '确认加入回收站',
+      icon: null,
+      content: (
+        <Form
+          layout="vertical"
+          ref={(ref) => {
+            if (ref) modalFormRef = ref;
+          }}
+          name="deleteReasonForm"
+        >
+          <Form.Item
+            name="deleteReason"
+            label="删除原因"
+            rules={[{ required: true, message: '请选择删除原因' }]}
+          >
+            <Select placeholder="请选择删除原因">
+              <Option value="discontinued">停产</Option>
+              <Option value="expired">过期</Option>
+              <Option value="quality_issue">质量问题</Option>
+              <Option value="policy_violation">违规</Option>
+              <Option value="merchant_request">商家要求</Option>
+              <Option value="system_cleanup">系统清理</Option>
+              <Option value="duplicate">重复</Option>
+              <Option value="other">其他</Option>
+            </Select>
+          </Form.Item>
+          <Form.Item name="deleteReasonDetail" label="删除原因详情">
+            <Input.TextArea rows={3} placeholder="请输入详细原因（可选）" />
+          </Form.Item>
+        </Form>
+      ),
+      okText: '确认',
+      cancelText: '取消',
+      onOk: handleSubmit,
     });
   };
+
   // 加载数据
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
-      // 这里应该调用实际的API
-      setTimeout(() => {
-        setDataSource((data.list || []).filter((item) => !item.isDeleted));
-        setPagination((prev) => ({
-          ...prev,
-          total: data.length,
-        }));
-        setLoading(false);
-      }, 1000);
-    } catch (error) {
-      message.error('加载数据失败');
-      setLoading(false);
-    }
-  }, []);
+  // const loadData = useCallback(async () => {
+  //   setLoading(true);
+  //   try {
+  //     // 这里应该调用实际的API
+  //     setTimeout(() => {
+  //       setDataSource((data.list || []).filter((item) => !item.isDeleted));
+  //       setPagination((prev) => ({
+  //         ...prev,
+  //         total: data.length,
+  //       }));
+  //       setLoading(false);
+  //     }, 1000);
+  //   } catch (error) {
+  //     message.error('加载数据失败');
+  //     setLoading(false);
+  //   }
+  // }, []);
 
   // 搜索处理
   const handleSearch = () => {
-    loadData();
+    // loadData();
   };
 
-  // 重置搜索
+  // 重置搜索handleAddhandleAdd
   const handleReset = () => {
-    setSearchParams({
-      name: '',
-      category: '',
-      status: '',
-    });
-    loadData();
+    // setSearchParams({
+    //   name: '',
+    //   category: '',
+    //   status: '',
+    // });
+    // loadData();
   };
 
   // 新增商品
+
   const handleAdd = () => {
+    addModalRef.current.toggleShowStatus(true);
     setEditingRecord(null);
     form.resetFields();
-    setModalVisible(true);
+    // console.log('添加');
+    // navigate('/goods/ProductEditor');
   };
 
   // 编辑商品
   const handleEdit = (record) => {
-    setEditingRecord(record);
-    form.setFieldsValue(record);
-    setModalVisible(true);
+    // setEditingRecord(record);
+    // form.setFieldsValue(record);
+    // setModalVisible(true);
   };
 
   // 删除商品
@@ -199,43 +330,70 @@ const ListOfCommodities = () => {
       title: '确认删除',
       content: `确定要删除商品"${record.name}"吗？`,
       onOk: () => {
-        message.success('删除成功');
-        loadData();
+        // message.success('删除成功');
+        // loadData();
       },
     });
   };
 
   // 表单提交
   const handleSubmit = async (values) => {
+    // console.log(values, '999');
     try {
       console.log('提交数据:', values);
-      message.success(editingRecord ? '更新成功' : '创建成功');
-      setModalVisible(false);
-      loadData();
+      if (!values) return;
+
+      // 生成审核ID
+      const auditId =
+        'AUDIT' +
+        Date.now().toString().slice(-8) +
+        Math.floor(Math.random() * 1000)
+          .toString()
+          .padStart(3, '0');
+
+      // 确保productInfo对象存在并有productName字段
+      const productInfo = {
+        ...values.productInfo,
+        productName:
+          values.productInfo?.productName || values.productName || '未命名商品',
+      };
+
+      // 构建完整的请求数据
+      const submitData = {
+        ...values,
+        auditId,
+        productInfo,
+        submitTime: new Date().toISOString(),
+      };
+
+      const { success } = await ProductApi.Product.addProductAudit(submitData);
+      if (success) {
+        messageApi.success('审核记录创建成功');
+        addModalRef.current?.toggleShowStatus(false);
+      }
     } catch (error) {
-      message.error('操作失败');
+      console.error('提交数据时出错:', error);
+      messageApi.error('提交数据时出错');
     }
   };
 
   // 分页变化
-  const handleTableChange = (page, pageSize) => {
-    setPagination({
-      current: page,
-      pageSize: pageSize,
-      total: pagination.total,
-    });
-    loadData();
-  };
+  // const handleTableChange = (page, pageSize) => {
+  //   setPagination({
+  //     current: page,
+  //     pageSize: pageSize,
+  //     total: pagination.total,
+  //   });
+  //   loadData();
+  // };
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  // useEffect(() => {
+  //   loadData();
+  // }, [loadData]);
   const onChange = (value) => {
     console.log(value);
   };
-  const ExportFn = () => {
-    message.success('导出成功');
-  };
+
   return (
     <GoodsLayout>
       <div style={{ padding: '24px' }}>
@@ -311,9 +469,9 @@ const ListOfCommodities = () => {
             icon={<PlusOutlined />}
             onClick={handleAdd}
           >
-            新增
+            新增审核
           </Button>
-          <Button className="Export " icon={<ExportSvg />} onClick={ExportFn}>
+          <Button className="Export " icon={<ExportSvg />}>
             导出
           </Button>
         </div>
@@ -321,7 +479,7 @@ const ListOfCommodities = () => {
         {/* 表格 */}
         <Table
           columns={columns}
-          dataSource={dataSource}
+          dataSource={list}
           loading={loading}
           rowKey="id"
           pagination={{
@@ -331,42 +489,75 @@ const ListOfCommodities = () => {
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total) => `共 ${total} 条记录`,
-            onChange: handleTableChange,
-            onShowSizeChange: handleTableChange,
+            // onChange: handleTableChange,
+            // onShowSizeChange: handleTableChange,
           }}
         />
 
-        {/* 新增/编辑商品弹窗 */}
-        <Modal
-          title={editingRecord ? '编辑商品' : '新增商品'}
-          open={modalVisible}
-          onCancel={() => setModalVisible(false)}
-          footer={null}
-          width={800}
+        {/* 新增/编辑商品-审核列表弹窗 */}
+        <CustomModal
+          ref={addModalRef}
+          title={editingRecord ? '编辑审核列表' : '新增审核列表'}
+          loading={loading}
         >
           <Form form={form} layout="vertical" onFinish={handleSubmit}>
+            {/* 以下内容保持不变 */}
+            <Col span={12}>
+              <Form.Item
+                name="merchant"
+                label="所属商家"
+                // rules={[{ required: true, message: '请输入商品名称' }]}
+              >
+                <Input placeholder="请输入所属商家" />
+              </Form.Item>
+            </Col>
             <Row gutter={16}>
               <Col span={12}>
                 <Form.Item
-                  name="name"
-                  label="商品名称"
-                  rules={[{ required: true, message: '请输入商品名称' }]}
+                  name="productInfo"
+                  label="商品信息"
+                  // rules={[{ required: true, message: '请输入商品名称' }]}
                 >
-                  <Input placeholder="请输入商品名称" />
+                  <Input placeholder="请输入商品信息" />
                 </Form.Item>
               </Col>
               <Col span={12}>
                 <Form.Item
-                  name="category"
-                  label="商品分类"
-                  rules={[{ required: true, message: '请选择商品分类' }]}
+                  name="auditReason"
+                  label="审核原因"
+                  // rules={[{ required: true, message: '请选择审核原因' }]}
                 >
-                  <Select placeholder="请选择商品分类">
-                    <Option value="数码产品">数码产品</Option>
-                    <Option value="服装">服装</Option>
-                    <Option value="食品">食品</Option>
-                    <Option value="家居">家居</Option>
-                  </Select>
+                  <Input placeholder="请输入审核原因" />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="auditType"
+                  label="审核类型"
+
+                  // rules={[{ required: true, message: '请选择审核原因' }]}
+                >
+                  <Select
+                    defaultValue={'create'}
+                    options={[
+                      {
+                        value: 'create',
+                        label: '新增',
+                      },
+                      {
+                        value: 'update',
+                        label: '修改',
+                      },
+                      {
+                        value: 'delete',
+                        label: '删除',
+                      },
+                      {
+                        value: 'restore',
+                        label: '恢复',
+                      },
+                    ]}
+                  ></Select>
                 </Form.Item>
               </Col>
             </Row>
@@ -374,50 +565,43 @@ const ListOfCommodities = () => {
             <Row gutter={16}>
               <Col span={12}>
                 <Form.Item
-                  name="price"
-                  label="商品价格"
-                  rules={[{ required: true, message: '请输入商品价格' }]}
+                  name="auditStatus"
+                  label="状态"
+                  // rules={[{ required: true, message: '请输入商品价格' }]}
                 >
-                  <InputNumber
-                    style={{ width: '100%' }}
-                    placeholder="请输入商品价格"
-                    min={0}
-                    precision={2}
-                    addonAfter="元"
-                  />
+                  <Select
+                    defaultValue={'pending'}
+                    placeholder="请选择状态"
+                    options={[
+                      {
+                        value: 'pending',
+                        label: '待审核',
+                      },
+                      {
+                        value: 'approved',
+                        label: '已通过',
+                      },
+                      {
+                        value: 'rejected',
+                        label: '已拒绝',
+                      },
+                    ]}
+                  ></Select>
                 </Form.Item>
               </Col>
               <Col span={12}>
                 <Form.Item
-                  name="stock"
-                  label="库存数量"
-                  rules={[{ required: true, message: '请输入库存数量' }]}
+                  name="submitTime"
+                  label="提交时间"
+                  // rules={[{ required: true, message: '请输入库存数量' }]}
                 >
-                  <InputNumber
-                    style={{ width: '100%' }}
-                    placeholder="请输入库存数量"
-                    min={0}
-                    addonAfter="件"
-                  />
+                  <DatePicker style={{ width: '100%' }} />
                 </Form.Item>
               </Col>
             </Row>
 
-            <Form.Item name="description" label="商品描述">
-              <Input.TextArea placeholder="请输入商品描述" rows={4} />
-            </Form.Item>
-
-            <Form.Item name="status" label="商品状态" valuePropName="checked">
-              <Switch checkedChildren="上架" unCheckedChildren="下架" />
-            </Form.Item>
-
-            <Form.Item name="image" label="商品图片">
-              <Upload action="/api/upload" listType="picture-card" maxCount={1}>
-                <div>
-                  <UploadOutlined />
-                  <div style={{ marginTop: 8 }}>上传图片</div>
-                </div>
-              </Upload>
+            <Form.Item name="auditor" label="操作人">
+              <Input placeholder="请输入操作人"></Input>
             </Form.Item>
 
             <Form.Item>
@@ -425,11 +609,15 @@ const ListOfCommodities = () => {
                 <Button type="primary" htmlType="submit">
                   {editingRecord ? '更新' : '创建'}
                 </Button>
-                <Button onClick={() => setModalVisible(false)}>取消</Button>
+                <Button
+                  onClick={() => addModalRef.current?.toggleShowStatus(false)}
+                >
+                  取消
+                </Button>
               </Space>
             </Form.Item>
           </Form>
-        </Modal>
+        </CustomModal>
       </div>
     </GoodsLayout>
   );

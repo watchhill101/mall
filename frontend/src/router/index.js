@@ -23,11 +23,11 @@ const DeviceManagement = lazy(() => import('@/pages/Merchant/DeviceManagement'))
 
 // 商品相关页面
 const ListOfCommodities = lazy(() => import('@/pages/Goods_S/ListOfCommodities'))
-
-const AuditList = lazy(() => import('@/pages/Goods_S/ListOfCommodities')) // 暂时使用商品列表组件
+const AuditList = lazy(() => import('@/pages/Goods_S/AuditList/AuditList'))
 const RecycleBin = lazy(() => import('@/pages/Goods_S/Trash/Trash')) // 回收站
 const ProductCategory = lazy(() => import('@/pages/Goods_S/Classification of Commodities/index'))
 const ExternalProduct = lazy(() => import('@/pages/Goods_S/ListOfCommodities')) // 暂时使用商品列表组件
+const ProductEditor = lazy(() => import('@/pages/Goods_S/ProductEditor/ProductEditor')) //商品编辑
 
 // 库存相关页面
 const CurrentStock = lazy(() => import('@/pages/Goods_S/inventory/CurrentInventory/CurrentInventory'))
@@ -156,6 +156,15 @@ const constantRoutes = [
             hidden: false,
             icon: 'component',
             menuPath: '/goods/product-list'
+          },
+          // 商品编辑
+          {
+            path: 'ProductEditor',
+            title: '商品编辑',
+            element: <ListOfCommodities />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/goods/ProductEditor'
           },
           {
             path: 'audit-list',

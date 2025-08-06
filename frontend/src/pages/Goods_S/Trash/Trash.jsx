@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   Statistic,
@@ -10,6 +10,7 @@ import {
   Button,
   Space,
   Popconfirm,
+  message, // 导入message组件
 } from 'antd';
 import {
   DeleteOutlined,
@@ -19,7 +20,7 @@ import {
 } from '@ant-design/icons';
 import GoodsLayout from '../Goods_Layout/Goods_Layout';
 import { TrashData, data } from '@/db_S/data.mjs';
-
+import ProductApi from '@/api/Product';
 const { Title } = Typography;
 
 export default function Trash() {
@@ -56,26 +57,36 @@ export default function Trash() {
   //     status: '已删除',
   //   },
   // ];
-
+  const [trashData, setTrashData] = useState([]);
+  const getProductAuditList = async () => {
+    const { success, data } = await ProductApi.Product.getProductRecycleBin();
+    console.log(success, data, '111111');
+    if (success) {
+      setTrashData(data);
+    }
+  };
+  useEffect(() => {
+    getProductAuditList();
+  }, []);
   const TrashColumns = [
     {
       title: '商品ID',
-      dataIndex: 'ProductID',
-      key: 'ProductID',
+      dataIndex: 'originalProduct',
+      key: 'originalProduct',
     },
     {
       title: '商品名称',
-      dataIndex: 'ProductName',
+      dataIndex: ['productSnapshot', 'productName'],
       key: 'ProductName',
       render: (text, record) => (
         <>
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <div>
-              <img
+              {/* <img
                 src={record.src}
                 alt=""
                 style={{ width: '50px', height: '50px', borderRadius: '50%' }}
-              />
+              /> */}
             </div>
             <div>{text}</div>
           </div>
@@ -84,18 +95,19 @@ export default function Trash() {
     },
     {
       title: '商品分类',
-      dataIndex: 'ProductCategory',
+      dataIndex: ['productSnapshot', 'productCategory'],
       key: 'ProductCategory',
     },
     {
       title: '市场售价',
-      dataIndex: 'MarketPrice',
+      dataIndex: ['productSnapshot', 'pricing', 'marketPrice'],
       key: 'MarketPrice',
     },
     {
       title: '最后更新时间',
-      dataIndex: 'LastUpdateTime',
-      key: 'LastUpdateTime',
+      dataIndex: 'updatedAt',
+      key: 'updatedAt',
+      render: (text) => (text ? new Date(text).toLocaleString() : '-'),
     },
     {
       title: '操作',
@@ -121,14 +133,35 @@ export default function Trash() {
   ];
 
   // 处理恢复商品
-  const handleRestore = (record) => {
-    console.log('restore', record);
-    record.isDeleted = false;
+  const handleRestore = async (record) => {
+    try {
+      console.log('恢复商品', record);
+      // 显示加载状态
+      const hideLoading = message.loading('商品恢复中...', 0);
 
-    const updated = recycleData.filter(
-      (item) => item.ProductID !== record.ProductID
-    );
-    setRecycleData(updated);
+      // 调用恢复商品API
+      const response = await ProductApi.Product.restoreProductFromRecycleBin({
+        productId: record.originalProduct,
+        restoredBy: '6891c594711bbd8f373159c3',
+      });
+
+      // 无论成功失败，先隐藏加载状态
+      hideLoading();
+
+      console.log('恢复商品响应:', response);
+      if (response && response.success) {
+        message.success('商品恢复成功');
+        // 刷新回收站列表
+        getProductAuditList();
+      } else {
+        message.error('商品恢复失败: ' + (response?.message || '未知错误'));
+      }
+    } catch (error) {
+      // 发生异常时也隐藏加载状态
+      message.destroy();
+      message.error('商品恢复失败: ' + error.message);
+      console.error('恢复商品错误:', error);
+    }
   };
   const [recycleData, setRecycleData] = useState(
     data.list.filter((item) => item.isDeleted)
@@ -234,7 +267,7 @@ export default function Trash() {
         >
           <Table
             columns={TrashColumns}
-            dataSource={recycleData}
+            dataSource={trashData}
             pagination={{
               pageSize: 10,
               showSizeChanger: true,

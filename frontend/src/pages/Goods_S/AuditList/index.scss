@@ -1,0 +1,61 @@
+.audit-list-container {
+  padding: 16px;
+
+  .filter-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+
+    .ant-form-item {
+      margin-bottom: 8px;
+    }
+
+    .search-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  }
+
+  .audit-table {
+    .ant-table-tbody > tr > td {
+      vertical-align: middle;
+    }
+
+    .product-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      img {
+        width: 40px;
+        height: 40px;
+        object-fit: cover;
+        border-radius: 4px;
+      }
+
+      span {
+        max-width: 180px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+  }
+}
+.audit-filter-form {
+  margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+  align-items: flex-start;
+  margin-bottom: 20px;
+
+  .ant-form-item {
+    margin-bottom: 0;
+  }
+
+  //   .ant-form-item:last-child {
+  //     margin-left: auto;
+  //   }
+}
