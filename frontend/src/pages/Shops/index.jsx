@@ -8,8 +8,7 @@ import {
   MoneyCollectOutlined,
   CalculatorOutlined,
   FileOutlined,
-  AuditOutlined,
-  DesktopOutlined
+  AuditOutlined
 } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import MerchantLayout from '../Merchant/MerchantLayout'
@@ -60,11 +59,6 @@ const Shops = () => {
       key: '/shops/merchant-application',
       icon: <AuditOutlined />,
       label: '商家申请',
-    },
-    {
-      key: '/shops/device-management',
-      icon: <DesktopOutlined />,
-      label: '设备管理',
     }
   ]
 

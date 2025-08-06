@@ -9,15 +9,37 @@ const instance = Axios.create({
   baseURL: BASE_URL,
   timeout: TIME_OUT
 })
-console.log(process.env.NODE_ENV,'获取环境变量')
+console.log(process.env.NODE_ENV, '获取环境变量')
 // 不需要token的接口白名单
-const whiteList = ['/auth/login', '/auth/refresh', '/captcha/generate', '/captcha/verify', '/captcha/refresh']
+const whiteList = [
+  '/auth/login',
+  '/auth/refresh',
+  '/captcha/generate',
+  '/captcha/verify',
+  '/captcha/refresh',
+  '/merchant/list',              // 临时添加，用于测试
+  '/merchant/test',              // 测试接口
+  '/merchant-account/list',      // 临时添加，用于测试
+  '/merchant-account/test',      // 测试接口
+  '/account-detail/list',        // 账户明细列表，用于测试
+  '/account-detail/stats',       // 账户明细统计，用于测试
+  '/account-detail/test',        // 账户明细测试接口
+  '/withdraw-account/list',      // 提现账号列表，用于测试
+  '/withdraw-account/test',      // 提现账号测试接口
+  '/withdraw-account/merchants', // 商家列表，用于测试
+  '/merchant-withdraw/list',     // 商家提现列表，用于测试
+  '/merchant-withdraw/test',     // 商家提现测试接口
+  '/merchant-withdraw/audit',    // 商家提现审核接口
+  '/bill/list',                  // 结算账单列表，用于测试
+  '/bill/test',                  // 结算账单测试接口
+  '/bill/stats'                  // 结算账单统计接口
+]
 
 // 添加请求拦截器
 instance.interceptors.request.use(
   (config) => {
     console.log('📤 发送请求:', config.method?.toUpperCase(), config.url, config.data);
-    
+
     if (config.url && typeof config.url === 'string') {
       if (!whiteList.includes(config.url)) {
         let token = getToken()
@@ -53,7 +75,7 @@ export function setResponseInterceptor(store, login, logout) {
         return response
       } else {
         console.log('📥 收到响应:', response.status, response.data);
-        
+
         // 处理后端返回的数据格式
         if (response.data && response.data.code !== undefined) {
           if (response.data.code === 200) {

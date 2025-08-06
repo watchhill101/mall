@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import {
   Card,
   Typography,
@@ -28,19 +28,28 @@ import {
   LockOutlined
 } from '@ant-design/icons'
 import MerchantLayout from './MerchantLayout'
+import merchantAccountAPI, {
+  ACCOUNT_STATUS,
+  ACCOUNT_STATUS_LABELS,
+  ACCOUNT_STATUS_COLORS
+} from '@/api/merchantAccount'
+import merchantAPI from '@/api/merchant'
 
 const { Title } = Typography
 const { Option } = Select
 
 const MerchantAccount = () => {
   const [form] = Form.useForm()
+  const [modalForm] = Form.useForm()
   const [loading, setLoading] = useState(false)
-  const [allData, setAllData] = useState([])
-  const [filteredData, setFilteredData] = useState([])
-  const [searchParams, setSearchParams] = useState({})
+  const [accountData, setAccountData] = useState([])
+  const [searchText, setSearchText] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
+  const [contactPhoneFilter, setContactPhoneFilter] = useState('')
+  const [merchantFilter, setMerchantFilter] = useState('')
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 2,
+    pageSize: 10,
     total: 0
   })
 
@@ -48,142 +57,125 @@ const MerchantAccount = () => {
   const [modalVisible, setModalVisible] = useState(false)
   const [modalType, setModalType] = useState('add') // 'add' 或 'edit'
   const [selectedRecord, setSelectedRecord] = useState(null)
+  const [confirmLoading, setConfirmLoading] = useState(false)
 
-  // 模拟商家账号数据
-  const mockMerchantData = [
-    {
-      id: 1,
-      merchantId: 1,
-      loginAccount: '0102',
-      userNickname: '闲花细雨',
-      contactPhone: '18979881656',
-      role: '商家角色3',
-      merchant: '商家名称商家名称',
-      status: 'active',
-      createTime: '2023-12-12 12:12:12',
-      updateTime: '2023-12-12 12:12:12'
-    },
-    {
-      id: 2,
-      merchantId: 2,
-      loginAccount: '0102',
-      userNickname: '闲花细雨',
-      contactPhone: '18979881656',
-      role: '商家角色2',
-      merchant: '商家名称商家名称',
-      status: 'disabled',
-      createTime: '2023-12-12 12:12:12',
-      updateTime: '2023-12-12 12:12:12'
-    },
-    {
-      id: 3,
-      merchantId: 3,
-      loginAccount: '0102',
-      userNickname: '闲花细雨',
-      contactPhone: '18979881656',
-      role: '商家角色1',
-      merchant: '商家名称商家名称',
-      status: 'active',
-      createTime: '2023-12-12 12:12:12',
-      updateTime: '2023-12-12 12:12:12'
-    },
-    {
-      id: 4,
-      merchantId: 4,
-      loginAccount: '0103',
-      userNickname: '清风明月',
-      contactPhone: '13800138000',
-      role: '商家角色1',
-      merchant: '清风超市',
-      status: 'active',
-      createTime: '2023-12-13 10:30:00',
-      updateTime: '2023-12-13 10:30:00'
-    },
-    {
-      id: 5,
-      merchantId: 5,
-      loginAccount: '0104',
-      userNickname: '春暖花开',
-      contactPhone: '13900139000',
-      role: '商家角色2',
-      merchant: '花开便利店',
-      status: 'disabled',
-      createTime: '2023-12-14 14:20:00',
-      updateTime: '2023-12-14 14:20:00'
+  // 商户和角色选项
+  const [merchantOptions, setMerchantOptions] = useState([])
+  const [roleOptions, setRoleOptions] = useState([])
+  const [personOptions, setPersonOptions] = useState([])
+
+  // 加载商户账号数据
+  const loadAccountData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const params = {
+        page: pagination.current,
+        pageSize: pagination.pageSize,
+        merchantId: searchText,
+        contactPhone: contactPhoneFilter,
+        merchant: merchantFilter,
+        status: statusFilter
+      };
+
+      const response = await merchantAccountAPI.getMerchantAccountList(params);
+
+      if (response.code === 200) {
+        const accounts = response.data.list.map(item => ({
+          ...item,
+          key: item._id,
+          id: item._id,
+          merchantId: item.merchant?._id || '',
+          merchantName: item.merchant?.name || '未设置',
+          roleName: item.role?.name || '未设置',
+          personName: item.personInCharge?.name || '未设置',
+          createTime: new Date(item.createdAt).toLocaleString(),
+          updateTime: new Date(item.updatedAt).toLocaleString()
+        }));
+
+        setAccountData(accounts);
+        setPagination(prev => ({
+          ...prev,
+          total: response.data.pagination.total
+        }));
+      }
+    } catch (error) {
+      console.error('获取商户账号列表失败:', error);
+
+      let errorMessage = '获取商户账号列表失败';
+      if (error.response) {
+        const { status, data } = error.response;
+        if (status === 401) {
+          errorMessage = '登录已过期，请重新登录';
+        } else if (status === 403) {
+          errorMessage = '权限不足，无法访问';
+        } else if (status === 500) {
+          errorMessage = '服务器错误，请稍后重试';
+        } else if (data && data.message) {
+          errorMessage = data.message;
+        }
+      }
+
+      message.error(errorMessage);
+    } finally {
+      setLoading(false);
     }
-  ]
+  }, [pagination.current, pagination.pageSize, searchText, contactPhoneFilter, merchantFilter, statusFilter]);
 
-  // 计算当前页数据
-  const currentPageData = useMemo(() => {
-    const startIndex = (pagination.current - 1) * pagination.pageSize
-    const endIndex = startIndex + pagination.pageSize
-    return filteredData.slice(startIndex, endIndex)
-  }, [filteredData, pagination.current, pagination.pageSize])
-
-  // 检查并修正分页状态
-  useEffect(() => {
-    if (filteredData.length > 0) {
-      const totalPages = Math.ceil(filteredData.length / pagination.pageSize)
-      if (pagination.current > totalPages) {
-        setPagination(prev => ({ ...prev, current: totalPages }))
+  // 加载选项数据
+  const loadOptions = useCallback(async () => {
+    try {
+      // 加载商户选项
+      const merchantResponse = await merchantAPI.getMerchantList({ pageSize: 100 });
+      if (merchantResponse.code === 200) {
+        setMerchantOptions(merchantResponse.data.list.map(item => ({
+          value: item._id,
+          label: item.name
+        })));
       }
+    } catch (error) {
+      console.error('加载选项数据失败:', error);
     }
-  }, [filteredData.length, pagination.current, pagination.pageSize])
+  }, []);
+
+  // 初始化加载数据
+  useEffect(() => {
+    loadAccountData();
+  }, [loadAccountData]);
 
   useEffect(() => {
-    setAllData(mockMerchantData)
-    setFilteredData(mockMerchantData)
-    setPagination(prev => ({ ...prev, total: mockMerchantData.length }))
-  }, [])
+    loadOptions();
+  }, [loadOptions]);
 
-  // 筛选数据
-  const filterData = (data, params) => {
-    return data.filter(item => {
-      // 按商户ID筛选
-      if (params.merchantId && !item.merchantId.toString().includes(params.merchantId)) {
-        return false
+  // 搜索和筛选变化时重新加载数据（使用防抖）
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (pagination.current === 1) {
+        loadAccountData();
+      } else {
+        setPagination(prev => ({ ...prev, current: 1 }));
       }
+    }, 500);
 
-      // 按联系电话筛选
-      if (params.contactPhone && !item.contactPhone.includes(params.contactPhone)) {
-        return false
-      }
-
-      // 按商家名称筛选
-      if (params.merchant && !item.merchant.toLowerCase().includes(params.merchant.toLowerCase())) {
-        return false
-      }
-
-      // 按状态筛选
-      if (params.status && item.status !== params.status) {
-        return false
-      }
-
-      return true
-    })
-  }
+    return () => clearTimeout(timer);
+  }, [searchText, contactPhoneFilter, merchantFilter, statusFilter]);
 
   // 搜索处理
   const handleSearch = (values) => {
-    console.log('搜索条件:', values)
-    setLoading(true)
-    setSearchParams(values)
-
-    setTimeout(() => {
-      const filtered = filterData(allData, values)
-      setFilteredData(filtered)
-      setPagination(prev => ({ ...prev, current: 1, total: filtered.length }))
-      setLoading(false)
-    }, 500)
-  }
+    console.log('搜索条件:', values);
+    setSearchText(values.merchantId || '');
+    setContactPhoneFilter(values.contactPhone || '');
+    setMerchantFilter(values.merchant || '');
+    setStatusFilter(values.status || '');
+  };
 
   // 重置处理
   const handleReset = () => {
-    form.resetFields()
-    setSearchParams({})
-    setFilteredData(allData)
-    setPagination(prev => ({ ...prev, current: 1, total: allData.length }))
-  }
+    form.resetFields();
+    setSearchText('');
+    setContactPhoneFilter('');
+    setMerchantFilter('');
+    setStatusFilter('');
+  };
 
   // 分页处理
   const handlePaginationChange = (page, pageSize) => {
@@ -191,45 +183,58 @@ const MerchantAccount = () => {
       ...prev,
       current: page,
       pageSize: pageSize || prev.pageSize
-    }))
-  }
+    }));
+  };
 
   // 新增账号
   const handleAdd = () => {
-    setModalType('add')
-    setSelectedRecord(null)
-    setModalVisible(true)
-  }
+    setModalType('add');
+    setSelectedRecord(null);
+    modalForm.resetFields();
+    setModalVisible(true);
+  };
 
   // 修改账号
   const handleEdit = (record) => {
-    setModalType('edit')
-    setSelectedRecord(record)
-    setModalVisible(true)
-  }
+    setModalType('edit');
+    setSelectedRecord(record);
+    modalForm.setFieldsValue({
+      loginAccount: record.loginAccount,
+      userNickname: record.userNickname,
+      contactPhone: record.contactPhone,
+      merchant: record.merchantId,
+      role: record.role?._id,
+      personInCharge: record.personInCharge?._id
+    });
+    setModalVisible(true);
+  };
 
   // 启用/禁用账号
   const handleToggleStatus = (record) => {
-    const newStatus = record.status === 'active' ? 'disabled' : 'active'
-    const actionText = newStatus === 'active' ? '启用' : '禁用'
+    const newStatus = record.status === 'active' ? 'disabled' : 'active';
+    const actionText = newStatus === 'active' ? '启用' : '禁用';
 
     Modal.confirm({
       title: `确认${actionText}`,
       content: `确定要${actionText}商家账号 "${record.userNickname}" 吗？`,
-      onOk: () => {
-        const updatedData = allData.map(item =>
-          item.id === record.id ? { ...item, status: newStatus } : item
-        )
-        setAllData(updatedData)
+      onOk: async () => {
+        try {
+          await merchantAccountAPI.updateMerchantAccountStatus(record.id, newStatus);
+          message.success(`${actionText}成功`);
+          loadAccountData(); // 重新加载数据
+        } catch (error) {
+          console.error(`${actionText}账号失败:`, error);
 
-        const filtered = filterData(updatedData, searchParams)
-        setFilteredData(filtered)
-        setPagination(prev => ({ ...prev, total: filtered.length }))
+          let errorMessage = `${actionText}账号失败`;
+          if (error.response && error.response.data && error.response.data.message) {
+            errorMessage = error.response.data.message;
+          }
 
-        message.success(`${actionText}成功`)
+          message.error(errorMessage);
+        }
       }
-    })
-  }
+    });
+  };
 
   // 删除账号
   const handleDelete = (record) => {
@@ -238,79 +243,97 @@ const MerchantAccount = () => {
       content: `确定要删除商家账号 "${record.userNickname}" 吗？此操作不可恢复。`,
       okText: '删除',
       okType: 'danger',
-      onOk: () => {
-        const updatedData = allData.filter(item => item.id !== record.id)
-        setAllData(updatedData)
+      onOk: async () => {
+        try {
+          await merchantAccountAPI.deleteMerchantAccount(record.id);
+          message.success('删除成功');
+          loadAccountData(); // 重新加载数据
+        } catch (error) {
+          console.error('删除账号失败:', error);
 
-        const filtered = filterData(updatedData, searchParams)
-        setFilteredData(filtered)
-        setPagination(prev => ({ ...prev, total: filtered.length }))
+          let errorMessage = '删除账号失败';
+          if (error.response && error.response.data && error.response.data.message) {
+            errorMessage = error.response.data.message;
+          }
 
-        message.success('删除成功')
+          message.error(errorMessage);
+        }
       }
-    })
-  }
+    });
+  };
 
   // 重置密码
   const handleResetPassword = (record) => {
     Modal.confirm({
       title: '确认重置密码',
       content: `确定要重置商家账号 "${record.userNickname}" 的密码吗？`,
-      onOk: () => {
-        message.success('密码重置成功，新密码已发送到商家手机')
+      onOk: async () => {
+        try {
+          const response = await merchantAccountAPI.resetMerchantAccountPassword(record.id);
+          if (response.code === 200) {
+            message.success(`密码重置成功，新密码：${response.data.newPassword}`);
+          }
+        } catch (error) {
+          console.error('重置密码失败:', error);
+
+          let errorMessage = '重置密码失败';
+          if (error.response && error.response.data && error.response.data.message) {
+            errorMessage = error.response.data.message;
+          }
+
+          message.error(errorMessage);
+        }
       }
-    })
-  }
+    });
+  };
 
   // 保存模态框数据
-  const handleModalOk = (values) => {
-    if (modalType === 'add') {
-      const newRecord = {
-        id: Date.now(),
-        merchantId: Date.now(),
-        ...values,
-        status: 'active',
-        createTime: new Date().toLocaleString(),
-        updateTime: new Date().toLocaleString()
+  const handleModalOk = async (values) => {
+    try {
+      setConfirmLoading(true);
+
+      if (modalType === 'add') {
+        // 添加密码字段（默认密码）
+        const accountData = {
+          ...values,
+          password: '123456' // 默认密码
+        };
+
+        await merchantAccountAPI.createMerchantAccount(accountData);
+        message.success('添加成功');
+      } else {
+        await merchantAccountAPI.updateMerchantAccount(selectedRecord.id, values);
+        message.success('修改成功');
       }
-      const updatedData = [...allData, newRecord]
-      setAllData(updatedData)
 
-      const filtered = filterData(updatedData, searchParams)
-      setFilteredData(filtered)
-      setPagination(prev => ({ ...prev, total: filtered.length }))
+      setModalVisible(false);
+      loadAccountData(); // 重新加载数据
+    } catch (error) {
+      console.error('操作失败:', error);
 
-      message.success('添加成功')
-    } else {
-      const updatedData = allData.map(item =>
-        item.id === selectedRecord.id ? { ...item, ...values, updateTime: new Date().toLocaleString() } : item
-      )
-      setAllData(updatedData)
+      let errorMessage = modalType === 'add' ? '添加账号失败' : '修改账号失败';
+      if (error.response && error.response.data && error.response.data.message) {
+        errorMessage = error.response.data.message;
+      }
 
-      const filtered = filterData(updatedData, searchParams)
-      setFilteredData(filtered)
-
-      message.success('修改成功')
+      message.error(errorMessage);
+    } finally {
+      setConfirmLoading(false);
     }
-    setModalVisible(false)
-  }
+  };
 
   // 关闭模态框
   const handleModalCancel = () => {
-    setModalVisible(false)
-    setSelectedRecord(null)
-  }
+    setModalVisible(false);
+    setSelectedRecord(null);
+    setConfirmLoading(false);
+    modalForm.resetFields();
+  };
 
   // 刷新数据
   const handleRefresh = () => {
-    setLoading(true)
-    setTimeout(() => {
-      const filtered = filterData(allData, searchParams)
-      setFilteredData(filtered)
-      setPagination(prev => ({ ...prev, total: filtered.length }))
-      setLoading(false)
-    }, 500)
-  }
+    loadAccountData();
+  };
 
   // 表格列定义
   const columns = [
@@ -318,7 +341,8 @@ const MerchantAccount = () => {
       title: '商户ID',
       dataIndex: 'merchantId',
       key: 'merchantId',
-      width: 100
+      width: 100,
+      render: (text) => text || '未设置'
     },
     {
       title: '登录帐号',
@@ -340,15 +364,17 @@ const MerchantAccount = () => {
     },
     {
       title: '角色',
-      dataIndex: 'role',
-      key: 'role',
-      width: 120
+      dataIndex: 'roleName',
+      key: 'roleName',
+      width: 120,
+      render: (text) => text || '未设置'
     },
     {
       title: '商家',
-      dataIndex: 'merchant',
-      key: 'merchant',
-      width: 150
+      dataIndex: 'merchantName',
+      key: 'merchantName',
+      width: 150,
+      render: (text) => text || '未设置'
     },
     {
       title: '状态',
@@ -357,12 +383,11 @@ const MerchantAccount = () => {
       width: 100,
       align: 'center',
       render: (status) => {
-        const statusMap = {
-          active: { color: 'green', text: '正常' },
-          disabled: { color: 'red', text: '禁用' }
-        }
-        const statusInfo = statusMap[status] || { color: 'default', text: status }
-        return <Tag color={statusInfo.color}>{statusInfo.text}</Tag>
+        const statusInfo = {
+          color: ACCOUNT_STATUS_COLORS[status] || 'default',
+          text: ACCOUNT_STATUS_LABELS[status] || status
+        };
+        return <Tag color={statusInfo.color}>{statusInfo.text}</Tag>;
       }
     },
     {
@@ -393,7 +418,7 @@ const MerchantAccount = () => {
             size="small"
             onClick={() => handleToggleStatus(record)}
           >
-            {record.status === 'active' ? '禁用' : '启用'}
+            {record.status === ACCOUNT_STATUS.ACTIVE ? '禁用' : '启用'}
           </Button>
           <Button
             type="link"
@@ -440,8 +465,10 @@ const MerchantAccount = () => {
               <Col span={6}>
                 <Form.Item label="状态" name="status">
                   <Select placeholder="请选择" style={{ width: '100%' }}>
-                    <Option value="active">正常</Option>
-                    <Option value="disabled">禁用</Option>
+                    <Option value={ACCOUNT_STATUS.ACTIVE}>{ACCOUNT_STATUS_LABELS[ACCOUNT_STATUS.ACTIVE]}</Option>
+                    <Option value={ACCOUNT_STATUS.DISABLED}>{ACCOUNT_STATUS_LABELS[ACCOUNT_STATUS.DISABLED]}</Option>
+                    <Option value={ACCOUNT_STATUS.LOCKED}>{ACCOUNT_STATUS_LABELS[ACCOUNT_STATUS.LOCKED]}</Option>
+                    <Option value={ACCOUNT_STATUS.PENDING}>{ACCOUNT_STATUS_LABELS[ACCOUNT_STATUS.PENDING]}</Option>
                   </Select>
                 </Form.Item>
               </Col>
@@ -514,13 +541,16 @@ const MerchantAccount = () => {
 
           <Table
             columns={columns}
-            dataSource={currentPageData}
+            dataSource={accountData}
             rowKey="id"
             pagination={false}
             loading={loading}
             scroll={{ x: 1200 }}
             size="middle"
             className="data-table"
+            locale={{
+              emptyText: '暂无商户账号数据'
+            }}
           />
 
           {/* 分页 */}
@@ -543,8 +573,8 @@ const MerchantAccount = () => {
                 `第 ${range[0]}-${range[1]} 条/共 ${total} 条`
               }
               onChange={handlePaginationChange}
-              pageSizeOptions={['2', '5', '10', '20', '50', '100']}
-              defaultPageSize={2}
+              pageSizeOptions={['5', '10', '20', '50', '100']}
+              defaultPageSize={10}
             />
           </div>
         </Card>
@@ -556,11 +586,15 @@ const MerchantAccount = () => {
           onCancel={handleModalCancel}
           footer={null}
           width={600}
+          confirmLoading={confirmLoading}
         >
           <Form
+            form={modalForm}
             layout="vertical"
             onFinish={handleModalOk}
-            initialValues={selectedRecord}
+            initialValues={{
+              status: ACCOUNT_STATUS.ACTIVE
+            }}
           >
             <Row gutter={16}>
               <Col span={12}>
@@ -599,21 +633,38 @@ const MerchantAccount = () => {
                   rules={[{ required: true, message: '请选择角色' }]}
                 >
                   <Select placeholder="请选择角色">
-                    <Option value="商家角色1">商家角色1</Option>
-                    <Option value="商家角色2">商家角色2</Option>
-                    <Option value="商家角色3">商家角色3</Option>
+                    {roleOptions.map(role => (
+                      <Option key={role.value} value={role.value}>{role.label}</Option>
+                    ))}
                   </Select>
                 </Form.Item>
               </Col>
             </Row>
             <Row gutter={16}>
-              <Col span={24}>
+              <Col span={12}>
                 <Form.Item
-                  label="商家名称"
+                  label="商家"
                   name="merchant"
-                  rules={[{ required: true, message: '请输入商家名称' }]}
+                  rules={[{ required: true, message: '请选择商家' }]}
                 >
-                  <Input placeholder="请输入商家名称" />
+                  <Select placeholder="请选择商家">
+                    {merchantOptions.map(merchant => (
+                      <Option key={merchant.value} value={merchant.value}>{merchant.label}</Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  label="负责人"
+                  name="personInCharge"
+                  rules={[{ required: true, message: '请选择负责人' }]}
+                >
+                  <Select placeholder="请选择负责人">
+                    {personOptions.map(person => (
+                      <Option key={person.value} value={person.value}>{person.label}</Option>
+                    ))}
+                  </Select>
                 </Form.Item>
               </Col>
             </Row>
@@ -624,7 +675,7 @@ const MerchantAccount = () => {
                     <Button onClick={handleModalCancel}>
                       取消
                     </Button>
-                    <Button type="primary" htmlType="submit">
+                    <Button type="primary" htmlType="submit" loading={confirmLoading}>
                       确定
                     </Button>
                   </Space>

@@ -10,7 +10,7 @@ import {
   CalculatorOutlined,
   FileOutlined,
   AuditOutlined,
-  DesktopOutlined,
+
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -18,7 +18,6 @@ const { Title } = Typography;
 const { Sider, Content } = Layout;
 
 const MerchantLayout = ({ children }) => {
-  console.log(children);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -64,11 +63,6 @@ const MerchantLayout = ({ children }) => {
       icon: <AuditOutlined />,
       label: '商家申请',
     },
-    {
-      key: '/shops/device-management',
-      icon: <DesktopOutlined />,
-      label: '设备管理',
-    },
   ];
 
   // 获取当前选中的菜单
@@ -76,7 +70,6 @@ const MerchantLayout = ({ children }) => {
 
   // 菜单点击处理
   const handleMenuClick = ({ key }) => {
-    console.log(key);
     navigate(key);
   };
   return (

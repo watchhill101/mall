@@ -112,10 +112,10 @@ class JwtUtil {
   static async refreshAccessToken(refreshToken) {
     try {
       const decoded = jwt.verify(refreshToken, config.jwtRefreshSecretKey);
-      
+
       // 验证 Refresh Token
       await this.verifyRefreshToken(refreshToken, decoded.userId);
-      
+
       // 从数据库获取最新的用户信息
       const user = await User.findById(decoded.userId).select('-password');
       if (!user) {

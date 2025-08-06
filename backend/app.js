@@ -8,7 +8,15 @@ var logger = require("morgan");
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
 var authRouter = require("./routes/auth");
+var merchantRouter = require("./routes/merchant");
+var merchantAccountRouter = require("./routes/merchantAccount");
+var accountDetailRouter = require("./routes/accountDetail");
+var withdrawAccountRouter = require("./routes/withdrawAccount");
+var merchantWithdrawRouter = require("./routes/merchantWithdraw");
+var settlementOrderRouter = require("./routes/settlementOrder");
+var billRouter = require("./routes/bill");
 var captchaRouter = require("./routes/captcha");
+var merchantApplicationRouter = require("./routes/merchantApplication");
 var navigationRouter = require("./routes/navigation");
 var businessRouter = require("./routes/business");
 
@@ -41,7 +49,10 @@ app.use(express.static(path.join(__dirname, "public")));
 
 // 添加请求日志中间件
 app.use((req, res, next) => {
-  console.log(`📥 ${req.method} ${req.path}`, req.body);
+  // 只记录重要的API请求，忽略静态资源
+  if (!req.path.startsWith('/static') && !req.path.endsWith('.ico')) {
+    console.log(`📥 ${req.method} ${req.path}`);
+  }
   next();
 });
 // 添加测试路由
@@ -53,17 +64,25 @@ app.get("/test", (req, res) => {
   });
 });
 
-// 路由配置
+// 路由
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
 app.use("/auth", authRouter);
+app.use("/merchant", merchantRouter);
+app.use("/merchant-account", merchantAccountRouter);
+app.use("/account-detail", accountDetailRouter);
+app.use("/withdraw-account", withdrawAccountRouter);
+app.use("/merchant-withdraw", merchantWithdrawRouter);
+app.use("/settlement-order", settlementOrderRouter);
+app.use("/bill", billRouter);
 app.use("/captcha", captchaRouter);
+app.use("/merchant-application", merchantApplicationRouter);
 app.use("/api", navigationRouter);
 app.use("/goods", businessRouter);
 app.use("/system", );
 
 // 需要认证的路由 - 使用express-jwt
-app.use("/api/protected", jwtAuth, verifyTokenType); // 需要强制验证的路由
+app.use("/merchant/list", jwtAuth, verifyTokenType); // 需要强制验证的路由
 
 // JWT错误处理中间件
 app.use(jwtErrorHandler);

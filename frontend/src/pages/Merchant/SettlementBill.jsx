@@ -31,6 +31,7 @@ import {
 import * as XLSX from 'xlsx'
 import dayjs from 'dayjs'
 import MerchantLayout from './MerchantLayout'
+import { getBillList, getBillStats } from '@/api/bill'
 
 const { Title } = Typography
 const { Option } = Select
@@ -41,6 +42,7 @@ const SettlementBill = () => {
   const [loading, setLoading] = useState(false)
   const [historyData, setHistoryData] = useState([])
   const [filteredHistoryData, setFilteredHistoryData] = useState([])
+  const [statsData, setStatsData] = useState({}) // 统计数据
   const [searchParams, setSearchParams] = useState({}) // 共享的搜索参数
   const [pagination, setPagination] = useState({
     current: 1,
@@ -104,61 +106,110 @@ const SettlementBill = () => {
     }
   ]
 
-  // 计算统计数据（基于筛选后的历史数据）
+  // 使用从API获取的统计数据
   const currentStats = useMemo(() => {
-    const stats = filteredHistoryData.reduce((acc, item) => {
-      acc.orderCount += item.orderCount || 0
-      acc.totalAmount += item.orderAmount || 0
-      acc.refundOrderCount += item.refundOrderCount || 0
-      acc.refundAmount += item.refundAmount || 0
+    return {
+      orderCount: statsData.orderCount || 0,
+      totalAmount: statsData.totalAmount || 0,
+      refundOrderCount: statsData.refundOrderCount || 0,
+      refundAmount: statsData.refundAmount || 0,
+      rechargeAmount: statsData.rechargeAmount || 0,
+      salesAmount: statsData.salesAmount || 0,
+      salesCount: statsData.salesCount || 0,
+      wechatSales: statsData.wechatSales || { amount: 0, count: 0 },
+      balanceSales: statsData.balanceSales || { amount: 0, count: 0 },
+      totalRefundAmount: statsData.totalRefundAmount || 0,
+      totalRefundCount: statsData.totalRefundCount || 0,
+      wechatRefund: statsData.wechatRefund || { amount: 0, count: 0 },
+      balanceRefund: statsData.balanceRefund || { amount: 0, count: 0 }
+    }
+  }, [statsData])
 
-      // 微信销售数据
-      acc.wechatSales.count += item.wechatSales || 0
-      acc.wechatSales.amount += item.wechatSalesAmount || 0
-
-      // 微信退款数据
-      acc.wechatRefund.count += item.wechatRefund || 0
-      acc.wechatRefund.amount += item.wechatRefundAmount || 0
-
-      return acc
-    }, {
-      orderCount: 0,
-      totalAmount: 0,
-      refundOrderCount: 0,
-      refundAmount: 0,
-      rechargeAmount: 0, // 这个需要从其他地方获取或计算
-      salesAmount: 0,
-      salesCount: 0,
-      wechatSales: { amount: 0, count: 0 },
-      balanceSales: { amount: 0, count: 0 }, // 这个需要从其他地方获取
-      totalRefundAmount: 0,
-      totalRefundCount: 0,
-      wechatRefund: { amount: 0, count: 0 },
-      balanceRefund: { amount: 0, count: 0 } // 这个需要从其他地方获取
-    })
-
-    // 计算总销售数据
-    stats.salesAmount = stats.wechatSales.amount + stats.balanceSales.amount
-    stats.salesCount = stats.wechatSales.count + stats.balanceSales.count
-    stats.totalRefundAmount = stats.wechatRefund.amount + stats.balanceRefund.amount
-    stats.totalRefundCount = stats.wechatRefund.count + stats.balanceRefund.count
-    stats.rechargeAmount = stats.totalAmount // 假设充值金额等于订单总额
-
-    return stats
+  // 计算当前页数据 - 现在直接使用API返回的数据
+  const currentPageData = useMemo(() => {
+    return filteredHistoryData
   }, [filteredHistoryData])
 
-  // 计算当前页数据
-  const currentPageData = useMemo(() => {
-    const startIndex = (pagination.current - 1) * pagination.pageSize
-    const endIndex = startIndex + pagination.pageSize
-    return filteredHistoryData.slice(startIndex, endIndex)
-  }, [filteredHistoryData, pagination.current, pagination.pageSize])
-
+  // 初始化数据加载
   useEffect(() => {
-    setHistoryData(mockHistoryData)
-    setFilteredHistoryData(mockHistoryData)
-    setPagination(prev => ({ ...prev, total: mockHistoryData.length }))
+    const initData = async () => {
+      await Promise.all([
+        loadBillData({ page: 1, pageSize: 2 }),
+        loadStatsData({})
+      ])
+    }
+    initData()
   }, [])
+
+  // 加载账单列表数据
+  const loadBillData = async (params = {}) => {
+    try {
+      setLoading(true)
+      const queryParams = {
+        page: params.page || pagination.current,
+        pageSize: params.pageSize || pagination.pageSize,
+        ...params
+      }
+
+      // 移除page和pageSize，避免重复
+      if (params.page) delete queryParams.page
+      if (params.pageSize) delete queryParams.pageSize
+
+      // 重新添加正确的分页参数
+      queryParams.page = params.page || pagination.current
+      queryParams.pageSize = params.pageSize || pagination.pageSize
+
+      // 处理日期范围参数
+      if (params.dateRange && params.dateRange.length === 2) {
+        queryParams.startDate = params.dateRange[0].format('YYYY-MM-DD')
+        queryParams.endDate = params.dateRange[1].format('YYYY-MM-DD')
+        delete queryParams.dateRange
+      }
+
+      console.log('发送请求参数:', queryParams)
+      const response = await getBillList(queryParams)
+
+      if (response.code === 200) {
+        const { list, pagination: paginationData } = response.data
+        setHistoryData(list)
+        setFilteredHistoryData(list)
+        setPagination(prev => ({
+          ...prev,
+          current: paginationData.current,
+          pageSize: paginationData.pageSize,
+          total: paginationData.total
+        }))
+      }
+    } catch (error) {
+      console.error('加载账单数据失败:', error)
+      message.error('加载账单数据失败')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // 加载统计数据
+  const loadStatsData = async (params = {}) => {
+    try {
+      const queryParams = { ...params }
+
+      // 处理日期范围参数
+      if (params.dateRange && params.dateRange.length === 2) {
+        queryParams.startDate = params.dateRange[0].format('YYYY-MM-DD')
+        queryParams.endDate = params.dateRange[1].format('YYYY-MM-DD')
+        delete queryParams.dateRange
+      }
+
+      const response = await getBillStats(queryParams)
+
+      if (response.code === 200) {
+        setStatsData(response.data)
+      }
+    } catch (error) {
+      console.error('加载统计数据失败:', error)
+      message.error('加载统计数据失败')
+    }
+  }
 
   // 筛选历史数据
   const filterHistoryData = (data, params) => {
@@ -187,36 +238,55 @@ const SettlementBill = () => {
   }
 
   // 共享查询处理
-  const handleSearch = (values) => {
+  const handleSearch = async (values) => {
     console.log('查询条件:', values)
-    setLoading(true)
     setSearchParams(values)
 
-    setTimeout(() => {
-      const filtered = filterHistoryData(historyData, values)
-      setFilteredHistoryData(filtered)
-      setPagination(prev => ({ ...prev, current: 1, total: filtered.length }))
-      setLoading(false)
-      message.success(`查询完成，找到 ${filtered.length} 条记录`)
-    }, 500)
+    // 重置分页到第一页
+    const newPagination = { ...pagination, current: 1 }
+    setPagination(newPagination)
+
+    // 同时加载列表数据和统计数据
+    await Promise.all([
+      loadBillData({ ...values, page: 1, pageSize: pagination.pageSize }),
+      loadStatsData(values)
+    ])
+
+    message.success('查询完成')
   }
 
   // 重置查询
-  const handleReset = () => {
+  const handleReset = async () => {
     sharedForm.resetFields()
     setSearchParams({})
-    setFilteredHistoryData(historyData)
-    setPagination(prev => ({ ...prev, current: 1, total: historyData.length }))
+
+    // 重新加载初始数据
+    const newPagination = { ...pagination, current: 1 }
+    setPagination(newPagination)
+
+    await Promise.all([
+      loadBillData({ page: 1, pageSize: pagination.pageSize }),
+      loadStatsData({})
+    ])
+
     message.info('已重置查询条件')
   }
 
   // 分页处理
-  const handlePaginationChange = (page, pageSize) => {
-    setPagination(prev => ({
-      ...prev,
+  const handlePaginationChange = async (page, pageSize) => {
+    const newPagination = {
+      ...pagination,
       current: page,
-      pageSize: pageSize || prev.pageSize
-    }))
+      pageSize: pageSize || pagination.pageSize
+    }
+    setPagination(newPagination)
+
+    // 重新加载当前页数据
+    await loadBillData({
+      ...searchParams,
+      page: page,
+      pageSize: pageSize || pagination.pageSize
+    })
   }
 
   // 导出数据
@@ -432,8 +502,9 @@ const SettlementBill = () => {
                   <Col span={8}>
                     <Form.Item label="所属商家" name="merchantName">
                       <Select placeholder="请选择" style={{ width: '100%' }}>
-                        <Option value="商家名称商家名称">商家名称商家名称</Option>
-                        <Option value="清风超市">清风超市</Option>
+                        <Option value="科技数码专营店">科技数码专营店</Option>
+                        <Option value="家电生活馆">家电生活馆</Option>
+                        <Option value="潮流配件店">潮流配件店</Option>
                       </Select>
                     </Form.Item>
                   </Col>
@@ -544,7 +615,13 @@ const SettlementBill = () => {
                     <Button
                       type="text"
                       icon={<ReloadOutlined />}
-                      onClick={() => handleSearch(searchParams)}
+                      onClick={async () => {
+                        await Promise.all([
+                          loadBillData({ ...searchParams, page: pagination.current, pageSize: pagination.pageSize }),
+                          loadStatsData(searchParams)
+                        ])
+                        message.success('刷新完成')
+                      }}
                       loading={loading}
                     />
                   </Tooltip>
