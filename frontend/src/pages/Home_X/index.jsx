@@ -1,5 +1,6 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import ReactECharts from "echarts-for-react";
+import * as echarts from "echarts";
 import {
   CloseOutlined,
   PieChartOutlined,
@@ -21,6 +22,13 @@ let globalAnimationState = {
   currentValue: 0,
   isRunning: false,
   duration: 20000, // 20秒
+};
+
+// ECharts 图表拖拽配置
+const DRAGGABLE_CONFIG = {
+  symbolSize: 15,
+  zLevel: 100,
+  dragSensitivity: 5,
 };
 
 // 地区销售总额数据
@@ -1363,7 +1371,7 @@ const regionSalesData = {
   },
 };
 
-// 状态监控面板组件
+// 状态监控面板组件 - 现在通过ECharts拖拽管理
 const StatusMonitorPanel = () => {
   const navigate = useNavigate();
 
@@ -1550,15 +1558,15 @@ const StatusMonitorPanel = () => {
       style={{
         position: "absolute",
         bottom: "260px",
-        right: "35px",
-        zIndex: 1000,
+        right: "35px", 
+        zIndex: 998, // 低于ECharts拖拽层级
         background: "rgba(45, 55, 72, 0.85)",
         borderRadius: "12px",
         padding: "20px",
         border: "1px solid rgba(129, 140, 248, 0.4)",
         backdropFilter: "blur(15px)",
         boxShadow: "0 8px 32px rgba(0, 0, 0, 0.2)",
-        pointerEvents: "auto",
+        pointerEvents: "none", // 让ECharts层处理交互
         animation: "slideInFromRight 0.8s ease-out",
         isolation: "isolate",
         userSelect: "none",
@@ -3423,10 +3431,185 @@ const Home = () => {
   const [globeVisible, setGlobeVisible] = useState(false);
   const [globeFullscreen, setGlobeFullscreen] = useState(false);
 
+  // ECharts 拖拽相关状态
+  const [draggableElements, setDraggableElements] = useState(() => [
+    { id: 'chart-toggle', x: 280, y: 250, width: 180, height: 40, type: 'button', label: '销售统计', visible: !chartVisible },
+    { id: 'globe-toggle', x: (typeof window !== 'undefined' ? window.innerWidth : 1920) - 420, y: 250, width: 160, height: 40, type: 'button', label: '赛博地球', visible: !globeVisible },
+    { id: 'stats-panel', x: (typeof window !== 'undefined' ? window.innerWidth : 1920) - 285, y: (typeof window !== 'undefined' ? window.innerHeight : 1080) - 360, width: 250, height: 300, type: 'panel', label: '监控面板', visible: true }
+  ]);
+  const chartRef = useRef(null);
+  const draggingElement = useRef(null);
+
   const handleCloseChart = () => {
     console.log("📊 销售总额图表已关闭，动画继续在后台运行");
     setChartVisible(false);
   };
+
+  // ECharts 拖拽实现 - 基于官方文档方法
+  const initializeDraggableChart = useCallback(() => {
+    if (!chartRef.current) return;
+    
+    const myChart = chartRef.current;
+    
+    // 创建拖拽图表配置
+    const draggableOption = {
+      animation: false,
+      grid: { left: 0, top: 0, right: 0, bottom: 0, show: false },
+      xAxis: { 
+        type: 'value', 
+        show: false, 
+        min: 0, 
+        max: window.innerWidth,
+        axisLine: { show: false },
+        axisTick: { show: false },
+        axisLabel: { show: false },
+        splitLine: { show: false }
+      },
+      yAxis: { 
+        type: 'value', 
+        show: false, 
+        min: 0, 
+        max: window.innerHeight,
+        axisLine: { show: false },
+        axisTick: { show: false },
+        axisLabel: { show: false },
+        splitLine: { show: false }
+      },
+      series: [{
+        type: 'scatter',
+        data: draggableElements.filter(el => el.visible).map(el => [el.x + el.width/2, el.y + el.height/2]),
+        symbolSize: 0,
+        itemStyle: { opacity: 0 }
+      }],
+      graphic: draggableElements.filter(el => el.visible).map((element, index) => ({
+        type: 'group',
+        id: element.id,
+        position: [element.x, element.y],
+        draggable: true,
+        z: DRAGGABLE_CONFIG.zLevel,
+        children: [{
+          type: 'rect',
+          shape: {
+            x: 0,
+            y: 0,
+            width: element.width,
+            height: element.height
+          },
+          style: {
+            fill: element.type === 'button' ? 'rgba(24, 144, 255, 0.9)' : 'rgba(45, 55, 72, 0.85)',
+            stroke: 'rgba(255, 255, 255, 0.2)',
+            lineWidth: 1,
+            shadowColor: 'rgba(0, 0, 0, 0.3)',
+            shadowBlur: 8,
+            shadowOffsetX: 0,
+            shadowOffsetY: 4
+          }
+        }, {
+          type: 'text',
+          position: [element.width/2, element.height/2],
+          style: {
+            text: element.label,
+            fill: '#fff',
+            fontSize: 14,
+            fontWeight: 'bold',
+            textAlign: 'center',
+            textVerticalAlign: 'middle'
+          }
+        }],
+        ondrag: function() {
+          updateElementPosition(element.id, this.position);
+        },
+        onmouseover: function() {
+          this.children[0].attr('style', {
+            ...this.children[0].style,
+            fill: element.type === 'button' ? 'rgba(24, 144, 255, 1.0)' : 'rgba(45, 55, 72, 0.95)',
+            shadowBlur: 12,
+            transform: 'scale(1.02)'
+          });
+        },
+        onmouseout: function() {
+          this.children[0].attr('style', {
+            ...this.children[0].style,
+            fill: element.type === 'button' ? 'rgba(24, 144, 255, 0.9)' : 'rgba(45, 55, 72, 0.85)',
+            shadowBlur: 8,
+            transform: 'scale(1.0)'
+          });
+        },
+        onclick: function() {
+          handleElementClick(element.id);
+        }
+      }))
+    };
+    
+    myChart.setOption(draggableOption);
+  }, [draggableElements]);
+
+  // 更新元素位置
+  const updateElementPosition = useCallback((elementId, newPosition) => {
+    setDraggableElements(prev => 
+      prev.map(el => 
+        el.id === elementId 
+          ? { ...el, x: Math.max(0, Math.min(newPosition[0], window.innerWidth - el.width)), 
+                     y: Math.max(0, Math.min(newPosition[1], window.innerHeight - el.height)) }
+          : el
+      )
+    );
+  }, []);
+
+  // 处理元素点击事件
+  const handleElementClick = useCallback((elementId) => {
+    switch(elementId) {
+      case 'chart-toggle':
+        setChartVisible(true);
+        break;
+      case 'globe-toggle':
+        setGlobeVisible(true);
+        break;
+      case 'stats-panel':
+        // 统计面板点击逻辑
+        break;
+      default:
+        break;
+    }
+  }, []);
+
+  // 响应窗口大小变化
+  useEffect(() => {
+    const handleResize = () => {
+      if (chartRef.current) {
+        chartRef.current.resize();
+        setDraggableElements(prev => 
+          prev.map(el => ({
+            ...el,
+            x: Math.min(el.x, window.innerWidth - el.width),
+            y: Math.min(el.y, window.innerHeight - el.height)
+          }))
+        );
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // 更新元素可见性
+  useEffect(() => {
+    setDraggableElements(prev => 
+      prev.map(el => ({
+        ...el,
+        visible: el.id === 'chart-toggle' ? !chartVisible :
+                el.id === 'globe-toggle' ? !globeVisible :
+                el.id === 'stats-panel' ? true : el.visible
+      }))
+    );
+  }, [chartVisible, globeVisible]);
+
+  // 初始化拖拽图表
+  useEffect(() => {
+    if (chartRef.current) {
+      initializeDraggableChart();
+    }
+  }, [initializeDraggableChart]);
 
   const handleShowChart = () => {
     console.log("📊 重新显示销售总额图表，从当前进度继续");
@@ -3536,8 +3719,8 @@ const Home = () => {
     <div style={{ position: "relative" }}>
       <Dashboard onRegionClick={handleMapRegionClick} />
 
-      {/* 右下角状态监控面板 - 地图容器内悬浮 */}
-      <StatusMonitorPanel />
+              {/* 右下角状态监控面板 - 地图容器内悬浮 */}
+        <StatusMonitorPanel />
 
       {/* 左上角销售统计图表 */}
       <SalesOverviewChart
@@ -3555,69 +3738,25 @@ const Home = () => {
         isFullscreen={globeFullscreen}
       />
 
-      {/* 显示销售统计按钮 */}
-      {!chartVisible && (
-        <Button
-          type="primary"
-          icon={<PieChartOutlined />}
-          onClick={handleShowChart}
-          style={{
-            position: "fixed",
-            top: "250px",
-            left: "280px",
-            zIndex: 1000,
-            borderRadius: "8px",
-            backgroundColor: "rgba(24, 144, 255, 0.9)",
-            border: "none",
-            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.3)",
-            backdropFilter: "blur(10px)",
-            animation: "fadeInScale 0.3s ease-out",
-            transition: "all 0.3s ease",
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.transform = "translateY(-2px) scale(1.05)";
-            e.target.style.boxShadow = "0 6px 16px rgba(0, 0, 0, 0.4)";
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.transform = "translateY(0) scale(1)";
-            e.target.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.3)";
-          }}
-        >
-          显示{selectedRegion}销售统计
-        </Button>
-      )}
-
-      {/* 显示3D地球按钮 */}
-      {!globeVisible && (
-        <Button
-          type="primary"
-          icon={<GlobalOutlined />}
-          onClick={handleShowGlobe}
-          style={{
-            position: "fixed",
-            top: "250px",
-            right: "240px",
-            zIndex: 1000,
-            borderRadius: "8px",
-            backgroundColor: "rgba(28, 126, 214, 0.9)",
-            border: "none",
-            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.3)",
-            backdropFilter: "blur(10px)",
-            animation: "fadeInScale 0.3s ease-out",
-            transition: "all 0.3s ease",
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.transform = "translateY(-2px) scale(1.05)";
-            e.target.style.boxShadow = "0 6px 16px rgba(0, 0, 0, 0.4)";
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.transform = "translateY(0) scale(1)";
-            e.target.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.3)";
-          }}
-        >
-          显示赛博地球
-        </Button>
-      )}
+      {/* ECharts 拖拽容器 - 覆盖整个屏幕的透明图表 */}
+      <div
+        ref={(el) => {
+          if (el && !chartRef.current) {
+            chartRef.current = echarts.init(el);
+            initializeDraggableChart();
+          }
+        }}
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          zIndex: 999,
+          pointerEvents: "auto",
+          background: "transparent"
+        }}
+      />
     </div>
   );
 };
