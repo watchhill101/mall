@@ -157,6 +157,16 @@ const LayoutApp = () => {
         }
       }
       
+      // 检查是否是一级导航（有子菜单的）
+      const parentNav = navigationData.find(nav => nav.url === key && nav.children && nav.children.length > 0);
+      
+      if (parentNav) {
+        // 如果是一级导航且有子菜单，确保菜单展开
+        if (!subMenuKeys.includes(key)) {
+          setSubMenuKeys([...subMenuKeys, key]);
+        }
+      }
+      
       navigate(key);
     }
   };
