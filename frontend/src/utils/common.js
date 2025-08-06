@@ -51,6 +51,15 @@ export const getBreadcrumbNameMap = (routes) => {
     { path: 'stock-out', menuPath: '/goods/inventory/stock-out', title: '出库' },
     { path: 'stocktake', menuPath: '/goods/inventory/stocktake', title: '盘点' },
     { path: 'stock-details', menuPath: '/goods/inventory/stock-details', title: '出入库明细' },
+    // 添加订单子路由映射
+    { path: 'orders-list', menuPath: '/orders/orders-list', title: '订单管理' },
+    { path: 'afterSales', menuPath: '/orders/afterSales', title: '售后管理' },
+    { path: 'tallySheet', menuPath: '/orders/tallySheet', title: '理货单' },
+    { path: 'SortingList', menuPath: '/orders/SortingList', title: '分拣单' },
+    { path: 'payment-record', menuPath: '/orders/payment-record', title: '收款记录' },
+    { path: 'allocation-order', menuPath: '/orders/allocation-order', title: '配货单' },
+    { path: 'work-order', menuPath: '/orders/work-order', title: '作业单' },
+    { path: 'logistics-order', menuPath: '/orders/logistics-order', title: '物流单' },
     ...routes
   ]
   let breadcrumbNameObj = {}

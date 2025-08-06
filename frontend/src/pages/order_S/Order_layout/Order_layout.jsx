@@ -1,18 +1,17 @@
 import React from 'react';
 import { Typography, Layout, Menu } from 'antd';
 import {
+  ShoppingCartOutlined,
   ShopOutlined,
-  TeamOutlined,
-  UserOutlined,
-  BankOutlined,
-  FileTextOutlined,
   MoneyCollectOutlined,
-  CalculatorOutlined,
   FileOutlined,
   AuditOutlined,
-  DesktopOutlined,
+  TruckOutlined,
+  SolutionOutlined,
+  ContainerOutlined,
+  DeploymentUnitOutlined,
 } from '@ant-design/icons';
-import { useNavigate, useLocation, Outlet } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const { Title } = Typography;
 const { Sider, Content } = Layout;
@@ -23,27 +22,46 @@ const OrderLayout = ({ children }) => {
   const location = useLocation();
 
   // 二级导航菜单项
-
   const menuItems = [
     {
       key: '/orders/orders-list',
-      icon: <TeamOutlined />,
-      label: '订单',
+      icon: <ShoppingCartOutlined />,
+      label: '订单管理',
     },
     {
       key: '/orders/afterSales',
-      icon: <UserOutlined />,
-      label: '售后',
+      icon: <AuditOutlined />,
+      label: '售后管理',
     },
     {
       key: '/orders/tallySheet',
-      icon: <BankOutlined />,
+      icon: <ContainerOutlined />,
       label: '理货单',
     },
     {
       key: '/orders/SortingList',
-      icon: <FileTextOutlined />,
+      icon: <SolutionOutlined />,
       label: '分拣单',
+    },
+    {
+      key: '/orders/payment-record',
+      icon: <MoneyCollectOutlined />,
+      label: '收款记录',
+    },
+    {
+      key: '/orders/allocation-order',
+      icon: <DeploymentUnitOutlined />,
+      label: '配货单',
+    },
+    {
+      key: '/orders/work-order',
+      icon: <FileOutlined />,
+      label: '作业单',
+    },
+    {
+      key: '/orders/logistics-order',
+      icon: <TruckOutlined />,
+      label: '物流单',
     },
   ];
 
