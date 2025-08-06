@@ -486,4 +486,4 @@ async function migrateData() {
 }
 
 // 执行迁移
-migrateData();
+geichumigrateData();

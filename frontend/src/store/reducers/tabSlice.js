@@ -8,7 +8,20 @@ const tabSlice = createSlice({
   reducers: {
     addTab: (state, action) => {
       if (!state.tabs.some(tab => tab.key === action.payload.key)) {
-        state.tabs.push(action.payload);
+        // 如果是首页标签，插入到第一位
+        if (action.payload.key === '/home') {
+          state.tabs.unshift(action.payload);
+        } else {
+          // 其他标签添加到末尾
+          state.tabs.push(action.payload);
+        }
+        
+        // 确保首页标签始终在第一位
+        state.tabs.sort((a, b) => {
+          if (a.key === '/home') return -1;
+          if (b.key === '/home') return 1;
+          return 0;
+        });
       }
     },
     removeTab: (state, action) => {
@@ -16,6 +29,12 @@ const tabSlice = createSlice({
     },
     setTabs: (state, action) => {
       state.tabs = action.payload;
+      // 确保首页标签始终在第一位
+      state.tabs.sort((a, b) => {
+        if (a.key === '/home') return -1;
+        if (b.key === '/home') return 1;
+        return 0;
+      });
     },
     editTab: (state, action) => {
       state.tabs[action.payload].outline = true;

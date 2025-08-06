@@ -155,36 +155,55 @@ const TabsView = React.memo(({ pathname, formatRoutes, selectTab }) => {
   }, [tabs, formatRoutes, dispatch]);
 
   const closeOtherTabs = useCallback((key) => {
-    // 保留当前标签，移除其他标签
+    // 如果是首页标签，只保留首页标签
+    if (key === '/home') {
+      const homeTab = tabs.find((item) => item.key === '/home');
+      if (homeTab) {
+        dispatch(setTabs([homeTab]));
+        selectTab('/home');
+      }
+      return;
+    }
+
+    // 如果是其他标签，保留当前标签和首页标签
     const currentTab = tabs.find((item) => item.key === key);
-    // 直接用当前标签创建新的标签数组
-    const newTabs = [currentTab];
-    // 更新 redux store 中的所有标签
-    dispatch({ type: 'tabs/setTabs', payload: newTabs });
+    const homeTab = tabs.find((item) => item.key === '/home');
+    
+    const newTabs = [];
+    if (homeTab) newTabs.push(homeTab);
+    if (currentTab && currentTab.key !== '/home') newTabs.push(currentTab);
+    
+    dispatch(setTabs(newTabs));
     selectTab(key);
   }, [tabs, selectTab, dispatch]);
   
   const closeAllTabs = useCallback(() => {
-    // 创建首页标签
-    const homeTab = {
-      key: '/home', // 使用 /home 作为key
-      label: '首页',
-      closable: false,
-      children: (
-        <Suspense fallback={<Loading />}>
-          {formatRoutes.find((item) => item.menuPath === '/home')?.element}
-        </Suspense>
-      ), // 查找 /home 路径的元素并包装Suspense
-    };
-
-    // 设置新的标签数组
-    dispatch(setTabs([homeTab]));
+    // 保留首页标签，关闭其他所有标签
+    const homeTab = tabs.find(tab => tab.key === '/home');
+    
+    if (homeTab) {
+      // 如果存在首页标签，只保留首页标签
+      dispatch(setTabs([homeTab]));
+    } else {
+      // 如果不存在首页标签，创建一个新的首页标签
+      const newHomeTab = {
+        key: '/home',
+        label: '首页',
+        closable: false,
+        children: (
+          <Suspense fallback={<Loading />}>
+            {formatRoutes.find((item) => item.menuPath === '/home')?.element}
+          </Suspense>
+        ),
+      };
+      dispatch(setTabs([newHomeTab]));
+    }
 
     // 更新选中的标签和导航
     setActiveKey('/home');
     selectTab('/home');
     navigate('/home');
-  }, [formatRoutes, dispatch, selectTab, navigate]);
+  }, [tabs, formatRoutes, dispatch, selectTab, navigate]);
 
   const handleEdit = useCallback((targetKey, action) => {
     if (action === 'remove') {
@@ -217,7 +236,14 @@ const TabsView = React.memo(({ pathname, formatRoutes, selectTab }) => {
   }, [onRefreshTab, closeOtherTabs, closeTab, closeAllTabs]);
 
   const tabItems = useMemo(() => {
-    return tabs.map((item, index) => {
+    // 确保首页标签始终在第一位
+    const sortedTabs = [...tabs].sort((a, b) => {
+      if (a.key === '/home') return -1;
+      if (b.key === '/home') return 1;
+      return 0;
+    });
+
+    return sortedTabs.map((item, index) => {
       let children = item.children;
 
       // 如果当前路径是二级导航且匹配此页签，更新内容
@@ -246,7 +272,7 @@ const TabsView = React.memo(({ pathname, formatRoutes, selectTab }) => {
             </div>
           </Dropdown>
         ),
-        closable: tabs.length > 1,
+        closable: item.key !== '/home', // 首页标签不可关闭
       };
     });
   }, [tabs, formatRoutes, pathname, getContextMenu]);

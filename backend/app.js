@@ -79,7 +79,7 @@ app.use("/captcha", captchaRouter);
 app.use("/merchant-application", merchantApplicationRouter);
 app.use("/api", navigationRouter);
 app.use("/goods", businessRouter);
-app.use("/system", );
+// app.use("/system", ); // 注释掉未完成的路由配置
 
 // 需要认证的路由 - 使用express-jwt
 app.use("/merchant/list", jwtAuth, verifyTokenType); // 需要强制验证的路由
