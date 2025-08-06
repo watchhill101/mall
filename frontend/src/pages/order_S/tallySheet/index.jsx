@@ -219,17 +219,6 @@ const TallySheet = () => {
     } catch (error) {
       console.error('获取理货单列表失败:', error);
       message.error('获取数据失败');
-      // 使用模拟数据
-      const mockData = Array(10).fill().map((_, index) => ({
-        id: `tally_${index + 1}`,
-        tallyOrderNumber: `WLD123132213121212${index}`,
-        quantity: '5',
-        status: ['待理货', '已理货', '已取消'][index % 3],
-        generateTime: '2023-12-12 12:12:12',
-        completeTime: '2023-12-12 12:12:12',
-      }));
-      setData(mockData);
-      setTotal(100);
     } finally {
       setLoading(false);
     }

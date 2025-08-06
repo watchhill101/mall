@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // 创建axios实例
 const api = axios.create({
-  baseURL: '/products', // 根据app.js中的配置
+  baseURL: '/api/qiao', // 根据后端路由配置，指向qiao.js的路由
   timeout: 10000,
 });
 
@@ -42,6 +42,26 @@ export const getOrdersList = (params) => {
 // 获取订单详情
 export const getOrderDetail = (id) => {
   return api.get(`/orders/${id}`);
+};
+
+// 更新订单状态
+export const updateOrderStatus = (id, data) => {
+  return api.put(`/orders/${id}/status`, data);
+};
+
+// 更新支付状态
+export const updatePaymentStatus = (id, data) => {
+  return api.put(`/orders/${id}/payment`, data);
+};
+
+// 批量操作订单
+export const batchOperateOrders = (data) => {
+  return api.post('/orders/batch', data);
+};
+
+// 获取订单统计信息
+export const getOrderStatistics = (params) => {
+  return api.get('/orders/statistics', { params });
 };
 
 // ==================== 售后管理相关API ====================

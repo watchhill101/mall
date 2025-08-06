@@ -56,7 +56,7 @@ app.get("/test", (req, res) => {
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
 app.use("/auth", authRouter);
-app.use("/products", ProductsRouter)
+app.use("/qiao", ProductsRouter)
 app.use("/captcha", captchaRouter);
 // 需要认证的路由 - 使用express-jwt
 app.use("/api/protected", jwtAuth, verifyTokenType); // 需要强制验证的路由

@@ -18,35 +18,58 @@ var Merchant = require('../moudle/merchant/merchant');
 // 获取订单列表
 router.get('/orders', async function (req, res, next) {
   try {
-    const { page = 1, pageSize = 10, orderNumber, shopLocation, status, paymentMethod } = req.query;
+    const { 
+      page = 1, 
+      pageSize = 10, 
+      orderId,
+      orderNumber, 
+      orderStatus, 
+      paymentMethod,
+      paymentStatus,
+      orderType,
+      customerName,
+      customerPhone,
+      startDate,
+      endDate
+    } = req.query;
     
     let query = {};
-    if (orderNumber) query.orderNumber = new RegExp(orderNumber, 'i');
-    if (shopLocation) query.shopLocation = shopLocation;
-    if (status) query.status = status;
-    if (paymentMethod) query.paymentMethod = paymentMethod;
+    
+    // 订单ID或订单号搜索
+    if (orderId) query.orderId = new RegExp(orderId, 'i');
+    if (orderNumber) query.orderId = new RegExp(orderNumber, 'i'); // orderNumber映射到orderId
+    
+    // 订单状态筛选
+    if (orderStatus) query.orderStatus = orderStatus;
+    
+    // 订单类型筛选
+    if (orderType) query.orderType = orderType;
+    
+    // 支付方式筛选
+    if (paymentMethod) query['payment.paymentMethod'] = paymentMethod;
+    
+    // 支付状态筛选
+    if (paymentStatus) query['payment.paymentStatus'] = paymentStatus;
+    
+    // 客户信息筛选
+    if (customerName) query['customer.customerName'] = new RegExp(customerName, 'i');
+    if (customerPhone) query['customer.customerPhone'] = new RegExp(customerPhone, 'i');
+    
+    // 时间范围筛选
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) query.createdAt.$gte = new Date(startDate);
+      if (endDate) query.createdAt.$lte = new Date(endDate + ' 23:59:59');
+    }
 
     const total = await Order.countDocuments(query);
     const orders = await Order.find(query)
+      // 暂时移除populate，因为相关模型还未注册
+      // .populate('merchant', 'name shopName') // 关联商家信息
+      // .populate('createBy', 'loginAccount name') // 关联创建人信息
       .skip((page - 1) * pageSize)
       .limit(parseInt(pageSize))
       .sort({ createdAt: -1 });
-
-/* GET home page. */
-// router.get('/products', function (req, res, next) {
-//     res.render('index', { title: 'Express' });
-// });
-// 获取商品列表
-
-// 获取商品列表
-router.get('/products', async function (req, res) {
-    try {
-        const products = await Product.find({}); // 获取全部商
-        res.json({ success: true, data: products });
-    } catch (err) {
-
-        console.log(err, '2')
-    }
 
     res.json({
       code: 200,
@@ -59,7 +82,23 @@ router.get('/products', async function (req, res) {
       message: '获取订单列表成功'
     });
   } catch (error) {
+    console.error('获取订单列表失败:', error);
     res.status(500).json({ code: 500, message: '获取订单列表失败', error: error.message });
+  }
+});
+
+// 获取商品列表
+router.get('/products', async function (req, res) {
+  try {
+    const products = await Product.find({});
+    res.json({
+      code: 200,
+      data: products,
+      message: '获取商品列表成功'
+    });
+  } catch (error) {
+    console.log(error, '获取商品列表失败');
+    res.status(500).json({ code: 500, message: '获取商品列表失败', error: error.message });
   }
 });
 // 修改商品状态接口
@@ -86,7 +125,9 @@ router.put('/updateProductStatus', async (req, res) => {
 
         if (!result) {
             return res.status(404).json({ success: false, message: '未找到该商品' });
-        } res.json({ success: true, message: '商品状态更新成功', data: result });
+        }
+        
+        res.json({ success: true, message: '商品状态更新成功', data: result });
     } catch (error) {
         console.error('修改商品状态失败:', error);
         res.status(500).json({ success: false, message: '服务器错误' });
@@ -94,24 +135,251 @@ router.put('/updateProductStatus', async (req, res) => {
 });
 
 // 获取审核列表数据
-// 获取商品列表
 router.get('/productAudit', async function (req, res) {
     try {
         // 关联查询 merchant、auditor 和 submitter 字段
         const productAudits = await ProductAudit.find({})
             .populate('merchant', 'name')  // 关联商家，只返回名称
-            .populate('auditor', 'loginAccount')  // 关联审核人，只返回名称
+            .populate('auditor', 'loginAccount');  // 关联审核人，只返回名称
+
+        // 处理分类ID转名称
+        // 提取所有分类ID
+        const categoryIds = [...new Set(productAudits.map(item => item.productInfo.productCategory))];
+        // 查询分类信息
+        const categories = await ProductCategory.find({
+            categoryId: { $in: categoryIds }
+        }).select('categoryId categoryName');
+        // 创建分类ID到名称的映射
+        const categoryMap = {};
+        categories.forEach(category => {
+            categoryMap[category.categoryId] = category.categoryName;
+        });
+
+        // 替换分类ID为名称
+        const result = productAudits.map(item => {
+            const productInfo = { ...item.productInfo };
+            if (productInfo.productCategory) {
+                productInfo.productCategory = categoryMap[productInfo.productCategory] || productInfo.productCategory;
+            }
+            return {
+                ...item._doc,
+                productInfo
+            };
+        });
+
+        console.log(result, '1');
+        res.json({ success: true, data: result });
+    } catch (err) {
+        console.log(err, '2');
+        res.status(500).json({ success: false, message: '获取审核列表失败', error: err.message });
+    }
+});
+
+// 订单统计信息
+router.get('/orders/statistics', async function (req, res, next) {
+  try {
+    const { startDate, endDate } = req.query;
+    
+    let dateFilter = {};
+    if (startDate || endDate) {
+      dateFilter.createdAt = {};
+      if (startDate) dateFilter.createdAt.$gte = new Date(startDate);
+      if (endDate) dateFilter.createdAt.$lte = new Date(endDate + ' 23:59:59');
+    }
+    
+    // 统计基本信息
+    const totalOrders = await Order.countDocuments(dateFilter);
+    const pendingOrders = await Order.countDocuments({...dateFilter, orderStatus: 'pending'});
+    const unpaidOrders = await Order.countDocuments({...dateFilter, 'payment.paymentStatus': 'unpaid'});
+    
+    // 金额统计
+    const amountStats = await Order.aggregate([
+      { $match: dateFilter },
+      {
+        $group: {
+          _id: null,
+          totalRevenue: { $sum: '$pricing.totalAmount' },
+          totalPaidAmount: { $sum: '$pricing.paidAmount' },
+          averageAmount: { $avg: '$pricing.totalAmount' }
+        }
+      }
+    ]);
+    
+    res.json({
+      code: 200,
+      data: {
+        totalOrders,
+        pendingOrders, 
+        unpaidOrders,
+        totalRevenue: amountStats[0]?.totalRevenue || 0,
+        totalPaidAmount: amountStats[0]?.totalPaidAmount || 0,
+        averageAmount: amountStats[0]?.averageAmount || 0
+      },
+      message: '获取订单统计成功'
+    });
+  } catch (error) {
+    console.error('获取订单统计失败:', error);
+    res.status(500).json({ code: 500, message: '获取订单统计失败', error: error.message });
+  }
+});
 
 // 获取订单详情
 router.get('/orders/:id', async function (req, res, next) {
   try {
     const order = await Order.findById(req.params.id);
+      // 暂时移除populate，因为相关模型还未注册
+      // .populate('merchant', 'name shopName contactInfo')
+      // .populate('createBy', 'loginAccount name')
+      // .populate('products.product', 'productName productCode category');
+      
     if (!order) {
       return res.status(404).json({ code: 404, message: '订单不存在' });
     }
+    
     res.json({ code: 200, data: order, message: '获取订单详情成功' });
   } catch (error) {
+    console.error('获取订单详情失败:', error);
     res.status(500).json({ code: 500, message: '获取订单详情失败', error: error.message });
+  }
+});
+
+// 更新订单状态
+router.put('/orders/:id/status', async function (req, res, next) {
+  try {
+    const { orderStatus, note } = req.body;
+    
+    if (!orderStatus) {
+      return res.status(400).json({ code: 400, message: '订单状态不能为空' });
+    }
+    
+    const validStatuses = ['pending', 'confirmed', 'preparing', 'shipped', 'delivered', 'completed', 'cancelled'];
+    if (!validStatuses.includes(orderStatus)) {
+      return res.status(400).json({ code: 400, message: '无效的订单状态' });
+    }
+    
+    const order = await Order.findByIdAndUpdate(
+      req.params.id,
+      { 
+        orderStatus,
+        $push: {
+          statusHistory: {
+            status: orderStatus,
+            note: note || '',
+            changedAt: new Date(),
+            changedBy: req.user?.id || 'system'
+          }
+        },
+        updatedAt: new Date()
+      },
+      { new: true }
+    );
+    
+    if (!order) {
+      return res.status(404).json({ code: 404, message: '订单不存在' });
+    }
+    
+    res.json({ code: 200, data: order, message: '订单状态更新成功' });
+  } catch (error) {
+    console.error('更新订单状态失败:', error);
+    res.status(500).json({ code: 500, message: '更新订单状态失败', error: error.message });
+  }
+});
+
+// 更新支付状态
+router.put('/orders/:id/payment', async function (req, res, next) {
+  try {
+    const { paymentStatus, paymentMethod, paidAmount, paymentNote } = req.body;
+    
+    if (!paymentStatus) {
+      return res.status(400).json({ code: 400, message: '支付状态不能为空' });
+    }
+    
+    const updateData = {
+      'payment.paymentStatus': paymentStatus,
+      updatedAt: new Date()
+    };
+    
+    if (paymentMethod) updateData['payment.paymentMethod'] = paymentMethod;
+    if (paidAmount !== undefined) updateData['pricing.paidAmount'] = paidAmount;
+    if (paymentStatus === 'paid') updateData['payment.paymentTime'] = new Date();
+    
+    const order = await Order.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true }
+    );
+    
+    if (!order) {
+      return res.status(404).json({ code: 404, message: '订单不存在' });
+    }
+    
+    res.json({ code: 200, data: order, message: '支付状态更新成功' });
+  } catch (error) {
+    console.error('更新支付状态失败:', error);
+    res.status(500).json({ code: 500, message: '更新支付状态失败', error: error.message });
+  }
+});
+
+// 批量操作订单
+router.post('/orders/batch', async function (req, res, next) {
+  try {
+    const { orderIds, action, data } = req.body;
+    
+    if (!orderIds || !Array.isArray(orderIds) || orderIds.length === 0) {
+      return res.status(400).json({ code: 400, message: '订单ID列表不能为空' });
+    }
+    
+    if (!action) {
+      return res.status(400).json({ code: 400, message: '操作类型不能为空' });
+    }
+    
+    let updateData = { updatedAt: new Date() };
+    let message = '';
+    
+    switch (action) {
+      case 'updateStatus':
+        if (!data.orderStatus) {
+          return res.status(400).json({ code: 400, message: '订单状态不能为空' });
+        }
+        updateData.orderStatus = data.orderStatus;
+        message = '批量更新订单状态成功';
+        break;
+        
+      case 'updatePaymentStatus':
+        if (!data.paymentStatus) {
+          return res.status(400).json({ code: 400, message: '支付状态不能为空' });
+        }
+        updateData['payment.paymentStatus'] = data.paymentStatus;
+        if (data.paymentStatus === 'paid') {
+          updateData['payment.paymentTime'] = new Date();
+        }
+        message = '批量更新支付状态成功';
+        break;
+        
+      case 'delete':
+        await Order.deleteMany({ _id: { $in: orderIds } });
+        return res.json({ code: 200, message: '批量删除订单成功' });
+        
+      default:
+        return res.status(400).json({ code: 400, message: '不支持的操作类型' });
+    }
+    
+    const result = await Order.updateMany(
+      { _id: { $in: orderIds } },
+      updateData
+    );
+    
+    res.json({ 
+      code: 200, 
+      data: { 
+        modifiedCount: result.modifiedCount,
+        matchedCount: result.matchedCount 
+      }, 
+      message 
+    });
+  } catch (error) {
+    console.error('批量操作失败:', error);
+    res.status(500).json({ code: 500, message: '批量操作失败', error: error.message });
   }
 });
 
@@ -401,52 +669,8 @@ router.get('/logistics-orders', async function (req, res, next) {
 
 // ==================== 商品相关接口（保留原有接口） ====================
 
-// 获取商品列表
-router.get('/products', async function (req, res, next) {
-  try {
-    const products = await Product.find({});
-    res.json({
-      code: 200,
-      data: products,
-      message: '获取商品列表成功'
-    });
-  } catch (error) {
-    res.status(500).json({ code: 500, message: '获取商品列表失败', error: error.message });
-  }
-});
+// 商品列表接口已在上方定义，此处不重复
 
-
-        // 处理分类ID转名称
-        // 提取所有分类ID
-        const categoryIds = [...new Set(productAudits.map(item => item.productInfo.productCategory))];
-        // 查询分类信息
-        const categories = await ProductCategory.find({
-            categoryId: { $in: categoryIds }
-        }).select('categoryId categoryName');
-        // 创建分类ID到名称的映射
-        const categoryMap = {};
-        categories.forEach(category => {
-            categoryMap[category.categoryId] = category.categoryName;
-        });
-
-        // 替换分类ID为名称
-        const result = productAudits.map(item => {
-            const productInfo = { ...item.productInfo };
-            if (productInfo.productCategory) {
-                productInfo.productCategory = categoryMap[productInfo.productCategory] || productInfo.productCategory;
-            }
-            return {
-                ...item._doc,
-                productInfo
-            };
-        });
-
-        console.log(result, '1');
-        res.json({ success: true, data: result });
-    } catch (err) {
-        console.log(err, '2');
-    }
-});
 // 加入回收站
 router.post('/addProductRecycleBin', async function (req, res) {
     try {
