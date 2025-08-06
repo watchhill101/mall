@@ -3481,14 +3481,14 @@ const Home = () => {
         symbolSize: 0,
         itemStyle: { opacity: 0 }
       }],
-      graphic: draggableElements.filter(el => el.visible).map((element, index) => ({
-        type: 'group',
-        id: element.id,
-        position: [element.x, element.y],
-        draggable: true,
-        z: DRAGGABLE_CONFIG.zLevel,
-        children: [{
+      graphic: draggableElements.filter(el => el.visible).flatMap((element, index) => [
+        // 背景矩形
+        {
           type: 'rect',
+          id: element.id,
+          position: [element.x, element.y],
+          draggable: true,
+          z: DRAGGABLE_CONFIG.zLevel,
           shape: {
             x: 0,
             y: 0,
@@ -3503,10 +3503,20 @@ const Home = () => {
             shadowBlur: 8,
             shadowOffsetX: 0,
             shadowOffsetY: 4
+          },
+          ondrag: function() {
+            updateElementPosition(element.id, this.position);
+          },
+          onclick: function() {
+            handleElementClick(element.id);
           }
-        }, {
+        },
+        // 文本标签
+        {
           type: 'text',
-          position: [element.width/2, element.height/2],
+          id: element.id + '_text',
+          position: [element.x + element.width/2, element.y + element.height/2],
+          z: DRAGGABLE_CONFIG.zLevel + 1,
           style: {
             text: element.label,
             fill: '#fff',
@@ -3514,31 +3524,10 @@ const Home = () => {
             fontWeight: 'bold',
             textAlign: 'center',
             textVerticalAlign: 'middle'
-          }
-        }],
-        ondrag: function() {
-          updateElementPosition(element.id, this.position);
-        },
-        onmouseover: function() {
-          this.children[0].attr('style', {
-            ...this.children[0].style,
-            fill: element.type === 'button' ? 'rgba(24, 144, 255, 1.0)' : 'rgba(45, 55, 72, 0.95)',
-            shadowBlur: 12,
-            transform: 'scale(1.02)'
-          });
-        },
-        onmouseout: function() {
-          this.children[0].attr('style', {
-            ...this.children[0].style,
-            fill: element.type === 'button' ? 'rgba(24, 144, 255, 0.9)' : 'rgba(45, 55, 72, 0.85)',
-            shadowBlur: 8,
-            transform: 'scale(1.0)'
-          });
-        },
-        onclick: function() {
-          handleElementClick(element.id);
+          },
+          silent: true // 文本不响应鼠标事件
         }
-      }))
+      ])
     };
     
     myChart.setOption(draggableOption);
