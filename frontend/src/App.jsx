@@ -75,6 +75,14 @@ export default function App() {
           console.log('🚪 Token被删除，执行登出')
           dispatch({ type: 'user/logout' })
         }
+        // 如果token被添加，恢复Redux状态
+        else if (e.newValue && !token) {
+          console.log('🔄 Token被添加，恢复登录状态')
+          const refreshToken = getRefreshToken()
+          if (refreshToken) {
+            dispatch({ type: 'user/login', payload: { token: e.newValue, refreshToken } })
+          }
+        }
       }
     }
 
@@ -82,34 +90,6 @@ export default function App() {
     return () => {
       window.removeEventListener('storage', handleStorageChange)
     }
-  }, [token, dispatch])
-
-  // 定期检查token状态（每30秒检查一次）
-  useEffect(() => {
-    const checkTokenStatus = () => {
-      const localToken = getToken()
-      // 如果Redux中有token但localStorage中没有，说明token被外部删除
-      if (token && !localToken) {
-        console.log('🚨 检测到token状态不一致，执行登出')
-        dispatch({ type: 'user/logout' })
-      }
-      // 如果localStorage中有token但Redux中没有，说明需要恢复状态
-      else if (!token && localToken) {
-        console.log('🔄 检测到需要恢复token状态')
-        const refreshToken = getRefreshToken()
-        if (refreshToken) {
-          dispatch({ type: 'user/login', payload: { token: localToken, refreshToken } })
-        }
-      }
-    }
-
-    // 立即执行一次检查
-    checkTokenStatus()
-    
-    // 设置定期检查
-    const interval = setInterval(checkTokenStatus, 30000) // 每30秒检查一次
-    
-    return () => clearInterval(interval)
   }, [token, dispatch])
 
   return <Suspense fallback={<Loading />}>{dynamicRoutes}</Suspense>

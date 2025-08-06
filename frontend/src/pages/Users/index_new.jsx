@@ -226,7 +226,7 @@ const Users = () => {
       key: 'phone',
       render: (phone) => (
         <Tooltip title={phone || '暂无手机号'}>
-          <span>{maskPhone(phone)}</span>
+          {maskPhone(phone)}
         </Tooltip>
       )
     },

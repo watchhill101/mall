@@ -34,6 +34,7 @@ import merchantAccountAPI, {
   ACCOUNT_STATUS_COLORS
 } from '@/api/merchantAccount'
 import merchantAPI from '@/api/merchant'
+import { maskPhone } from '@/utils/maskUtils'
 
 const { Title } = Typography
 const { Option } = Select
@@ -363,7 +364,12 @@ const MerchantAccount = () => {
       title: '联系电话',
       dataIndex: 'contactPhone',
       key: 'contactPhone',
-      width: 140
+      width: 140,
+      render: (phone) => (
+        <Tooltip title={phone || '暂无手机号'}>
+          <span>{maskPhone(phone)}</span>
+        </Tooltip>
+      )
     },
     {
       title: '角色',

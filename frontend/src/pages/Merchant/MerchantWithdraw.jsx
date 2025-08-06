@@ -29,6 +29,7 @@ import {
 import dayjs from 'dayjs'
 import MerchantLayout from './MerchantLayout'
 import merchantWithdrawAPI, { WITHDRAW_STATUS_LABELS } from '@/api/merchantWithdraw'
+import { maskPhone } from '@/utils/maskUtils'
 
 const { Title } = Typography
 const { Option } = Select
@@ -235,7 +236,12 @@ const MerchantWithdraw = () => {
       title: '联系电话',
       dataIndex: 'contactPhone',
       key: 'contactPhone',
-      width: 140
+      width: 140,
+      render: (phone) => (
+        <Tooltip title={phone || '暂无手机号'}>
+          <span>{maskPhone(phone)}</span>
+        </Tooltip>
+      )
     },
     {
       title: '账号类型',
@@ -493,7 +499,7 @@ const MerchantWithdraw = () => {
                   <Col span={12}>
                     <p><strong>订单号：</strong>{selectedRecord.orderNo}</p>
                     <p><strong>商家名称：</strong>{selectedRecord.merchantName}</p>
-                    <p><strong>联系电话：</strong>{selectedRecord.contactPhone}</p>
+                    <p><strong>联系电话：</strong>{maskPhone(selectedRecord.contactPhone)}</p>
                   </Col>
                   <Col span={12}>
                     <p><strong>提现金额：</strong>¥{selectedRecord.withdrawAmount.toFixed(2)}</p>

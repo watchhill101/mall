@@ -28,6 +28,7 @@ import {
 } from '@ant-design/icons'
 import MerchantLayout from './MerchantLayout'
 import merchantApplicationAPI from '../../api/merchantApplication'
+import { maskPhone } from '@/utils/maskUtils'
 
 const { Title } = Typography
 const { Option } = Select
@@ -195,7 +196,11 @@ const MerchantApplication = () => {
       render: (_, record) => (
         <div>
           <div style={{ fontWeight: 'bold' }}>{record.contactPerson}</div>
-          <div style={{ color: '#999', fontSize: '12px' }}>{record.contactPhone}</div>
+          <div style={{ color: '#999', fontSize: '12px' }}>
+            <Tooltip title={record.contactPhone || '暂无手机号'}>
+              {maskPhone(record.contactPhone)}
+            </Tooltip>
+          </div>
         </div>
       )
     },
@@ -435,7 +440,7 @@ const MerchantApplication = () => {
               <p>确定要{auditAction === 'approve' ? '通过' : '拒绝'}以下申请吗？</p>
               <div style={{ background: '#f5f5f5', padding: '12px', borderRadius: '4px', marginTop: '12px' }}>
                 <p><strong>申请人：</strong>{selectedRecord.contactPerson}</p>
-                <p><strong>联系电话：</strong>{selectedRecord.contactPhone}</p>
+                <p><strong>联系电话：</strong>{maskPhone(selectedRecord.contactPhone)}</p>
                 <p><strong>商家类型：</strong>{selectedRecord.merchantType}</p>
                 <p><strong>所在城市：</strong>{selectedRecord.city}</p>
                 <p><strong>申请时间：</strong>{selectedRecord.applicationTime}</p>

@@ -15,6 +15,7 @@ import {
     Row,
     Col,
     Descriptions,
+    Tooltip,
 } from "antd";
 import {
     PlusOutlined,
@@ -31,6 +32,7 @@ import merchantAPI, {
     MERCHANT_TYPES,
     MERCHANT_TYPE_LABELS
 } from '@/api/merchant';
+import { maskPhone } from '@/utils/maskUtils';
 
 const { Title } = Typography;
 const { Search } = Input;
@@ -147,14 +149,11 @@ const Merchant = () => {
     // 初始化加载数据
     useEffect(() => {
         const init = async () => {
-            // 先测试后端连接
-            const isConnected = await testBackendConnection();
-            if (isConnected) {
-                loadMerchantData();
-            }
+            loadMerchantData();
+
         };
         init();
-    }, [loadMerchantData, testBackendConnection]);
+    }, []);
 
     // 搜索和筛选变化时重新加载数据
     useEffect(() => {
@@ -197,6 +196,11 @@ const Merchant = () => {
             dataIndex: "phone",
             key: "phone",
             width: 120,
+            render: (phone) => (
+                <Tooltip title={phone || '暂无手机号'}>
+                    <span>{maskPhone(phone)}</span>
+                </Tooltip>
+            ),
         },
         {
             title: "服务费率",
@@ -757,7 +761,7 @@ const Merchant = () => {
                                 {currentRecord.contact}
                             </Descriptions.Item>
                             <Descriptions.Item label="联系电话" span={1}>
-                                {currentRecord.phone}
+                                {maskPhone(currentRecord.phone)}
                             </Descriptions.Item>
                             <Descriptions.Item label="服务费率" span={1}>
                                 {currentRecord.serviceCharge ? `${(currentRecord.serviceCharge * 100).toFixed(1)}%` : '未设置'}

@@ -75,7 +75,7 @@ const LayoutApp = () => {
     return () => setIsMounted(false);
   }, []);
 
-  // 监听token状态变化
+  // 监听token状态变化（减少检查频率）
   useEffect(() => {
     // 组件未完全挂载时不执行检查
     if (!isMounted) return;
@@ -104,8 +104,8 @@ const LayoutApp = () => {
     // 立即检查一次
     checkTokenStatus();
     
-    // 设置定期检查（每10秒检查一次，比App.jsx更频繁）
-    const interval = setInterval(checkTokenStatus, 10000);
+    // 设置定期检查（每5分钟检查一次，减少频率）
+    const interval = setInterval(checkTokenStatus, 5 * 60 * 1000);
     
     return () => clearInterval(interval);
   }, [token, dispatch, navigate, isMounted]);
