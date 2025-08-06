@@ -74,6 +74,7 @@ router.get('/orders', async function (req, res, next) {
   } catch (error) {
     console.error('获取订单列表失败:', error);
     res.status(500).json({ code: 500, message: '获取订单列表失败', error: error.message });
+  }
 });
 
 // 获取商品列表
