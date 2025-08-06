@@ -56,4 +56,154 @@
     padding-left: 10px;
     margin-bottom: 10px;
   }
+
+  // 统一一级菜单选中效果，与首页保持一致
+  .ant-menu {
+    // 一级子菜单选中时的样式，与普通菜单项选中效果一致
+    .ant-menu-submenu.ant-menu-submenu-selected > .ant-menu-submenu-title {
+      background-color: #1890ff !important;
+      color: #fff !important;
+      
+      // 图标颜色
+      .anticon {
+        color: #fff !important;
+      }
+      
+      // 箭头颜色
+      .ant-menu-submenu-arrow {
+        color: #fff !important;
+        
+        &::before,
+        &::after {
+          background: #fff !important;
+        }
+      }
+    }
+    
+    // 二级菜单项选中样式
+    .ant-menu-sub {
+      .ant-menu-item-selected {
+        background-color: #e6f7ff !important;
+        color: #1890ff !important;
+        border-radius: 6px !important;
+        margin: 2px 8px !important;
+        
+        // 二级菜单选中项的图标颜色
+        .anticon {
+          color: #1890ff !important;
+        }
+        
+        // 二级菜单选中项的链接颜色
+        a {
+          color: #1890ff !important;
+          font-weight: 500 !important;
+        }
+      }
+      
+      // 二级菜单项hover效果
+      .ant-menu-item:hover:not(.ant-menu-item-selected) {
+        background-color: #f0f0f0 !important;
+        border-radius: 6px !important;
+        margin: 2px 8px !important;
+        
+        a {
+          color: #1890ff !important;
+        }
+      }
+    }
+    
+    // dark主题下的一级子菜单选中效果
+    &.ant-menu-dark {
+      .ant-menu-submenu.ant-menu-submenu-selected > .ant-menu-submenu-title {
+        background-color: #1890ff !important;
+        color: #fff !important;
+        
+        .anticon {
+          color: #fff !important;
+        }
+        
+        .ant-menu-submenu-arrow {
+          color: #fff !important;
+          
+          &::before,
+          &::after {
+            background: #fff !important;
+          }
+        }
+      }
+      
+      // dark主题下的二级菜单选中样式
+      .ant-menu-sub {
+        .ant-menu-item-selected {
+          background-color: #1890ff !important;
+          color: #fff !important;
+          
+          .anticon {
+            color: #fff !important;
+          }
+          
+          a {
+            color: #fff !important;
+            font-weight: 500 !important;
+          }
+        }
+        
+        // dark主题下二级菜单项hover效果
+        .ant-menu-item:hover:not(.ant-menu-item-selected) {
+          background-color: #1f1f1f !important;
+          
+          a {
+            color: #fff !important;
+          }
+        }
+      }
+    }
+    
+    // light主题下的一级子菜单选中效果
+    &.ant-menu-light {
+      .ant-menu-submenu.ant-menu-submenu-selected > .ant-menu-submenu-title {
+        background-color: #1890ff !important;
+        color: #fff !important;
+        
+        .anticon {
+          color: #fff !important;
+        }
+        
+        .ant-menu-submenu-arrow {
+          color: #fff !important;
+          
+          &::before,
+          &::after {
+            background: #fff !important;
+          }
+        }
+      }
+      
+      // light主题下的二级菜单选中样式
+      .ant-menu-sub {
+        .ant-menu-item-selected {
+          background-color: #e6f7ff !important;
+          color: #1890ff !important;
+          
+          .anticon {
+            color: #1890ff !important;
+          }
+          
+          a {
+            color: #1890ff !important;
+            font-weight: 500 !important;
+          }
+        }
+        
+        // light主题下二级菜单项hover效果
+        .ant-menu-item:hover:not(.ant-menu-item-selected) {
+          background-color: #f0f0f0 !important;
+          
+          a {
+            color: #1890ff !important;
+          }
+        }
+      }
+    }
+  }
 }

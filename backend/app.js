@@ -70,6 +70,7 @@ app.use("/", indexRouter);
 app.use("/auth", authRouter);  // 登录、注册等认证相关
 app.use("/captcha", captchaRouter);  // 验证码
 
+
 // 需要token验证的路由
 app.use("/users", jwtAuth, verifyTokenType, usersRouter);
 app.use("/merchant", jwtAuth, verifyTokenType, merchantRouter);

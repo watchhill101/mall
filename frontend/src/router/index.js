@@ -67,7 +67,6 @@ const constantRoutes = [
         icon: 'ShopOutlined',    // 使用存在的图标
         menuPath: '/shops',
         children: [
-          { index: true, element: <Navigate to={'/shops/merchants'} replace /> },
           {
             path: 'merchants',
             title: '商家管理',
@@ -142,7 +141,6 @@ const constantRoutes = [
         icon: 'GoodsOutlined',    // 商品图标
         menuPath: '/goods',
         children: [
-          { index: true, element: <Navigate to={'/goods/product-list'} replace /> },
           {
             path: 'product-list',
             title: '商品列表',

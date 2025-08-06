@@ -1,4 +1,12 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { 
+  HomeOutlined, 
+  ShopOutlined, 
+  ShoppingOutlined, 
+  FileTextOutlined, 
+  UserOutlined, 
+  AppstoreOutlined 
+} from '@ant-design/icons';
 import navigationAPI from '@/api/navigation';
 
 // 本地默认导航数据 - 作为后备方案
@@ -138,18 +146,18 @@ export const useNavigationData = () => {
 /**
  * 将导航数据转换为Antd Menu需要的格式
  */
-export const convertToMenuItems = (navigationData, getItem, Link, SvgIcon) => {
-  // 图标名称映射
+export const convertToMenuItems = (navigationData, getItem, Link) => {
+  // 图标组件映射
   const iconMap = {
-    'HomeOutlined': 'component',
-    'ShopOutlined': 'shop', 
-    'GoodsOutlined': 'goods',
-    'OrdersOutlined': 'orders',
-    'SettingOutlined': 'setting'
+    'HomeOutlined': <HomeOutlined />,
+    'ShopOutlined': <ShopOutlined />, 
+    'GoodsOutlined': <ShoppingOutlined />,
+    'OrdersOutlined': <FileTextOutlined />,
+    'UsersOutlined': <UserOutlined />
   };
 
   return navigationData.map(nav => {
-    const iconName = iconMap[nav.icon] || 'component';
+    const iconComponent = iconMap[nav.icon] || <AppstoreOutlined />;
     
     // 如果有子菜单
     if (nav.children && nav.children.length > 0) {
@@ -157,15 +165,15 @@ export const convertToMenuItems = (navigationData, getItem, Link, SvgIcon) => {
         getItem(
           <Link to={child.url}>{child.name}</Link>,
           child.url,
-          <SvgIcon name="component" width="14" height="14" color="#ccc" />
+          <AppstoreOutlined style={{ fontSize: '14px' }} />
         )
       );
 
-      // 有子菜单的一级导航，不使用Link，只显示标题
+      // 有子菜单的一级导航，可以点击跳转到过渡页面
       return getItem(
         nav.title,
         nav.url,
-        <SvgIcon name={iconName} width="14" height="14" color="#ccc" />,
+        React.cloneElement(iconComponent, { style: { fontSize: '14px' } }),
         children
       );
     } else {
@@ -173,7 +181,7 @@ export const convertToMenuItems = (navigationData, getItem, Link, SvgIcon) => {
       return getItem(
         <Link to={nav.url}>{nav.title}</Link>,
         nav.url,
-        <SvgIcon name={iconName} width="14" height="14" color="#ccc" />
+        React.cloneElement(iconComponent, { style: { fontSize: '14px' } })
       );
     }
   });
