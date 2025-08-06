@@ -3479,13 +3479,19 @@ const Home = () => {
     console.log('ECharts 拖拽图表已初始化（简化版本）');
   }, []);
 
-  // 传统拖拽实现
+  // 优化的拖拽实现
   const [isDragging, setIsDragging] = useState(null);
+  const [dragStartPos, setDragStartPos] = useState({ x: 0, y: 0 });
   const dragOffset = useRef({ x: 0, y: 0 });
+  const dragStartTime = useRef(0);
 
   const handleMouseDown = useCallback((e, elementId) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    // 记录拖拽开始时间，用于区分点击和拖拽
+    dragStartTime.current = Date.now();
+    setDragStartPos({ x: e.clientX, y: e.clientY });
     
     setIsDragging(elementId);
     
@@ -3495,8 +3501,13 @@ const Home = () => {
       y: e.clientY - rect.top,
     };
     
-    // 改变光标样式
+    // 改变光标样式和视觉反馈
     e.target.style.cursor = 'grabbing';
+    e.target.style.transform = 'scale(1.02) rotate(1deg)';
+    e.target.style.zIndex = '9999';
+    e.target.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.5)';
+    
+    console.log(`🎮 开始拖拽: ${elementId}`);
   }, []);
 
   const handleMouseMove = useCallback((e) => {
@@ -3510,11 +3521,17 @@ const Home = () => {
     const element = draggableElements.find(el => el.id === isDragging);
     if (!element) return;
     
-    // 边界限制
-    const boundedX = Math.max(0, Math.min(newX, window.innerWidth - element.width));
-    const boundedY = Math.max(0, Math.min(newY, window.innerHeight - element.height));
+    // 优化的边界限制 - 允许部分超出边界
+    const margin = 20; // 允许20px的缓冲区
+    const minX = -element.width * 0.7; // 允许70%超出左边
+    const minY = -element.height * 0.5; // 允许50%超出上边
+    const maxX = window.innerWidth - element.width * 0.3 + margin; // 右边保留30%
+    const maxY = window.innerHeight - element.height * 0.3 + margin; // 下边保留30%
     
-    // 更新位置
+    const boundedX = Math.max(minX, Math.min(newX, maxX));
+    const boundedY = Math.max(minY, Math.min(newY, maxY));
+    
+    // 更新位置，添加平滑过渡
     setDraggableElements(prev => 
       prev.map(el => 
         el.id === isDragging 
@@ -3522,18 +3539,46 @@ const Home = () => {
           : el
       )
     );
-  }, [isDragging, draggableElements]);
+    
+    // 实时反馈拖拽距离
+    const dragDistance = Math.sqrt(
+      Math.pow(e.clientX - dragStartPos.x, 2) + 
+      Math.pow(e.clientY - dragStartPos.y, 2)
+    );
+    
+    // 如果拖拽距离超过5px，认为是真正的拖拽操作
+    if (dragDistance > 5) {
+      dragStartTime.current = 0; // 标记为拖拽，不是点击
+    }
+  }, [isDragging, draggableElements, dragStartPos]);
 
   const handleMouseUp = useCallback(() => {
     if (isDragging) {
-      setIsDragging(null);
-      // 恢复光标样式
+      const dragDuration = Date.now() - dragStartTime.current;
+      const isClick = dragDuration < 200 && dragStartTime.current > 0; // 小于200ms且未标记为拖拽
+      
+      console.log(`🎮 结束拖拽: ${isDragging}, 是否为点击: ${isClick}`);
+      
+      // 恢复元素样式
       const draggedElement = document.querySelector(`[data-element-id="${isDragging}"]`);
       if (draggedElement) {
         draggedElement.style.cursor = 'grab';
+        draggedElement.style.transform = 'scale(1.0) rotate(0deg)';
+        draggedElement.style.zIndex = '999';
+        draggedElement.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.3)';
       }
+      
+      // 如果是点击操作，触发点击事件
+      if (isClick) {
+        setTimeout(() => {
+          handleElementClick(isDragging);
+        }, 50); // 延迟50ms确保拖拽状态已清除
+      }
+      
+      setIsDragging(null);
+      dragStartTime.current = 0;
     }
-  }, [isDragging]);
+  }, [isDragging, handleElementClick]);
 
   // 绑定全局事件
   useEffect(() => {
@@ -3741,31 +3786,66 @@ const Home = () => {
             left: `${element.x}px`,
             width: `${element.width}px`,
             height: `${element.height}px`,
-            zIndex: 999,
-            background: element.type === 'button' ? 'rgba(24, 144, 255, 0.9)' : 'rgba(45, 55, 72, 0.85)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            borderRadius: '8px',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-            backdropFilter: 'blur(10px)',
-            cursor: 'grab',
+            zIndex: isDragging === element.id ? 9999 : 999,
+            background: element.type === 'button' 
+              ? 'linear-gradient(135deg, rgba(24, 144, 255, 0.95), rgba(16, 112, 224, 0.9))' 
+              : 'linear-gradient(135deg, rgba(45, 55, 72, 0.9), rgba(55, 65, 81, 0.85))',
+            border: element.type === 'button' 
+              ? '2px solid rgba(59, 130, 246, 0.4)' 
+              : '2px solid rgba(129, 140, 248, 0.4)',
+            borderRadius: element.type === 'button' ? '12px' : '16px',
+            boxShadow: isDragging === element.id 
+              ? '0 12px 32px rgba(0, 0, 0, 0.6), 0 0 20px rgba(59, 130, 246, 0.3)' 
+              : '0 6px 20px rgba(0, 0, 0, 0.4), 0 0 10px rgba(0, 0, 0, 0.1)',
+            backdropFilter: 'blur(20px) saturate(180%)',
+            cursor: isDragging === element.id ? 'grabbing' : 'grab',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#fff',
-            fontSize: '14px',
-            fontWeight: 'bold',
+            color: '#ffffff',
+            fontSize: element.type === 'button' ? '13px' : '12px',
+            fontWeight: '600',
+            letterSpacing: '0.5px',
             userSelect: 'none',
-            transition: 'all 0.3s ease'
+            transition: isDragging === element.id 
+              ? 'box-shadow 0.1s ease' 
+              : 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+            transform: isDragging === element.id ? 'scale(1.02)' : 'scale(1.0)',
+            // 添加微妙的内发光效果
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              borderRadius: 'inherit',
+              padding: '1px',
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05))',
+              mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+              maskComposite: 'exclude'
+            }
           }}
           onMouseDown={(e) => handleMouseDown(e, element.id)}
-          onClick={() => handleElementClick(element.id)}
           onMouseEnter={(e) => {
-            e.target.style.transform = 'scale(1.05)';
-            e.target.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.4)';
+            if (isDragging !== element.id) {
+              e.target.style.transform = 'scale(1.08) translateY(-2px)';
+              e.target.style.boxShadow = element.type === 'button' 
+                ? '0 8px 25px rgba(59, 130, 246, 0.4), 0 0 15px rgba(59, 130, 246, 0.2)' 
+                : '0 8px 25px rgba(129, 140, 248, 0.4), 0 0 15px rgba(129, 140, 248, 0.2)';
+              e.target.style.borderColor = element.type === 'button' 
+                ? 'rgba(59, 130, 246, 0.6)' 
+                : 'rgba(129, 140, 248, 0.6)';
+            }
           }}
           onMouseLeave={(e) => {
-            e.target.style.transform = 'scale(1.0)';
-            e.target.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.3)';
+            if (isDragging !== element.id) {
+              e.target.style.transform = 'scale(1.0) translateY(0px)';
+              e.target.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.4), 0 0 10px rgba(0, 0, 0, 0.1)';
+              e.target.style.borderColor = element.type === 'button' 
+                ? 'rgba(59, 130, 246, 0.4)' 
+                : 'rgba(129, 140, 248, 0.4)';
+            }
           }}
         >
           {element.label}
