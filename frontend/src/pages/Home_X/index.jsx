@@ -3552,6 +3552,23 @@ const Home = () => {
     }
   }, [isDragging, draggableElements, dragStartPos]);
 
+  // 处理元素点击事件 - 提前定义避免依赖顺序问题
+  const handleElementClick = useCallback((elementId) => {
+    switch(elementId) {
+      case 'chart-toggle':
+        setChartVisible(true);
+        break;
+      case 'globe-toggle':
+        setGlobeVisible(true);
+        break;
+      case 'stats-panel':
+        // 统计面板点击逻辑
+        break;
+      default:
+        break;
+    }
+  }, []);
+
   const handleMouseUp = useCallback(() => {
     if (isDragging) {
       const dragDuration = Date.now() - dragStartTime.current;
@@ -3592,23 +3609,6 @@ const Home = () => {
       };
     }
   }, [isDragging, handleMouseMove, handleMouseUp]);
-
-  // 处理元素点击事件
-  const handleElementClick = useCallback((elementId) => {
-    switch(elementId) {
-      case 'chart-toggle':
-        setChartVisible(true);
-        break;
-      case 'globe-toggle':
-        setGlobeVisible(true);
-        break;
-      case 'stats-panel':
-        // 统计面板点击逻辑
-        break;
-      default:
-        break;
-    }
-  }, []);
 
   // 响应窗口大小变化
   useEffect(() => {
