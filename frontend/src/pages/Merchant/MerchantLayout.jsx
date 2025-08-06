@@ -10,7 +10,7 @@ import {
   CalculatorOutlined,
   FileOutlined,
   AuditOutlined,
-  DesktopOutlined,
+
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -62,11 +62,6 @@ const MerchantLayout = ({ children }) => {
       key: '/shops/merchant-application',
       icon: <AuditOutlined />,
       label: '商家申请',
-    },
-    {
-      key: '/shops/device-management',
-      icon: <DesktopOutlined />,
-      label: '设备管理',
     },
   ];
 

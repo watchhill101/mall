@@ -213,9 +213,6 @@ const LayoutApp = () => {
   const MerchantApplication = lazy(() =>
     import('@/pages/Merchant/MerchantApplication')
   );
-  const DeviceManagement = lazy(() =>
-    import('@/pages/Merchant/DeviceManagement')
-  );
   const formatRoutes = useMemo(() => {
     return [
       { title: '首页', menuPath: '/home', element: <Home /> },
@@ -263,11 +260,6 @@ const LayoutApp = () => {
         title: '商家申请',
         menuPath: '/shops/merchant-application',
         element: <MerchantApplication />,
-      },
-      {
-        title: '设备管理',
-        menuPath: '/shops/device-management',
-        element: <DeviceManagement />,
       },
     ].concat(getMenus(permissionRoutes));
   }, [permissionRoutes]);

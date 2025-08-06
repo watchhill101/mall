@@ -19,7 +19,6 @@ const MerchantWithdraw = lazy(() => import('@/pages/Merchant/MerchantWithdraw'))
 const SettlementOrder = lazy(() => import('@/pages/Merchant/SettlementOrder'))
 const SettlementBill = lazy(() => import('@/pages/Merchant/SettlementBill'))
 const MerchantApplication = lazy(() => import('@/pages/Merchant/MerchantApplication'))
-const DeviceManagement = lazy(() => import('@/pages/Merchant/DeviceManagement'))
 
 // 商品相关页面
 const ListOfCommodities = lazy(() => import('@/pages/Goods_S/ListOfCommodities'))
@@ -129,14 +128,6 @@ const constantRoutes = [
             hidden: false,
             icon: 'component',
             menuPath: '/shops/merchant-application'
-          },
-          {
-            path: 'device-management',
-            title: '设备管理',
-            element: <DeviceManagement />,
-            hidden: false,
-            icon: 'component',
-            menuPath: '/shops/device-management'
           }
         ]
       },
