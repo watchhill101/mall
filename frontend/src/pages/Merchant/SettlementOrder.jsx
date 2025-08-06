@@ -15,7 +15,12 @@ import {
   Col,
   DatePicker,
   Modal,
-  message
+  message,
+  InputNumber,
+  Collapse,
+  Divider,
+  Alert,
+  Badge
 } from 'antd'
 import {
   SearchOutlined,
@@ -24,7 +29,11 @@ import {
   FullscreenOutlined,
   ColumnHeightOutlined,
   DownloadOutlined,
-  FileExcelOutlined
+  FileExcelOutlined,
+  FilterOutlined,
+  ClearOutlined,
+  SaveOutlined,
+  HistoryOutlined
 } from '@ant-design/icons'
 import * as XLSX from 'xlsx'
 import dayjs from 'dayjs'
@@ -34,6 +43,7 @@ import { getSettlementOrderList, testSettlementOrderAPI } from '@/api/settlement
 const { Title } = Typography
 const { Option } = Select
 const { RangePicker } = DatePicker
+const { Panel } = Collapse
 
 const SettlementOrder = () => {
   const [form] = Form.useForm()
@@ -56,6 +66,11 @@ const SettlementOrder = () => {
   const [detailModalVisible, setDetailModalVisible] = useState(false)
   const [selectedRecord, setSelectedRecord] = useState(null)
 
+  // 搜索历史相关状态
+  const [advancedSearchVisible, setAdvancedSearchVisible] = useState(false)
+  const [searchHistory, setSearchHistory] = useState([])
+  const [savedSearches, setSavedSearches] = useState([])
+
   // 数据加载函数（优化后的版本）
   const loadSettlementOrderList = async (params = {}) => {
     try {
@@ -67,19 +82,65 @@ const SettlementOrder = () => {
         pageSize: params.pageSize || pagination.pageSize
       }
 
-      // 处理搜索条件
-      if (params.merchantName) queryParams.merchantName = params.merchantName
-      if (params.orderNo) queryParams.orderNo = params.orderNo
-      if (params.productName) queryParams.productName = params.productName
-      if (params.settlementStatus) queryParams.status = params.settlementStatus
-      if (params.networkPoint) queryParams.networkPoint = params.networkPoint
+      // 处理搜索条件 - 改进条件判断逻辑
+      if (params.merchantName && params.merchantName.trim() !== '') {
+        queryParams.merchantName = params.merchantName.trim()
+      }
+      if (params.orderNo && params.orderNo.trim() !== '') {
+        queryParams.orderNo = params.orderNo.trim()
+      }
+      if (params.productName && params.productName.trim() !== '') {
+        queryParams.productName = params.productName.trim()
+      }
+      if (params.settlementStatus && params.settlementStatus !== '') {
+        queryParams.status = params.settlementStatus
+      }
+      if (params.networkPoint && params.networkPoint.trim() !== '') {
+        queryParams.networkPoint = params.networkPoint.trim()
+      }
 
-      // 处理日期参数
-      if (params.selectedDate && params.timeType) {
-        const dateStr = params.selectedDate.format('YYYY-MM-DD')
+      // 处理日期参数 - 支持日期范围
+      if (params.timeType && params.timeType !== '') {
         queryParams.timeType = params.timeType
-        queryParams.startDate = dateStr
-        queryParams.endDate = dateStr
+
+        if (params.dateRange && Array.isArray(params.dateRange) && params.dateRange.length === 2) {
+          // 日期范围查询
+          queryParams.startDate = params.dateRange[0].format('YYYY-MM-DD')
+          queryParams.endDate = params.dateRange[1].format('YYYY-MM-DD')
+        } else if (params.selectedDate) {
+          // 单日查询
+          const dateStr = params.selectedDate.format('YYYY-MM-DD')
+          queryParams.startDate = dateStr
+          queryParams.endDate = dateStr
+        }
+      }
+
+      // 处理金额范围 - 改进数值判断
+      if (params.minAmount !== undefined && params.minAmount !== null && params.minAmount !== '') {
+        const minAmount = Number(params.minAmount)
+        if (!isNaN(minAmount) && minAmount >= 0) {
+          queryParams.minAmount = minAmount
+        }
+      }
+      if (params.maxAmount !== undefined && params.maxAmount !== null && params.maxAmount !== '') {
+        const maxAmount = Number(params.maxAmount)
+        if (!isNaN(maxAmount) && maxAmount >= 0) {
+          queryParams.maxAmount = maxAmount
+        }
+      }
+
+      // 处理数量范围 - 改进数值判断
+      if (params.minQuantity !== undefined && params.minQuantity !== null && params.minQuantity !== '') {
+        const minQuantity = Number(params.minQuantity)
+        if (!isNaN(minQuantity) && minQuantity >= 0) {
+          queryParams.minQuantity = minQuantity
+        }
+      }
+      if (params.maxQuantity !== undefined && params.maxQuantity !== null && params.maxQuantity !== '') {
+        const maxQuantity = Number(params.maxQuantity)
+        if (!isNaN(maxQuantity) && maxQuantity >= 0) {
+          queryParams.maxQuantity = maxQuantity
+        }
       }
 
       console.log('📋 发送API请求参数:', queryParams)
@@ -115,6 +176,17 @@ const SettlementOrder = () => {
         }, { total: 0, totalAmount: 0, unsettled: 0, settled: 0, failed: 0 })
 
         console.log('📊 当前页面数据统计:', stats)
+
+        // 输出实际应用的搜索条件
+        const appliedConditions = Object.keys(queryParams).filter(key =>
+          !['page', 'pageSize'].includes(key)
+        )
+        if (appliedConditions.length > 0) {
+          console.log('🔍 实际应用的搜索条件:', appliedConditions.map(key =>
+            `${key}: ${queryParams[key]}`
+          ).join(', '))
+        }
+
       } else {
         message.error(response.message || '获取结算订单列表失败')
         setDataSource([])
@@ -162,6 +234,18 @@ const SettlementOrder = () => {
   useEffect(() => {
     loadSettlementOrderList({ page: 1, pageSize: 10 })
     loadOptions()
+
+    // 加载搜索历史
+    const savedHistory = localStorage.getItem('settlementOrder_searchHistory')
+    if (savedHistory) {
+      setSearchHistory(JSON.parse(savedHistory))
+    }
+
+    // 加载保存的搜索
+    const savedSearchesData = localStorage.getItem('settlementOrder_savedSearches')
+    if (savedSearchesData) {
+      setSavedSearches(JSON.parse(savedSearchesData))
+    }
   }, [])
 
   // 监听表单时间类型变化
@@ -172,18 +256,96 @@ const SettlementOrder = () => {
     }
   }, [form, selectedTimeType])
 
-  // 搜索处理
+  // 保存搜索条件
+  const saveCurrentSearch = () => {
+    const currentValues = form.getFieldsValue()
+    const activeConditions = Object.keys(currentValues).filter(key =>
+      currentValues[key] !== undefined && currentValues[key] !== null && currentValues[key] !== ''
+    )
+
+    if (activeConditions.length === 0) {
+      message.warning('没有可保存的搜索条件')
+      return
+    }
+
+    Modal.confirm({
+      title: '保存搜索条件',
+      content: (
+        <div>
+          <p>是否保存当前搜索条件？</p>
+          <Input
+            placeholder="请输入搜索名称"
+            id="searchName"
+            style={{ marginTop: 8 }}
+          />
+        </div>
+      ),
+      onOk: () => {
+        const searchName = document.getElementById('searchName')?.value || '未命名搜索'
+        const newSavedSearch = {
+          id: Date.now(),
+          name: searchName,
+          conditions: currentValues,
+          createdAt: new Date().toLocaleString('zh-CN')
+        }
+
+        const updatedSavedSearches = [...savedSearches, newSavedSearch]
+        setSavedSearches(updatedSavedSearches)
+        localStorage.setItem('settlementOrder_savedSearches', JSON.stringify(updatedSavedSearches))
+        message.success('搜索条件已保存')
+      }
+    })
+  }
+
+  // 应用保存的搜索
+  const applySavedSearch = (savedSearch) => {
+    form.setFieldsValue(savedSearch.conditions)
+    handleSearch(savedSearch.conditions)
+    message.info(`已应用搜索条件：${savedSearch.name}`)
+  }
+
+  // 搜索处理（增强版）
   const handleSearch = async (values) => {
     try {
-      console.log('搜索条件:', values)
-      setSearchParams(values)
+      // 获取完整的表单数据，包括基础搜索和高级搜索的所有字段
+      const allFormValues = form.getFieldsValue()
+      const searchValues = values || allFormValues
+
+      console.log('🔍 原始搜索条件:', searchValues)
+      console.log('📋 完整表单数据:', allFormValues)
+
+      // 合并搜索条件，确保所有字段都被包含
+      const combinedValues = {
+        ...allFormValues,
+        ...searchValues
+      }
+
+      console.log('🔄 合并后的搜索条件:', combinedValues)
+
+      setSearchParams(combinedValues)
       setPagination(prev => ({ ...prev, current: 1 }))
 
+      // 记录搜索历史
+      const searchHistoryItem = {
+        id: Date.now(),
+        conditions: combinedValues,
+        timestamp: new Date().toLocaleString('zh-CN'),
+        resultCount: 0
+      }
+
       await loadSettlementOrderList({
-        ...values,
+        ...combinedValues,
         page: 1,
         pageSize: pagination.pageSize
       })
+
+      // 更新搜索历史中的结果数量
+      searchHistoryItem.resultCount = pagination.total
+
+      // 更新搜索历史
+      const updatedHistory = [searchHistoryItem, ...searchHistory.slice(0, 9)] // 保留最近10次搜索
+      setSearchHistory(updatedHistory)
+      localStorage.setItem('settlementOrder_searchHistory', JSON.stringify(updatedHistory))
 
       const resultCount = pagination.total
       if (resultCount === 0) {
@@ -192,6 +354,7 @@ const SettlementOrder = () => {
         message.success(`查询完成，找到 ${resultCount} 条记录`)
       }
     } catch (error) {
+      console.error('❌ 搜索失败:', error)
       message.error('查询失败: ' + error.message)
     }
   }
@@ -212,6 +375,19 @@ const SettlementOrder = () => {
     } catch (error) {
       message.error('重置失败: ' + error.message)
     }
+  }
+
+  // 清空搜索历史
+  const clearSearchHistory = () => {
+    Modal.confirm({
+      title: '确认清空',
+      content: '确定要清空所有搜索历史吗？',
+      onOk: () => {
+        setSearchHistory([])
+        localStorage.removeItem('settlementOrder_searchHistory')
+        message.success('搜索历史已清空')
+      }
+    })
   }
 
   // 分页处理
@@ -359,6 +535,38 @@ const SettlementOrder = () => {
     }
   }
 
+  // 计算当前搜索条件数量
+  const activeSearchConditionsCount = useMemo(() => {
+    const values = form.getFieldsValue()
+    let count = 0
+
+    // 检查字符串类型的字段
+    const stringFields = ['merchantName', 'orderNo', 'productName', 'networkPoint', 'timeType', 'settlementStatus']
+    stringFields.forEach(field => {
+      if (values[field] && values[field].toString().trim() !== '') {
+        count++
+      }
+    })
+
+    // 检查日期范围
+    if (values.dateRange && Array.isArray(values.dateRange) && values.dateRange.length === 2) {
+      count++
+    }
+
+    // 检查数值类型的字段
+    const numberFields = ['minAmount', 'maxAmount', 'minQuantity', 'maxQuantity']
+    numberFields.forEach(field => {
+      if (values[field] !== undefined && values[field] !== null && values[field] !== '') {
+        const num = Number(values[field])
+        if (!isNaN(num) && num >= 0) {
+          count++
+        }
+      }
+    })
+
+    return count
+  }, [form, forceUpdate, searchParams])
+
   // 表格列定义
   const columns = [
     {
@@ -455,135 +663,247 @@ const SettlementOrder = () => {
       <div style={{ padding: '24px' }}>
         {/* 搜索表单 */}
         <Card className="search-card" style={{ marginBottom: '16px' }}>
-          <Form form={form} onFinish={handleSearch} layout="vertical">
-            <Row gutter={16}>
-              <Col span={6}>
-                <Form.Item label="所属商家" name="merchantName">
-                  <Select
-                    placeholder="搜索商家"
-                    showSearch
-                    allowClear
-                    style={{ width: '100%' }}
-                    filterOption={(input, option) =>
-                      option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-                    }
-                  >
-                    {merchantOptions.map(option => (
-                      <Option key={option.value} value={option.value}>
-                        {option.label}
-                      </Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-              </Col>
-              <Col span={6}>
-                <Form.Item label="所属网点" name="networkPoint">
-                  <Select
-                    placeholder="搜索网点"
-                    showSearch
-                    allowClear
-                    style={{ width: '100%' }}
-                    filterOption={(input, option) =>
-                      option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-                    }
-                  >
-                    {networkOptions.map(option => (
-                      <Option key={option.value} value={option.value}>
-                        {option.label}
-                      </Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-              </Col>
-              <Col span={6}>
-                <Form.Item label="订单编号" name="orderNo">
-                  <Input placeholder="请输入" />
-                </Form.Item>
-              </Col>
-              <Col span={6}>
-                <Form.Item label="商品名称" name="productName">
-                  <Input placeholder="请输入" />
-                </Form.Item>
-              </Col>
-            </Row>
-            <Row gutter={16}>
-              <Col span={6}>
-                <Form.Item label="时间类型" name="timeType">
-                  <Select
-                    placeholder="选择时间类型"
-                    allowClear
-                    style={{ width: '100%' }}
-                    onChange={(value) => {
-                      setSelectedTimeType(value || '')
-                      // 清空日期选择
-                      form.setFieldValue('selectedDate', null)
-                    }}
-                  >
-                    <Option value="paymentTime">支付时间</Option>
-                    <Option value="settlementTime">结算时间</Option>
-                  </Select>
-                </Form.Item>
-              </Col>
-              <Col span={10}>
-                <Form.Item label="选择日期" name="selectedDate">
-                  <DatePicker
-                    style={{ width: '100%' }}
-                    placeholder={
-                      selectedTimeType === 'paymentTime'
-                        ? '选择支付日期'
-                        : selectedTimeType === 'settlementTime'
-                          ? '选择结算日期'
-                          : '选择日期'
-                    }
-                    format="YYYY-MM-DD"
-                    disabled={!selectedTimeType}
+          <Collapse
+            defaultActiveKey={['basic']}
+            ghost
+          >
+            <Panel
+              header={
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>
+                    <FilterOutlined style={{ marginRight: '8px' }} />
+                    基础搜索
+                    {activeSearchConditionsCount > 0 && (
+                      <Badge count={activeSearchConditionsCount} style={{ marginLeft: '8px' }} />
+                    )}
+                  </span>
+                </div>
+              }
+              key="basic"
+            >
+              <Form form={form} onFinish={handleSearch} layout="vertical">
+                <Row gutter={16}>
+                  <Col span={6}>
+                    <Form.Item label="所属商家" name="merchantName">
+                      <Select
+                        placeholder="搜索商家"
+                        showSearch
+                        allowClear
+                        style={{ width: '100%' }}
+                        filterOption={(input, option) =>
+                          option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                        }
+                      >
+                        {merchantOptions.map(option => (
+                          <Option key={option.value} value={option.value}>
+                            {option.label}
+                          </Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                  <Col span={6}>
+                    <Form.Item label="所属网点" name="networkPoint">
+                      <Select
+                        placeholder="搜索网点"
+                        showSearch
+                        allowClear
+                        style={{ width: '100%' }}
+                        filterOption={(input, option) =>
+                          option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                        }
+                      >
+                        {networkOptions.map(option => (
+                          <Option key={option.value} value={option.value}>
+                            {option.label}
+                          </Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                  <Col span={6}>
+                    <Form.Item label="订单编号" name="orderNo">
+                      <Input placeholder="请输入订单编号" />
+                    </Form.Item>
+                  </Col>
+                  <Col span={6}>
+                    <Form.Item label="商品名称" name="productName">
+                      <Input placeholder="请输入商品名称" />
+                    </Form.Item>
+                  </Col>
+                </Row>
+                <Row gutter={16}>
+                  <Col span={6}>
+                    <Form.Item label="时间类型" name="timeType">
+                      <Select
+                        placeholder="选择时间类型"
+                        allowClear
+                        style={{ width: '100%' }}
+                        onChange={(value) => {
+                          setSelectedTimeType(value || '')
+                          // 清空日期选择
+                          form.setFieldValue('dateRange', null)
+                          form.setFieldValue('selectedDate', null)
+                        }}
+                      >
+                        <Option value="paymentTime">支付时间</Option>
+                        <Option value="settlementTime">结算时间</Option>
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                  <Col span={10}>
+                    <Form.Item label="日期范围" name="dateRange">
+                      <RangePicker
+                        style={{ width: '100%' }}
+                        placeholder={[
+                          selectedTimeType === 'paymentTime' ? '支付开始日期' :
+                            selectedTimeType === 'settlementTime' ? '结算开始日期' : '开始日期',
+                          selectedTimeType === 'paymentTime' ? '支付结束日期' :
+                            selectedTimeType === 'settlementTime' ? '结算结束日期' : '结束日期'
+                        ]}
+                        format="YYYY-MM-DD"
+                        disabled={!selectedTimeType}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col span={8}>
+                    <Form.Item label="结算状态" name="settlementStatus">
+                      <Select placeholder="选择状态" allowClear style={{ width: '100%' }}>
+                        <Option value="unsettled">未结算</Option>
+                        <Option value="settled">已结算</Option>
+                        <Option value="failed">结算失败</Option>
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                </Row>
+              </Form>
+            </Panel>
+
+            <Panel header="高级搜索" key="advanced">
+              <Form form={form} layout="vertical">
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Form.Item label="金额范围">
+                      <Input.Group compact>
+                        <Form.Item name="minAmount" noStyle>
+                          <InputNumber
+                            placeholder="最小金额"
+                            style={{ width: '45%' }}
+                            min={0}
+                            precision={2}
+                          />
+                        </Form.Item>
+                        <Input
+                          style={{ width: '10%', textAlign: 'center', border: 0, pointerEvents: 'none' }}
+                          placeholder="~"
+                          disabled
+                        />
+                        <Form.Item name="maxAmount" noStyle>
+                          <InputNumber
+                            placeholder="最大金额"
+                            style={{ width: '45%' }}
+                            min={0}
+                            precision={2}
+                          />
+                        </Form.Item>
+                      </Input.Group>
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item label="数量范围">
+                      <Input.Group compact>
+                        <Form.Item name="minQuantity" noStyle>
+                          <InputNumber
+                            placeholder="最小数量"
+                            style={{ width: '45%' }}
+                            min={0}
+                          />
+                        </Form.Item>
+                        <Input
+                          style={{ width: '10%', textAlign: 'center', border: 0, pointerEvents: 'none' }}
+                          placeholder="~"
+                          disabled
+                        />
+                        <Form.Item name="maxQuantity" noStyle>
+                          <InputNumber
+                            placeholder="最大数量"
+                            style={{ width: '45%' }}
+                            min={0}
+                          />
+                        </Form.Item>
+                      </Input.Group>
+                    </Form.Item>
+                  </Col>
+                </Row>
+              </Form>
+            </Panel>
+          </Collapse>
+
+          <Divider style={{ margin: '16px 0' }} />
+
+          <Row>
+            <Col span={24}>
+              <Space>
+                <Button
+                  type="primary"
+                  icon={<SearchOutlined />}
+                  onClick={() => form.submit()}
+                  loading={loading}
+                >
+                  搜索
+                </Button>
+                <Button
+                  icon={<ReloadOutlined />}
+                  onClick={handleReset}
+                >
+                  重置
+                </Button>
+                <Button
+                  icon={<ClearOutlined />}
+                  onClick={() => form.resetFields()}
+                >
+                  清空
+                </Button>
+                <Button
+                  icon={<SaveOutlined />}
+                  onClick={saveCurrentSearch}
+                  disabled={activeSearchConditionsCount === 0}
+                >
+                  保存搜索
+                </Button>
+                <Button
+                  icon={<HistoryOutlined />}
+                  onClick={() => setAdvancedSearchVisible(true)}
+                >
+                  搜索历史
+                </Button>
+
+                {selectedTimeType && (
+                  <Alert
+                    message={`当前按${selectedTimeType === 'paymentTime' ? '支付日期' : '结算日期'}筛选${selectedTimeType === 'settlementTime' ? '（仅显示已结算的订单）' : ''}`}
+                    type="info"
+                    showIcon
+                    style={{ display: 'inline-block' }}
                   />
-                </Form.Item>
-              </Col>
-              <Col span={8}>
-                <Form.Item label="状态" name="settlementStatus">
-                  <Select placeholder="选择状态" allowClear style={{ width: '100%' }}>
-                    <Option value="unsettled">未结算</Option>
-                    <Option value="settled">已结算</Option>
-                    <Option value="failed">结算失败</Option>
-                  </Select>
-                </Form.Item>
-              </Col>
-            </Row>
-            <Row>
-              <Col span={24}>
-                <Form.Item label=" " colon={false}>
-                  <Space>
-                    <Button
-                      type="primary"
-                      icon={<SearchOutlined />}
-                      htmlType="submit"
-                      loading={loading}
-                    >
-                      搜索
-                    </Button>
-                    <Button
-                      icon={<ReloadOutlined />}
-                      onClick={handleReset}
-                    >
-                      重置
-                    </Button>
-                    {selectedTimeType && (
-                      <span style={{ color: '#666', fontSize: '12px' }}>
-                        💡 当前按{selectedTimeType === 'paymentTime' ? '支付日期' : '结算日期'}筛选
-                        {selectedTimeType === 'settlementTime' && '（仅显示已结算的订单）'}
-                      </span>
-                    )}
-                    {Object.keys(searchParams).length > 0 && (
-                      <span style={{ color: '#1890ff', fontSize: '12px', marginLeft: '8px' }}>
-                        🔍 已应用 {Object.keys(searchParams).filter(key => searchParams[key]).length} 个筛选条件
-                      </span>
-                    )}
-                  </Space>
-                </Form.Item>
-              </Col>
-            </Row>
-          </Form>
+                )}
+
+                {activeSearchConditionsCount > 0 && (
+                  <Alert
+                    message={`已应用 ${activeSearchConditionsCount} 个筛选条件`}
+                    type="success"
+                    showIcon
+                    style={{ display: 'inline-block' }}
+                    onClick={() => {
+                      // 调试功能：点击查看当前搜索条件
+                      const currentValues = form.getFieldsValue()
+                      console.log('🔍 当前表单值:', currentValues)
+                      console.log('💾 当前搜索参数:', searchParams)
+                    }}
+                  />
+                )}
+              </Space>
+            </Col>
+          </Row>
         </Card>
 
         {/* 数据表格 */}
@@ -600,6 +920,12 @@ const SettlementOrder = () => {
                 {loading && (
                   <span style={{ fontSize: '12px', color: '#1890ff' }}>
                     🔄 加载中...
+                  </span>
+                )}
+                {!loading && dataSource.length > 0 && (
+                  <span style={{ fontSize: '12px', color: '#52c41a' }}>
+                    📊 当前显示 {dataSource.length} 条记录
+                    {Object.keys(searchParams).length > 0 && ` (已筛选)`}
                   </span>
                 )}
                 <Button
@@ -679,6 +1005,123 @@ const SettlementOrder = () => {
             />
           </div>
         </Card>
+
+        {/* 搜索历史模态框 */}
+        <Modal
+          title="搜索历史与保存的搜索"
+          open={advancedSearchVisible}
+          onCancel={() => setAdvancedSearchVisible(false)}
+          footer={null}
+          width={800}
+        >
+          <Collapse defaultActiveKey={['history']}>
+            <Panel header="搜索历史" key="history">
+              {searchHistory.length > 0 ? (
+                <div>
+                  <div style={{ textAlign: 'right', marginBottom: '8px' }}>
+                    <Button size="small" danger onClick={clearSearchHistory}>
+                      清空历史
+                    </Button>
+                  </div>
+                  {searchHistory.map(item => (
+                    <Card key={item.id} size="small" className="search-history-item" style={{ marginBottom: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <div style={{ fontSize: '12px', color: '#666' }}>
+                            {item.timestamp}
+                          </div>
+                          <div style={{ marginTop: '4px' }}>
+                            {Object.keys(item.conditions).map(key => (
+                              item.conditions[key] && (
+                                <Tag key={key} size="small">
+                                  {key}: {Array.isArray(item.conditions[key]) ?
+                                    item.conditions[key].map(d => d.format ? d.format('YYYY-MM-DD') : d).join(' ~ ') :
+                                    item.conditions[key]}
+                                </Tag>
+                              )
+                            ))}
+                          </div>
+                        </div>
+                        <Button
+                          size="small"
+                          type="primary"
+                          onClick={() => {
+                            form.setFieldsValue(item.conditions)
+                            setAdvancedSearchVisible(false)
+                            handleSearch(item.conditions)
+                          }}
+                        >
+                          应用
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', color: '#999', padding: '20px' }}>
+                  暂无搜索历史
+                </div>
+              )}
+            </Panel>
+
+            <Panel header="保存的搜索" key="saved">
+              {savedSearches.length > 0 ? (
+                <div>
+                  {savedSearches.map(item => (
+                    <Card key={item.id} size="small" style={{ marginBottom: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <div style={{ fontWeight: 'bold' }}>
+                            {item.name}
+                          </div>
+                          <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
+                            保存于 {item.createdAt}
+                          </div>
+                          <div style={{ marginTop: '4px' }}>
+                            {Object.keys(item.conditions).map(key => (
+                              item.conditions[key] && (
+                                <Tag key={key} size="small">
+                                  {key}: {Array.isArray(item.conditions[key]) ?
+                                    item.conditions[key].map(d => d.format ? d.format('YYYY-MM-DD') : d).join(' ~ ') :
+                                    item.conditions[key]}
+                                </Tag>
+                              )
+                            ))}
+                          </div>
+                        </div>
+                        <Space>
+                          <Button
+                            size="small"
+                            type="primary"
+                            onClick={() => applySavedSearch(item)}
+                          >
+                            应用
+                          </Button>
+                          <Button
+                            size="small"
+                            danger
+                            onClick={() => {
+                              const updatedSavedSearches = savedSearches.filter(s => s.id !== item.id)
+                              setSavedSearches(updatedSavedSearches)
+                              localStorage.setItem('settlementOrder_savedSearches', JSON.stringify(updatedSavedSearches))
+                              message.success('已删除保存的搜索')
+                            }}
+                          >
+                            删除
+                          </Button>
+                        </Space>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', color: '#999', padding: '20px' }}>
+                  暂无保存的搜索
+                </div>
+              )}
+            </Panel>
+          </Collapse>
+        </Modal>
       </div>
     </MerchantLayout>
   )
