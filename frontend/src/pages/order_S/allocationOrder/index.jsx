@@ -43,97 +43,43 @@ const AllocationOrder = () => {
   });
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
+  const [searchParams, setSearchParams] = useState({});
 
-  // 模拟数据
-  const mockData = useMemo(() => [
-    {
-      id: 1,
-      allocationId: 'ALO202312010001',
-      orderIds: ['ORD202312010001', 'ORD202312010002'],
-      merchantName: '清风便利店',
-      allocationType: 'normal',
-      status: 'pending',
-      priority: 3,
-      plannedQuantity: 25,
-      allocatedQuantity: 18,
-      allocationRate: 72,
-      planStartTime: '2023-12-01 09:00:00',
-      planEndTime: '2023-12-01 12:00:00',
-      actualStartTime: '',
-      actualEndTime: '',
-      allocator: '张三',
-      totalAmount: 1280.50,
-      createTime: '2023-12-01 08:30:00',
-      remarks: '正常配货'
-    },
-    {
-      id: 2,
-      allocationId: 'ALO202312010002',
-      orderIds: ['ORD202312010003'],
-      merchantName: '星期八超市',
-      allocationType: 'urgent',
-      status: 'allocated',
-      priority: 5,
-      plannedQuantity: 15,
-      allocatedQuantity: 15,
-      allocationRate: 100,
-      planStartTime: '2023-12-01 10:00:00',
-      planEndTime: '2023-12-01 11:00:00',
-      actualStartTime: '2023-12-01 10:05:00',
-      actualEndTime: '2023-12-01 11:30:00',
-      allocator: '李四',
-      totalAmount: 890.00,
-      createTime: '2023-12-01 09:45:00',
-      remarks: '紧急配货单'
-    },
-    {
-      id: 3,
-      allocationId: 'ALO202312010003',
-      orderIds: ['ORD202312010004', 'ORD202312010005'],
-      merchantName: '清风便利店',
-      allocationType: 'batch',
-      status: 'in_progress',
-      priority: 2,
-      plannedQuantity: 40,
-      allocatedQuantity: 32,
-      allocationRate: 80,
-      planStartTime: '2023-12-01 14:00:00',
-      planEndTime: '2023-12-01 17:00:00',
-      actualStartTime: '2023-12-01 14:10:00',
-      actualEndTime: '',
-      allocator: '王五',
-      totalAmount: 2156.80,
-      createTime: '2023-12-01 13:20:00',
-      remarks: '批量配货'
-    },
-    {
-      id: 4,
-      allocationId: 'ALO202312010004',
-      orderIds: ['ORD202312010006'],
-      merchantName: '星期八超市',
-      allocationType: 'partial',
-      status: 'shortage',
-      priority: 4,
-      plannedQuantity: 20,
-      allocatedQuantity: 12,
-      allocationRate: 60,
-      planStartTime: '2023-12-01 15:00:00',
-      planEndTime: '2023-12-01 16:00:00',
-      actualStartTime: '2023-12-01 15:05:00',
-      actualEndTime: '',
-      allocator: '赵六',
-      totalAmount: 745.20,
-      createTime: '2023-12-01 14:30:00',
-      remarks: '部分缺货'
+  // 获取数据
+  const fetchData = async (params = {}) => {
+    setLoading(true);
+    try {
+      const response = await getAllocationOrdersList({
+        page: pagination.current,
+        pageSize: pagination.pageSize,
+        ...searchParams,
+        ...params,
+      });
+      
+      if (response.code === 200) {
+        setAllData(response.data.list || []);
+        setFilteredData(response.data.list || []);
+        setPagination(prev => ({
+          ...prev,
+          total: response.data.total || 0,
+          current: response.data.page || 1,
+          pageSize: response.data.pageSize || 10
+        }));
+      } else {
+        message.error(response.message || '获取数据失败');
+      }
+    } catch (error) {
+      console.error('获取配货单列表失败:', error);
+      message.error('获取数据失败');
+    } finally {
+      setLoading(false);
     }
-  ], []);
+  };
 
   // 初始化数据
   useEffect(() => {
-    setAllData(mockData);
-    setFilteredData(mockData);
-    setPagination(prev => ({ ...prev, total: mockData.length }));
-  }, [mockData]);
+    fetchData();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 配货类型选项
   const allocationTypeOptions = [

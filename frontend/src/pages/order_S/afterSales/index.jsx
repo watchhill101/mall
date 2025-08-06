@@ -201,25 +201,6 @@ const AfterSales = () => {
     } catch (error) {
       console.error('获取售后列表失败:', error);
       message.error('获取数据失败');
-      // 使用模拟数据
-      const mockData = Array(10).fill().map((_, index) => ({
-        id: `aftersales_${index + 1}`,
-        salesOrderNumber: `LXSH-121313123123${index}`,
-        orderNumber: `LX-121313123123${index}`,
-        source: '金融中介',
-        memberName: '木易',
-        memberPhone: '18979881656',
-        amount: '25',
-        status: ['待处理', '已退款', '已退货', '已拒绝'][index % 4],
-        shippingType: index % 2 === 0 ? '免运费' : '退运费',
-        afterSalesTime: '2023-02-05 12:12:12',
-        reviewer: '小慧子',
-        processTime: '2023-02-05 12:12:12',
-        orderSource: 'web',
-        ip: '182.101.61.25',
-      }));
-      setData(mockData);
-      setTotal(100);
     } finally {
       setLoading(false);
     }

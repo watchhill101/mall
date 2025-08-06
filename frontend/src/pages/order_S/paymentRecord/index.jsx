@@ -41,72 +41,43 @@ const PaymentRecord = () => {
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
 
-  // 模拟数据
-  const mockData = useMemo(() => [
-    {
-      id: 1,
-      paymentId: 'PAY202312010001',
-      orderId: 'ORD202312010001',
-      merchantName: '清风便利店',
-      paymentMethod: 'wechat',
-      paymentAmount: 128.50,
-      actualAmount: 128.50,
-      paymentStatus: 'paid',
-      paymentTime: '2023-12-01 10:30:15',
-      customerPhone: '13800138000',
-      transactionId: 'WX20231201103015123456',
-      remarks: '正常支付'
-    },
-    {
-      id: 2,
-      paymentId: 'PAY202312010002',
-      orderId: 'ORD202312010002',
-      merchantName: '星期八超市',
-      paymentMethod: 'alipay',
-      paymentAmount: 89.90,
-      actualAmount: 89.90,
-      paymentStatus: 'paid',
-      paymentTime: '2023-12-01 14:20:30',
-      customerPhone: '13900139000',
-      transactionId: 'ALI20231201142030789012',
-      remarks: ''
-    },
-    {
-      id: 3,
-      paymentId: 'PAY202312010003',
-      orderId: 'ORD202312010003',
-      merchantName: '清风便利店',
-      paymentMethod: 'cash',
-      paymentAmount: 45.00,
-      actualAmount: 45.00,
-      paymentStatus: 'paid',
-      paymentTime: '2023-12-01 16:45:12',
-      customerPhone: '13700137000',
-      transactionId: '',
-      remarks: '现金支付'
-    },
-    {
-      id: 4,
-      paymentId: 'PAY202312010004',
-      orderId: 'ORD202312010004',
-      merchantName: '星期八超市',
-      paymentMethod: 'wechat',
-      paymentAmount: 256.80,
-      actualAmount: 250.00,
-      paymentStatus: 'refunding',
-      paymentTime: '2023-12-01 18:15:45',
-      customerPhone: '13600136000',
-      transactionId: 'WX20231201181545654321',
-      remarks: '部分退款中'
+  // 获取数据
+  const fetchData = async (params = {}) => {
+    setLoading(true);
+    try {
+      const response = await getPaymentRecordsList({
+        page: pagination.current,
+        pageSize: pagination.pageSize,
+        ...params,
+      });
+      
+      if (response.code === 200) {
+        setAllData(response.data.list || []);
+        setFilteredData(response.data.list || []);
+        setPagination(prev => ({
+          ...prev,
+          total: response.data.total || 0,
+          current: response.data.page || 1,
+          pageSize: response.data.pageSize || 10
+        }));
+      } else {
+        message.error(response.message || '获取数据失败');
+      }
+    } catch (error) {
+      console.error('获取支付记录失败:', error);
+      message.error('获取数据失败');
+    } finally {
+      setLoading(false);
     }
-  ], []);
+  };
 
   // 初始化数据
   useEffect(() => {
-    setAllData(mockData);
-    setFilteredData(mockData);
-    setPagination(prev => ({ ...prev, total: mockData.length }));
-  }, [mockData]);
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+
 
   // 支付方式选项
   const paymentMethodOptions = [
