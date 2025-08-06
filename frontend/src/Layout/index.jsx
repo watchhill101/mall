@@ -121,7 +121,6 @@ const LayoutApp = () => {
       Link,
       SvgIcon
     );
-
     
     // 合并导航菜单和权限路由菜单
     return navigationMenuItems.concat(getTreeMenu(permissionRoutes));
