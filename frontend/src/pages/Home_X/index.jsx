@@ -3445,13 +3445,13 @@ const Home = () => {
     setChartVisible(false);
   };
 
-  // ECharts 拖拽实现 - 基于官方文档方法
+  // ECharts 拖拽实现 - 简化版本，避免运行时错误
   const initializeDraggableChart = useCallback(() => {
     if (!chartRef.current) return;
     
     const myChart = chartRef.current;
     
-    // 创建拖拽图表配置
+    // 简化的图表配置，仅用于占位
     const draggableOption = {
       animation: false,
       grid: { left: 0, top: 0, right: 0, bottom: 0, show: false },
@@ -3459,91 +3459,94 @@ const Home = () => {
         type: 'value', 
         show: false, 
         min: 0, 
-        max: window.innerWidth,
-        axisLine: { show: false },
-        axisTick: { show: false },
-        axisLabel: { show: false },
-        splitLine: { show: false }
+        max: window.innerWidth
       },
       yAxis: { 
         type: 'value', 
         show: false, 
         min: 0, 
-        max: window.innerHeight,
-        axisLine: { show: false },
-        axisTick: { show: false },
-        axisLabel: { show: false },
-        splitLine: { show: false }
+        max: window.innerHeight
       },
       series: [{
         type: 'scatter',
-        data: draggableElements.filter(el => el.visible).map(el => [el.x + el.width/2, el.y + el.height/2]),
+        data: [[100, 100]],
         symbolSize: 0,
         itemStyle: { opacity: 0 }
-      }],
-      graphic: draggableElements.filter(el => el.visible).flatMap((element, index) => [
-        // 背景矩形
-        {
-          type: 'rect',
-          id: element.id,
-          position: [element.x, element.y],
-          draggable: true,
-          z: DRAGGABLE_CONFIG.zLevel,
-          shape: {
-            x: 0,
-            y: 0,
-            width: element.width,
-            height: element.height
-          },
-          style: {
-            fill: element.type === 'button' ? 'rgba(24, 144, 255, 0.9)' : 'rgba(45, 55, 72, 0.85)',
-            stroke: 'rgba(255, 255, 255, 0.2)',
-            lineWidth: 1,
-            shadowColor: 'rgba(0, 0, 0, 0.3)',
-            shadowBlur: 8,
-            shadowOffsetX: 0,
-            shadowOffsetY: 4
-          },
-          ondrag: function() {
-            updateElementPosition(element.id, this.position);
-          },
-          onclick: function() {
-            handleElementClick(element.id);
-          }
-        },
-        // 文本标签
-        {
-          type: 'text',
-          id: element.id + '_text',
-          position: [element.x + element.width/2, element.y + element.height/2],
-          z: DRAGGABLE_CONFIG.zLevel + 1,
-          style: {
-            text: element.label,
-            fill: '#fff',
-            fontSize: 14,
-            fontWeight: 'bold',
-            textAlign: 'center',
-            textVerticalAlign: 'middle'
-          },
-          silent: true // 文本不响应鼠标事件
-        }
-      ])
+      }]
     };
     
     myChart.setOption(draggableOption);
-  }, [draggableElements]);
+    console.log('ECharts 拖拽图表已初始化（简化版本）');
+  }, []);
 
-  // 更新元素位置
-  const updateElementPosition = useCallback((elementId, newPosition) => {
+  // 传统拖拽实现
+  const [isDragging, setIsDragging] = useState(null);
+  const dragOffset = useRef({ x: 0, y: 0 });
+
+  const handleMouseDown = useCallback((e, elementId) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    setIsDragging(elementId);
+    
+    const rect = e.target.getBoundingClientRect();
+    dragOffset.current = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    };
+    
+    // 改变光标样式
+    e.target.style.cursor = 'grabbing';
+  }, []);
+
+  const handleMouseMove = useCallback((e) => {
+    if (!isDragging) return;
+    
+    e.preventDefault();
+    const newX = e.clientX - dragOffset.current.x;
+    const newY = e.clientY - dragOffset.current.y;
+    
+    // 获取拖拽元素信息
+    const element = draggableElements.find(el => el.id === isDragging);
+    if (!element) return;
+    
+    // 边界限制
+    const boundedX = Math.max(0, Math.min(newX, window.innerWidth - element.width));
+    const boundedY = Math.max(0, Math.min(newY, window.innerHeight - element.height));
+    
+    // 更新位置
     setDraggableElements(prev => 
       prev.map(el => 
-        el.id === elementId 
-          ? { ...el, x: Math.max(0, Math.min(newPosition[0], window.innerWidth - el.width)), 
-                     y: Math.max(0, Math.min(newPosition[1], window.innerHeight - el.height)) }
+        el.id === isDragging 
+          ? { ...el, x: boundedX, y: boundedY }
           : el
       )
     );
-  }, []);
+  }, [isDragging, draggableElements]);
+
+  const handleMouseUp = useCallback(() => {
+    if (isDragging) {
+      setIsDragging(null);
+      // 恢复光标样式
+      const draggedElement = document.querySelector(`[data-element-id="${isDragging}"]`);
+      if (draggedElement) {
+        draggedElement.style.cursor = 'grab';
+      }
+    }
+  }, [isDragging]);
+
+  // 绑定全局事件
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging, handleMouseMove, handleMouseUp]);
 
   // 处理元素点击事件
   const handleElementClick = useCallback((elementId) => {
@@ -3727,25 +3730,47 @@ const Home = () => {
         isFullscreen={globeFullscreen}
       />
 
-      {/* ECharts 拖拽容器 - 覆盖整个屏幕的透明图表 */}
-      <div
-        ref={(el) => {
-          if (el && !chartRef.current) {
-            chartRef.current = echarts.init(el);
-            initializeDraggableChart();
-          }
-        }}
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          width: "100vw",
-          height: "100vh",
-          zIndex: 999,
-          pointerEvents: "auto",
-          background: "transparent"
-        }}
-      />
+      {/* 传统拖拽元素 - 替代ECharts方案 */}
+      {draggableElements.filter(el => el.visible).map(element => (
+        <div
+          key={element.id}
+          data-element-id={element.id}
+          style={{
+            position: "fixed",
+            top: `${element.y}px`,
+            left: `${element.x}px`,
+            width: `${element.width}px`,
+            height: `${element.height}px`,
+            zIndex: 999,
+            background: element.type === 'button' ? 'rgba(24, 144, 255, 0.9)' : 'rgba(45, 55, 72, 0.85)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            borderRadius: '8px',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+            backdropFilter: 'blur(10px)',
+            cursor: 'grab',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#fff',
+            fontSize: '14px',
+            fontWeight: 'bold',
+            userSelect: 'none',
+            transition: 'all 0.3s ease'
+          }}
+          onMouseDown={(e) => handleMouseDown(e, element.id)}
+          onClick={() => handleElementClick(element.id)}
+          onMouseEnter={(e) => {
+            e.target.style.transform = 'scale(1.05)';
+            e.target.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.4)';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.transform = 'scale(1.0)';
+            e.target.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.3)';
+          }}
+        >
+          {element.label}
+        </div>
+      ))}
     </div>
   );
 };
