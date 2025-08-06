@@ -13,7 +13,7 @@ export const IconMap = {
   ShopOutlined: <SvgIcon name="shop" style={{ fontSize: '14px', color: '#ccc' }} />,
   GoodsOutlined: <SvgIcon name="goods" style={{ fontSize: '14px', color: '#ccc' }} />,
   OrdersOutlined: <SvgIcon name="orders" style={{ fontSize: '14px', color: '#ccc' }} />,
-  UsersOutlined: <SvgIcon name="users" style={{ fontSize: '14px', color: '#ccc' }} />,
+  SettingOutlined: <SvgIcon name="setting" style={{ fontSize: '14px', color: '#ccc' }} />,
   // 可以继续添加其他图标
 }
 
@@ -29,7 +29,7 @@ export const getBreadcrumbNameMap = (routes) => {
     { path: 'shops', menuPath: '/shops', title: '商家' }, // 添加商家路由
     { path: 'goods', menuPath: '/goods', title: '商品' }, // 添加商品路由
     { path: 'orders', menuPath: '/orders', title: '订单' }, // 添加订单路由
-    { path: 'users', menuPath: '/users', title: '用户' }, // 添加用户路由
+    { path: 'system', menuPath: '/system', title: '系统设置' }, // 更新为系统设置路由
     // 添加商家子路由映射
     { path: 'merchants', menuPath: '/shops/merchants', title: '商家管理' },
     { path: 'merchant-account', menuPath: '/shops/merchant-account', title: '商家账号' },
@@ -51,6 +51,15 @@ export const getBreadcrumbNameMap = (routes) => {
     { path: 'stock-out', menuPath: '/goods/inventory/stock-out', title: '出库' },
     { path: 'stocktake', menuPath: '/goods/inventory/stocktake', title: '盘点' },
     { path: 'stock-details', menuPath: '/goods/inventory/stock-details', title: '出入库明细' },
+    // 添加订单子路由映射
+    { path: 'orders-list', menuPath: '/orders/orders-list', title: '订单' },
+    { path: 'afterSales', menuPath: '/orders/afterSales', title: '售后' },
+    { path: 'tallySheet', menuPath: '/orders/tallySheet', title: '理货单' },
+    { path: 'SortingList', menuPath: '/orders/SortingList', title: '分拣单' },
+    // 添加系统设置子路由映射
+    { path: 'users', menuPath: '/system/users', title: '用户' },
+    { path: 'carousel', menuPath: '/system/carousel', title: '轮播图' },
+    { path: 'user-permissions', menuPath: '/system/user-permissions', title: '用户权限' },
     ...routes
   ]
   let breadcrumbNameObj = {}
@@ -125,4 +134,7 @@ export const getTreeMenu = (menuData) => {
 export const availableIcons = [
   'HomeOutlined',
   'ShopOutlined',
+  'GoodsOutlined',
+  'OrdersOutlined',
+  'SettingOutlined',
 ]

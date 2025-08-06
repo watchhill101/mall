@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo, useCallback, lazy } from 'react';
+import React, { useState, useRef, useMemo, useCallback, lazy } from "react";
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -7,7 +7,7 @@ import {
   UserOutlined,
   UndoOutlined,
   LogoutOutlined,
-} from '@ant-design/icons';
+} from "@ant-design/icons";
 import {
   Layout,
   Menu,
@@ -19,22 +19,26 @@ import {
   Popconfirm,
   Breadcrumb,
   Alert,
-} from 'antd';
-import { useDispatch, useSelector } from 'react-redux';
-import { logout } from '@/store/reducers/userSlice';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+} from "antd";
+import { useDispatch, useSelector } from "react-redux";
+import { logout } from "@/store/reducers/userSlice";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 // 导入css（未模块化）
-import './Layout.scss';
+import "./Layout.scss";
 // 导入自定义组件
-import TabsView from './components/TabsView';
-import CustomModal from '@/components/CustomModal';
-import UserCenterForm from './components/UserCenterForm';
-import ResetPwdForm from './components/ResetPwdForm';
-import SvgIcon from '@/components/SvgIcon';
+import TabsView from "./components/TabsView";
+import CustomModal from "@/components/CustomModal";
+import UserCenterForm from "./components/UserCenterForm";
+import ResetPwdForm from "./components/ResetPwdForm";
+import SvgIcon from "@/components/SvgIcon";
 // 导入工具类方法
-import { getBreadcrumbNameMap, getItem, getTreeMenu } from '@/utils/common';
+import { getBreadcrumbNameMap, getItem, getTreeMenu } from "@/utils/common";
 // 导入导航数据管理Hook
-import { useNavigationData, convertToMenuItems, generateBreadcrumbNameMap } from '@/hooks/useNavigationData';
+import {
+  useNavigationData,
+  convertToMenuItems,
+  generateBreadcrumbNameMap,
+} from "@/hooks/useNavigationData";
 
 const { Header, Sider, Content } = Layout;
 // 提取底层路由方法
@@ -56,20 +60,24 @@ const LayoutApp = () => {
   /** 通用hook */
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  
+
   // 导航数据管理
-  const { navigationData, isFromBackend, error: navError } = useNavigationData();
-  
+  const {
+    navigationData,
+    isFromBackend,
+    error: navError,
+  } = useNavigationData();
+
   // 侧边栏伸缩
   const [collapsed, setCollapsed] = useState(false);
   const {
     token: { colorBgContainer },
   } = theme.useToken();
   // 侧边栏主题模式
-  const [themeVari, setThemeVari] = useState('dark');
+  const [themeVari, setThemeVari] = useState("dark");
   // 切换侧边栏主题颜色
   const changeTheme = (value) => {
-    setThemeVari(value ? 'light' : 'dark');
+    setThemeVari(value ? "light" : "dark");
   };
   /** 侧边栏菜单 */
   const { pathname } = useLocation();
@@ -77,38 +85,43 @@ const LayoutApp = () => {
     (state) => state.permission.permissionRoutes
   );
   // 获取当前路径数组片段
-  const pathSnippets = pathname.split('/').filter((i) => i);
+  const pathSnippets = pathname.split("/").filter((i) => i);
   const [subMenuKeys, setSubMenuKeys] = useState(
-    pathSnippets.slice(0, -1).map((item) => '/' + item)
+    pathSnippets.slice(0, -1).map((item) => "/" + item)
   );
 
   // 处理菜单选中状态 - 确保根路径也能正确选中首页
   const currentSelectedKey = useMemo(() => {
-    if (pathname === '/' || pathname === '/home') {
-      return '/home';
+    if (pathname === "/" || pathname === "/home") {
+      return "/home";
     }
     // 处理嵌套路由：如果是商家子路由，选中商家主菜单
-    if (pathname.startsWith('/shops')) {
-      return '/shops';
+    if (pathname.startsWith("/shops")) {
+      return "/shops";
     }
     // 处理嵌套路由：如果是商品子路由，选中商品主菜单
-    if (pathname.startsWith('/goods')) {
-      return '/goods';
+    if (pathname.startsWith("/goods")) {
+      return "/goods";
     }
     // 处理嵌套路由：如果是订单子路由，选中订单主菜单
-    if (pathname.startsWith('/orders')) {
-      return '/orders';
+    if (pathname.startsWith("/orders")) {
+      return "/orders";
     }
-    // 处理嵌套路由：如果是用户子路由，选中用户主菜单
-    if (pathname.startsWith('/users')) {
-      return '/users';
+    // 处理嵌套路由：如果是系统设置子路由，选中系统设置主菜单
+    if (pathname.startsWith("/system")) {
+      return "/system";
     }
     return pathname;
   }, [pathname]);
   const menuItems = useMemo(() => {
     // 使用导航数据生成菜单项
-    const navigationMenuItems = convertToMenuItems(navigationData, getItem, Link, SvgIcon);
-    
+    const navigationMenuItems = convertToMenuItems(
+      navigationData,
+      getItem,
+      Link,
+      SvgIcon
+    );
+
     // 合并导航菜单和权限路由菜单
     return navigationMenuItems.concat(getTreeMenu(permissionRoutes));
   }, [navigationData, permissionRoutes]);
@@ -118,16 +131,19 @@ const LayoutApp = () => {
   };
   // 点击菜单
   const handleMenuClick = ({ key }) => {
-    console.log(key, '获取点击路径');
-    
+    console.log(key, "获取点击路径");
+
     // 检查是否是导航数据中的路径
-    const isNavigationPath = navigationData.some(nav => 
-      nav.url === key || nav.children?.some(child => child.url === key)
+    const isNavigationPath = navigationData.some(
+      (nav) =>
+        nav.url === key || nav.children?.some((child) => child.url === key)
     );
-    
+
     // 检查是否是权限路由中的路径
-    const isPermissionRoute = formatRoutes.find((item) => item.menuPath === key);
-    
+    const isPermissionRoute = formatRoutes.find(
+      (item) => item.menuPath === key
+    );
+
     // 如果是有效路径，则进行跳转
     if (isNavigationPath || isPermissionRoute) {
       navigate(key);
@@ -137,26 +153,26 @@ const LayoutApp = () => {
   const breadcrumbNameMap = useMemo(() => {
     // 使用导航数据生成面包屑名称映射
     const navigationBreadcrumbMap = generateBreadcrumbNameMap(navigationData);
-    
+
     // 合并导航面包屑和权限路由面包屑
     const permissionBreadcrumbMap = getBreadcrumbNameMap(permissionRoutes);
-    
+
     return { ...navigationBreadcrumbMap, ...permissionBreadcrumbMap };
   }, [navigationData, permissionRoutes]);
   const breadcrumbItems = useMemo(() => {
     const items = [];
 
     // 如果不在首页，总是添加首页作为第一项
-    if (pathname !== '/' && pathname !== '/home') {
+    if (pathname !== "/" && pathname !== "/home") {
       items.push({
-        key: '/home',
+        key: "/home",
         title: <Link to="/home">首页</Link>,
       });
     }
 
     // 生成路径面包屑
     pathSnippets.forEach((_, index) => {
-      const url = `/${pathSnippets.slice(0, index + 1).join('/')}`;
+      const url = `/${pathSnippets.slice(0, index + 1).join("/")}`;
       const title = breadcrumbNameMap[url];
 
       if (title) {
@@ -187,139 +203,168 @@ const LayoutApp = () => {
     [navigate]
   );
   // 格式化路由数组
-  const Home = lazy(() => import('@/pages/Home_X'));
-  const Shops = lazy(() => import('@/pages/Shops'));
-  const Goods = lazy(() => import('@/pages/Goods'));
-  const Orders = lazy(() => import('@/pages/Orders'));
-  const Users = lazy(() => import('@/pages/Users'));
-  const Merchants = lazy(() => import('@/pages/Merchant/Merchant'));
+  const Home = lazy(() => import("@/pages/Home_X"));
+  const Shops = lazy(() => import("@/pages/Shops"));
+  const Goods = lazy(() => import("@/pages/Goods"));
+  const Orders = lazy(() => import("@/pages/Orders"));
+  const Users = lazy(() => import("@/pages/Users"));
+  const Lbt = lazy(() => import("@/pages/Home_X/lbt"));
+  const Merchants = lazy(() => import("@/pages/Merchant/Merchant"));
+  const UserRoot = lazy(() => import("@/pages/UserRoot"));
   const MerchantAccount = lazy(() =>
-    import('@/pages/Merchant/MerchantAccount')
+    import("@/pages/Merchant/MerchantAccount")
   );
   const WithdrawAccount = lazy(() =>
-    import('@/pages/Merchant/WithdrawAccount')
+    import("@/pages/Merchant/WithdrawAccount")
   );
-  const AccountDetail = lazy(() => import('@/pages/Merchant/AccountDetail'));
+  const AccountDetail = lazy(() => import("@/pages/Merchant/AccountDetail"));
   const MerchantWithdraw = lazy(() =>
-    import('@/pages/Merchant/MerchantWithdraw')
+    import("@/pages/Merchant/MerchantWithdraw")
   );
   const SettlementOrder = lazy(() =>
-    import('@/pages/Merchant/SettlementOrder')
+    import("@/pages/Merchant/SettlementOrder")
   );
-  const SettlementBill = lazy(() => import('@/pages/Merchant/SettlementBill'));
+  const SettlementBill = lazy(() => import("@/pages/Merchant/SettlementBill"));
   const MerchantApplication = lazy(() =>
-    import('@/pages/Merchant/MerchantApplication')
+    import("@/pages/Merchant/MerchantApplication")
   );
   const DeviceManagement = lazy(() =>
-    import('@/pages/Merchant/DeviceManagement')
+    import("@/pages/Merchant/DeviceManagement")
   );
 
   // 导入商品相关组件
-  const ListOfCommodities = lazy(() => import('@/pages/Goods_S/ListOfCommodities'));
-  const ProductCategory = lazy(() => import('@/pages/Goods_S/Classification of Commodities/index'));
-  const RecycleBin = lazy(() => import('@/pages/Goods_S/Trash/Trash'));
-  const CurrentStock = lazy(() => import('@/pages/Goods_S/inventory/CurrentInventory/CurrentInventory'));
-  const StockIn = lazy(() => import('@/pages/Goods_S/inventory/enterTheWarehouse/enterTheWarehouse'));
-  const StockOut = lazy(() => import('@/pages/Goods_S/inventory/exWarehouse/exWarehouse'));
-  const Stocktake = lazy(() => import('@/pages/Goods_S/inventory/stocktaking/stocktaking'));
-  const StockDetails = lazy(() => import('@/pages/Goods_S/inventory/DetailsOfStockInAndstockOut/DetailsOfStockInAndstockOut'));
+  const ListOfCommodities = lazy(() =>
+    import("@/pages/Goods_S/ListOfCommodities")
+  );
+  const ProductCategory = lazy(() =>
+    import("@/pages/Goods_S/Classification of Commodities/index")
+  );
+  const RecycleBin = lazy(() => import("@/pages/Goods_S/Trash/Trash"));
+  const CurrentStock = lazy(() =>
+    import("@/pages/Goods_S/inventory/CurrentInventory/CurrentInventory")
+  );
+  const StockIn = lazy(() =>
+    import("@/pages/Goods_S/inventory/enterTheWarehouse/enterTheWarehouse")
+  );
+  const StockOut = lazy(() =>
+    import("@/pages/Goods_S/inventory/exWarehouse/exWarehouse")
+  );
+  const Stocktake = lazy(() =>
+    import("@/pages/Goods_S/inventory/stocktaking/stocktaking")
+  );
+  const StockDetails = lazy(() =>
+    import(
+      "@/pages/Goods_S/inventory/DetailsOfStockInAndstockOut/DetailsOfStockInAndstockOut"
+    )
+  );
 
   // 导入订单相关组件
-  const OrdersList = lazy(() => import('@/pages/order_S/Orders'));
-  const AfterSales = lazy(() => import('@/pages/order_S/afterSales'));
-  const TallySheet = lazy(() => import('@/pages/order_S/tallySheet'));
-  const SortingList = lazy(() => import('@/pages/order_S/sortingList'));
+  const OrdersList = lazy(() => import("@/pages/order_S/Orders"));
+  const AfterSales = lazy(() => import("@/pages/order_S/afterSales"));
+  const TallySheet = lazy(() => import("@/pages/order_S/tallySheet"));
+  const SortingList = lazy(() => import("@/pages/order_S/sortingList"));
 
   const formatRoutes = useMemo(() => {
     // 基础路由
     const baseRoutes = [
-      { title: '首页', menuPath: '/home', element: <Home /> },
-      { title: '商家', menuPath: '/shops', element: <Shops /> },
-      { title: '商品', menuPath: '/goods', element: <Goods /> },
-      { title: '订单', menuPath: '/orders', element: <Orders /> },
-      { title: '用户', menuPath: '/users', element: <Users /> },
+      { title: "首页", menuPath: "/home", element: <Home /> },
+      { title: "商家", menuPath: "/shops", element: <Shops /> },
+      { title: "商品", menuPath: "/goods", element: <Goods /> },
+      { title: "订单", menuPath: "/orders", element: <Orders /> },
+      { title: "系统设置", menuPath: "/system", element: <Users /> },
     ];
 
     // 从导航数据动态生成子路由
     const navigationRoutes = [];
-    navigationData.forEach(nav => {
+    navigationData.forEach((nav) => {
       if (nav.children && nav.children.length > 0) {
-        nav.children.forEach(child => {
+        nav.children.forEach((child) => {
           let element = null;
-          
+
           // 根据URL路径匹配对应的组件
           switch (child.url) {
             // 商家相关路由
-            case '/shops/merchants':
+            case "/shops/merchants":
               element = <Merchants />;
               break;
-            case '/shops/merchant-account':
+            case "/shops/merchant-account":
               element = <MerchantAccount />;
               break;
-            case '/shops/withdraw-account':
+            case "/shops/withdraw-account":
               element = <WithdrawAccount />;
               break;
-            case '/shops/account-detail':
+            case "/shops/account-detail":
               element = <AccountDetail />;
               break;
-            case '/shops/merchant-withdraw':
+            case "/shops/merchant-withdraw":
               element = <MerchantWithdraw />;
               break;
-            case '/shops/settlement-order':
+            case "/shops/settlement-order":
               element = <SettlementOrder />;
               break;
-            case '/shops/settlement-bill':
+            case "/shops/settlement-bill":
               element = <SettlementBill />;
               break;
-            case '/shops/merchant-application':
+            case "/shops/merchant-application":
               element = <MerchantApplication />;
               break;
-            case '/shops/device-management':
+            case "/shops/device-management":
               element = <DeviceManagement />;
               break;
-            
+
             // 商品相关路由
-            case '/goods/product-list':
-            case '/goods/audit-list':
-            case '/goods/external-product':
+            case "/goods/product-list":
+            case "/goods/audit-list":
+            case "/goods/external-product":
               element = <ListOfCommodities />;
               break;
-            case '/goods/product-category':
+            case "/goods/product-category":
               element = <ProductCategory />;
               break;
-            case '/goods/recycle-bin':
+            case "/goods/recycle-bin":
               element = <RecycleBin />;
               break;
-            case '/goods/inventory/current-stock':
+            case "/goods/inventory/current-stock":
               element = <CurrentStock />;
               break;
-            case '/goods/inventory/stock-in':
+            case "/goods/inventory/stock-in":
               element = <StockIn />;
               break;
-            case '/goods/inventory/stock-out':
+            case "/goods/inventory/stock-out":
               element = <StockOut />;
               break;
-            case '/goods/inventory/stocktake':
+            case "/goods/inventory/stocktake":
               element = <Stocktake />;
               break;
-            case '/goods/inventory/stock-details':
+            case "/goods/inventory/stock-details":
               element = <StockDetails />;
               break;
-            
+
             // 订单相关路由
-            case '/orders/orders-list':
+            case "/orders/orders-list":
               element = <OrdersList />;
               break;
-            case '/orders/afterSales':
+            case "/orders/afterSales":
               element = <AfterSales />;
               break;
-            case '/orders/tallySheet':
+            case "/orders/tallySheet":
               element = <TallySheet />;
               break;
-            case '/orders/SortingList':
+            case "/orders/SortingList":
               element = <SortingList />;
               break;
-            
+
+            // 系统设置相关路由
+            case "/system/users":
+              element = <Users />;
+              break;
+            case "/system/carousel":
+              element = <Lbt />;
+              break;
+            case "/system/user-permissions":
+              element = <UserRoot />; // 暂时使用Users组件，后续可以创建专门的权限管理组件
+              break;
+
             default:
               console.warn(`未找到路由 ${child.url} 对应的组件`);
               break;
@@ -336,7 +381,9 @@ const LayoutApp = () => {
       }
     });
 
-    return baseRoutes.concat(navigationRoutes).concat(getMenus(permissionRoutes));
+    return baseRoutes
+      .concat(navigationRoutes)
+      .concat(getMenus(permissionRoutes));
   }, [navigationData, permissionRoutes]);
   // 用户头像
   const avatar = useSelector((state) => state.user.userinfo.avatar);
@@ -344,7 +391,7 @@ const LayoutApp = () => {
   // 下拉菜单项数组
   const dropdownMenuItems = [
     {
-      key: '1',
+      key: "1",
       label: (
         <div onClick={() => toggleCenterStatus(true)}>
           <UserOutlined /> 个人中心
@@ -352,7 +399,7 @@ const LayoutApp = () => {
       ),
     },
     {
-      key: '2',
+      key: "2",
       label: (
         <Popconfirm
           onConfirm={() => toggleResetStatus(true)}
@@ -365,7 +412,7 @@ const LayoutApp = () => {
       ),
     },
     {
-      key: '3',
+      key: "3",
       label: (
         <Popconfirm
           onConfirm={() => handleLogout()}
@@ -392,17 +439,17 @@ const LayoutApp = () => {
   // 退出登录
   const handleLogout = () => {
     dispatch(logout());
-    navigate('/login');
+    navigate("/login");
   };
   // debugger
 
-  console.log(menuItems, '获取菜单');
+  console.log(menuItems, "获取菜单");
   return (
     <Layout className="layout">
       <Sider trigger={null} collapsible collapsed={collapsed} theme={themeVari}>
         <div
           className="layout-logo-vertical"
-          style={{ color: themeVari === 'dark' ? '#fff' : '#000' }}
+          style={{ color: themeVari === "dark" ? "#fff" : "#000" }}
         >
           <span className="layout-logo">
             <DashboardFilled />
@@ -415,7 +462,7 @@ const LayoutApp = () => {
           unCheckedChildren="🌙"
           onChange={changeTheme}
           style={{
-            transform: collapsed ? 'translateX(15px)' : 'translateX(75px)',
+            transform: collapsed ? "translateX(15px)" : "translateX(75px)",
           }}
         />
         <Menu
@@ -433,7 +480,7 @@ const LayoutApp = () => {
           style={{
             padding: 0,
             background: colorBgContainer,
-            display: 'flex',
+            display: "flex",
           }}
         >
           <Button
@@ -441,7 +488,7 @@ const LayoutApp = () => {
             icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
             onClick={() => setCollapsed(!collapsed)}
             style={{
-              fontSize: '16px',
+              fontSize: "16px",
               width: 64,
               height: 64,
             }}
@@ -458,7 +505,7 @@ const LayoutApp = () => {
                 <img
                   src={
                     avatar ||
-                    require('@/assets/images/avatar/default_avatar.jpg')
+                    require("@/assets/images/avatar/default_avatar.jpg")
                   }
                   className="user-icon"
                   alt="avatar"
@@ -483,7 +530,7 @@ const LayoutApp = () => {
               type="warning"
               showIcon
               closable
-              style={{ margin: '8px 16px' }}
+              style={{ margin: "8px 16px" }}
             />
           )}
           {isFromBackend && (
@@ -492,10 +539,10 @@ const LayoutApp = () => {
               type="success"
               showIcon
               closable
-              style={{ margin: '8px 16px', display: 'none' }} // 默认隐藏成功提示
+              style={{ margin: "8px 16px", display: "none" }} // 默认隐藏成功提示
             />
           )}
-          
+
           <TabsView
             pathname={pathname}
             formatRoutes={formatRoutes}

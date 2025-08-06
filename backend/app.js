@@ -59,7 +59,8 @@ app.use("/users", usersRouter);
 app.use("/auth", authRouter);
 app.use("/captcha", captchaRouter);
 app.use("/api", navigationRouter);
-app.use("/api", businessRouter);
+app.use("/goods", businessRouter);
+app.use("/system", );
 
 // 需要认证的路由 - 使用express-jwt
 app.use("/api/protected", jwtAuth, verifyTokenType); // 需要强制验证的路由

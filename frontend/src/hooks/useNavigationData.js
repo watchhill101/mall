@@ -66,13 +66,17 @@ const DEFAULT_NAVIGATION = [
     ]
   },
   {
-    _id: 'local-users',
-    title: '用户',
-    icon: 'UsersOutlined',
-    url: '/users',
-    subTitle: '用户管理',
-    subText: '管理系统用户信息和权限',
-    children: []
+    _id: 'local-system',
+    title: '系统设置',
+    icon: 'SettingOutlined',
+    url: '/system',
+    subTitle: '系统设置',
+    subText: '管理用户、轮播图和权限配置',
+    children: [
+      { _id: 'local-system-1', name: '用户', url: '/system/users' },
+      { _id: 'local-system-2', name: '轮播图', url: '/system/carousel' },
+      { _id: 'local-system-3', name: '用户权限', url: '/system/user-permissions' }
+    ]
   }
 ];
 
@@ -141,7 +145,7 @@ export const convertToMenuItems = (navigationData, getItem, Link, SvgIcon) => {
     'ShopOutlined': 'shop', 
     'GoodsOutlined': 'goods',
     'OrdersOutlined': 'orders',
-    'UsersOutlined': 'users'
+    'SettingOutlined': 'setting'
   };
 
   return navigationData.map(nav => {

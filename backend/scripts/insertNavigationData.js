@@ -126,16 +126,30 @@ async function insertNavigationData() {
     );
     console.log('订单导航插入成功');
 
-    // 8. 插入用户一级导航（无二级导航）
-    const usersNavigation = await FirstLevelNavigation.create({
-      title: '用户',
-      icon: 'UsersOutlined',
-      url: '/users',
-      subTitle: '用户管理',
-      subText: '管理系统用户信息和权限',
-      SecondaryNavigationID: []
+    // 8. 创建系统设置相关的二级导航
+    const tempId4 = new mongoose.Types.ObjectId();
+    const systemSecondaryNavs = await SecondaryNavigation.insertMany([
+      { name: '用户', url: '/system/users', firstLevelNavigationID: tempId4 },
+      { name: '轮播图', url: '/system/carousel', firstLevelNavigationID: tempId4 },
+      { name: '用户权限', url: '/system/user-permissions', firstLevelNavigationID: tempId4 }
+    ]);
+
+    // 9. 插入系统设置一级导航
+    const systemNavigation = await FirstLevelNavigation.create({
+      title: '系统设置',
+      icon: 'SettingOutlined',
+      url: '/system',
+      subTitle: '系统设置',
+      subText: '管理用户、轮播图和权限配置',
+      SecondaryNavigationID: systemSecondaryNavs.map(nav => nav._id)
     });
-    console.log('用户导航插入成功');
+
+    // 更新系统设置二级导航的一级导航ID
+    await SecondaryNavigation.updateMany(
+      { _id: { $in: systemSecondaryNavs.map(nav => nav._id) } },
+      { firstLevelNavigationID: systemNavigation._id }
+    );
+    console.log('系统设置导航插入成功');
 
     console.log('\n=== 导航数据插入完成 ===');
     console.log('一级导航数量:', await FirstLevelNavigation.countDocuments());

@@ -3,11 +3,9 @@ import { Navigate } from 'react-router-dom'
 
 const Layout = lazy(() => import('@/Layout'))
 const Home = lazy(() => import('@/pages/Home_X'))
-const Lbt = lazy(() => import('@/pages/Home_X/lbt'))
 const Shops = lazy(() => import('@/pages/Shops'))
 const Goods = lazy(() => import('@/pages/Goods'))
 const Orders = lazy(() => import('@/pages/Orders'))
-const Users = lazy(() => import('@/pages/Users'))
 const Login = lazy(() => import('@/pages/Login'))
 const NotFound = lazy(() => import('@/pages/NotFound'))
 
@@ -41,6 +39,10 @@ const OrdersList = lazy(() => import('@/pages/order_S/Orders'))
 const AfterSales = lazy(() => import('@/pages/order_S/afterSales'))
 const TallySheet = lazy(() => import('@/pages/order_S/tallySheet'))
 const SortingList = lazy(() => import('@/pages/order_S/sortingList'))
+// 系统设置相关页面
+const Lbt = lazy(() => import('@/pages/Home_X/lbt')) // 轮播图组件
+const Users = lazy(() => import('@/pages/Users'))
+const UserRoot = lazy(() => import('@/pages/UserRoot')) // 用户权限组件
 const constantRoutes = [
   { path: '/login', title: '登录', element: <Login /> },
   {
@@ -58,18 +60,7 @@ const constantRoutes = [
         icon: 'HomeOutlined',    // 确认图标名称正确
         menuPath: '/home'
       },
-      {
-        path: 'shops',
-        title: '商家',
-        element: <Shops />,
-      },
-      { 
-        path: 'lbt', 
-        title: '轮播图管理', 
-        element: <Lbt />, 
-        hidden: true,           // 隐藏在菜单中，只能通过代码跳转
-        menuPath: '/lbt'
-      },
+
       { 
         path: 'shops', 
         title: '商家', 
@@ -287,12 +278,39 @@ const constantRoutes = [
         ]
       },
       {
-        path: 'users',
-        title: '用户',
-        element: <Users />,
+        path: 'system',
+        title: '系统设置',
+        element: <Users />, // 暂时使用Users组件作为系统设置主页面
         hidden: false,
-        icon: 'UsersOutlined',    // 用户图标
-        menuPath: '/users'
+        icon: 'SettingOutlined',    // 系统设置图标
+        menuPath: '/system',
+        children: [
+          { index: true, element: <Navigate to={'/system/users'} replace /> },
+          {
+            path: 'users',
+            title: '用户',
+            element: <Users />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/system/users'
+          },
+          {
+            path: 'carousel',
+            title: '轮播图',
+            element: <Lbt />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/system/carousel'
+          },
+          {
+            path: 'user-permissions',
+            title: '用户权限',
+            element: <UserRoot />, // 暂时使用Users组件，后续可以创建专门的权限管理组件
+            hidden: false,
+            icon: 'component',
+            menuPath: '/system/user-permissions'
+          }
+        ]
       }
     ]
   },
