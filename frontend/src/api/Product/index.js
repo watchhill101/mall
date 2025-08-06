@@ -9,12 +9,9 @@ const apiMap = {
         addToRecycleBin: addToRecycleBin,
         getProductRecycleBin: getProductRecycleBin,
         addProductAudit: addProductAudit,
-        // 恢复回收站
         restoreProductFromRecycleBin: restoreProductFromRecycleBin,
-        // 更新审核商品状态
         updateAuditStatus: updateAuditStatus,
-
-
+        updateProductInfo: updateProductInfo,  // 确保此条目存在
     }
 }
 
@@ -86,3 +83,20 @@ function updateAuditStatus(data) {
         data
     });
 }
+// 更新商品信息
+function updateProductInfo(updatedRecord) {
+    const { productId, ...updateData } = updatedRecord;
+    return request({
+        url: `/products/updateProductInfo`,
+        method: 'PUT',  // 确保与后端路由方法一致
+        data: { productId, ...updateData }  // 将productId一起发送
+    })
+}
+
+// const searchProducts = (data) => {
+//     return request({
+//         url: `/products/searchProducts`,
+//         method: 'POST',
+//         data
+//     });
+// }
