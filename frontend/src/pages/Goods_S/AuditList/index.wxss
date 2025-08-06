@@ -1,0 +1,56 @@
+.audit-list-container {
+  padding: 16px;
+}
+
+.audit-list-container .filter-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.audit-list-container .filter-form .ant-form-item {
+  margin-bottom: 8px;
+}
+
+.audit-list-container .filter-form .search-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.audit-list-container .audit-table .ant-table-tbody > tr > td {
+  vertical-align: middle;
+}
+
+.audit-list-container .audit-table .product-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.audit-list-container .audit-table .product-info img {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.audit-list-container .audit-table .product-info span {
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.audit-filter-form {
+  margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.audit-filter-form .ant-form-item {
+  margin-bottom: 0;
+}
