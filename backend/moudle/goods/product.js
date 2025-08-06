@@ -28,7 +28,7 @@ const productSchema = new mongoose.Schema(
     
     merchant: { 
       type: mongoose.Schema.Types.ObjectId, 
-      ref: "Merchant", 
+      ref: "merchant", 
       required: true 
     }, // 所属商家
     
@@ -81,7 +81,7 @@ const productSchema = new mongoose.Schema(
       auditReason: { type: String }, // 审核原因
       auditor: { 
         type: mongoose.Schema.Types.ObjectId, 
-        ref: "User" 
+        ref: "user" 
       }, // 审核人
       auditTime: { type: Date } // 审核时间
     },
@@ -118,12 +118,12 @@ const productSchema = new mongoose.Schema(
     
     lastUpdateBy: { 
       type: mongoose.Schema.Types.ObjectId, 
-      ref: "User" 
+      ref: "user" 
     }, // 最后更新人
     
     createBy: { 
       type: mongoose.Schema.Types.ObjectId, 
-      ref: "User", 
+      ref: "user", 
       required: true 
     } // 创建人
   },

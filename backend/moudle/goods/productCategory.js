@@ -69,13 +69,13 @@ const productCategorySchema = new mongoose.Schema(
     
     createBy: { 
       type: mongoose.Schema.Types.ObjectId, 
-      ref: "User", 
+      ref: "user", 
       required: true 
     }, // 创建人
     
     lastUpdateBy: { 
       type: mongoose.Schema.Types.ObjectId, 
-      ref: "User" 
+      ref: "user" 
     } // 最后更新人
   },
   {

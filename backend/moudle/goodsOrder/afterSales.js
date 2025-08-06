@@ -17,7 +17,7 @@ const afterSalesSchema = new mongoose.Schema(
     
     merchant: { 
       type: mongoose.Schema.Types.ObjectId, 
-      ref: "Merchant", 
+      ref: "merchant", 
       required: true 
     }, // 所属商家
     
@@ -85,7 +85,7 @@ const afterSalesSchema = new mongoose.Schema(
     processingInfo: {
       processor: { 
         type: mongoose.Schema.Types.ObjectId, 
-        ref: "User" 
+        ref: "user" 
       }, // 处理人
       processingTime: { 
         type: Date 
@@ -138,13 +138,13 @@ const afterSalesSchema = new mongoose.Schema(
     
     createBy: { 
       type: mongoose.Schema.Types.ObjectId, 
-      ref: "User", 
+      ref: "user", 
       required: true 
     }, // 创建人
     
     lastUpdateBy: { 
       type: mongoose.Schema.Types.ObjectId, 
-      ref: "User" 
+      ref: "user" 
     } // 最后更新人
   },
   {

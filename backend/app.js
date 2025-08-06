@@ -9,6 +9,8 @@ var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
 var authRouter = require("./routes/auth");
 var captchaRouter = require("./routes/captcha");
+var navigationRouter = require("./routes/navigation");
+var businessRouter = require("./routes/business");
 
 // 导入数据库模型（确保数据库连接和模型初始化）
 require("./moudle/index");
@@ -56,6 +58,8 @@ app.use("/", indexRouter);
 app.use("/users", usersRouter);
 app.use("/auth", authRouter);
 app.use("/captcha", captchaRouter);
+app.use("/api", navigationRouter);
+app.use("/api", businessRouter);
 
 // 需要认证的路由 - 使用express-jwt
 app.use("/api/protected", jwtAuth, verifyTokenType); // 需要强制验证的路由
