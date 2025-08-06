@@ -55,8 +55,43 @@ export default function AuditList() {
     getProductAuditList();
   }, []);
 
-  const handleAudit = (record) => {
+  const handleAudit = async (record) => {
+    console.log('审核');
+    console.log(record, '11');
+
     setCurrentRecord(record);
+    console.log(record, '2222222222222222222222222222');
+
+    // 使用record数据创建商品
+    const response = await ProductApi.Product.createProduct({
+      productId: record.productId || `PROD${Date.now()}`,
+      productName: record.productInfo?.productName || '',
+      productCategory: record.productInfo?.productCategory || '',
+      businessType: 'retail',
+      merchant: record.merchant?._id || '',
+      productInfo: record.productInfo || {},
+      pricing: record.pricing || {
+        salePrice: {
+          min: 0,
+          max: 0,
+        },
+      },
+      inventory: record.inventory || { currentStock: 0 },
+      status: record.status || 'pending',
+      auditInfo: {
+        auditReason: record.auditReason || '',
+        auditor: '648a7d9f8b7c6b5a4d3c2b1c',
+        auditTime: new Date().toISOString(),
+      },
+      isExternal: false,
+      salesData: {
+        totalSales: 0,
+        monthlyStock: record.inventory?.currentStock || 0,
+      },
+      warehouseInfo: record.warehouseInfo || {},
+      createBy: record.submitter?._id || '648a7d9f8b7c6b5a4d3c2b1e',
+    });
+    console.log(response, 'response');
     auditForm.resetFields();
     setVisible(true);
   };
@@ -74,8 +109,82 @@ export default function AuditList() {
 
       if (result.success) {
         message.success('审核成功');
+
+        // 如果审核通过
+        if (values.auditStatus === 'approved') {
+          // 处理创建类型的审核
+          if (currentRecord.auditType === 'create') {
+            const createResult = await ProductApi.Product.createProduct({
+              productInfo: currentRecord.productInfo,
+              merchant: currentRecord.merchant._id,
+              businessType: 'retail',
+              pricing: currentRecord.pricing || {
+                salePrice: {
+                  min: 0,
+                  max: 0,
+                },
+              },
+              inventory: currentRecord.inventory || { currentStock: 0 },
+              createBy:
+                currentRecord.submitter?._id || '6891c594711bbd8f373159c3',
+              status: 'approved', // 设置初始状态为已通过
+            });
+
+            if (createResult.success) {
+              message.success('商品已成功添加到商品列表');
+            } else {
+              message.error('添加商品到列表失败: ' + createResult.message);
+            }
+          }
+          // 处理更新类型的审核
+          else if (
+            currentRecord.auditType === 'update' &&
+            currentRecord.productId
+          ) {
+            // 调用更新商品状态的API
+            const updateResult = await ProductApi.Product.updateProductStatus(
+              currentRecord.productId,
+              'approved'
+            );
+
+            if (updateResult.success) {
+              message.success('商品状态已更新为已通过');
+            } else {
+              message.error('更新商品状态失败: ' + updateResult.message);
+            }
+          }
+        }
+        // 如果审核拒绝
+        else if (values.auditStatus === 'rejected') {
+          // 处理创建类型的审核（拒绝创建）
+          if (currentRecord.auditType === 'create') {
+            message.info('已拒绝创建新商品');
+          }
+          // 处理更新类型的审核（拒绝更新）
+          else if (
+            currentRecord.auditType === 'update' &&
+            currentRecord.productId
+          ) {
+            // 调用更新商品状态的API
+            const updateResult = await ProductApi.Product.updateProductStatus(
+              currentRecord.productId,
+              'rejected'
+            );
+
+            if (updateResult.success) {
+              message.success('商品状态已更新为已拒绝');
+            } else {
+              message.error('更新商品状态失败: ' + updateResult.message);
+            }
+          }
+        }
+
         setVisible(false);
         getProductAuditList();
+        // 确保事件正确派发
+        setTimeout(() => {
+          window.dispatchEvent(new Event('refreshProductList'));
+        }, 300);
       } else {
         message.error('审核失败: ' + result.message);
       }

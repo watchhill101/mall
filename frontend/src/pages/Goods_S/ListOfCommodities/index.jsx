@@ -44,18 +44,31 @@ const ListOfCommodities = () => {
   const navigate = useNavigate();
   const [messageApi, contextHolder] = message.useMessage();
   const [list, setlist] = useState([]);
+  const [recycleForm] = Form.useForm(); // 添加这行代码声明表单引用
+
   const getGoodsList = async () => {
     const { success, data } = await ProductApi.Product.getList();
-    // console.log(success, data);
     if (success) {
       // 过滤掉已删除的商品
       // const filteredData = data.filter((item) => item.status !== 'deleted');
-      // console.log(filteredData, '列表数据');
       setlist(data);
     }
   };
   useEffect(() => {
+    // 初始加载商品列表
     getGoodsList();
+
+    // 监听刷新事件
+    const handleRefresh = () => {
+      getGoodsList();
+    };
+
+    window.addEventListener('refreshProductList', handleRefresh);
+
+    // 组件卸载时移除监听
+    return () => {
+      window.removeEventListener('refreshProductList', handleRefresh);
+    };
   }, []);
 
   const [loading, setLoading] = useState(false);
@@ -89,10 +102,17 @@ const ListOfCommodities = () => {
       key: 'productName',
       width: 200,
       render: (text, record) => {
+        // 处理图片URL，去除多余的空格和反引号
+        const imageUrl =
+          record?.productInfo?.images[0]?.replace(/[`\s]/g, '') || '';
         return (
           <div style={{ display: 'flex', alignItems: 'center' }}>
-            <img src={record.src} alt="" style={{ width: 60, height: 60 }} />
-            <span>{text}</span>
+            {/* {JSON.stringify(record)} */}
+
+            <>
+              <img src={imageUrl} alt="" style={{ width: 60, height: 60 }} />
+              <span>{record.productName}</span>
+            </>
           </div>
         );
       },
@@ -102,12 +122,29 @@ const ListOfCommodities = () => {
       dataIndex: 'productCategory',
       key: 'productCategory',
       width: 100,
+      render: (text) => {
+        // 这里假设你有一个分类映射表
+        const categoryMap = {
+          '68923655d69c94af5d9ead4c': '智能设备',
+          // 其他分类映射...
+        };
+        return categoryMap[text] || '未知分类';
+      },
     },
     {
       title: '销售价',
       dataIndex: ['pricing', 'salePrice'],
       key: 'pricing',
       width: 100,
+      render: (text) => {
+        // 显示最小值和最大值（如果相同则只显示一个）
+        if (text && text.min === text.max) {
+          return `¥${text.min}`;
+        } else if (text) {
+          return `¥${text.min}-¥${text.max}`;
+        }
+        return '-';
+      },
     },
     {
       title: '库存商品',
@@ -130,8 +167,8 @@ const ListOfCommodities = () => {
         // 状态映射：英文状态 -> [中文状态, 标签颜色]
         const statusMap = {
           pending: ['待审核', 'default'],
-          approved: ['已通过', 'success'],
-          rejected: ['已拒绝', 'error'],
+          approved: ['已通过', 'approved'],
+          rejected: ['已拒绝', ''],
           onSale: ['在售', 'primary'],
           offSale: ['下架', 'warning'],
           deleted: ['已删除', 'danger'],
@@ -186,157 +223,90 @@ const ListOfCommodities = () => {
   //修改商品状态
   const handleChangeStatus = async ({ productId, status }) => {
     console.log(productId, status);
-    const statusList = [
-      'pending',
-      'approved',
-      'rejected',
-      'onSale',
-      'offSale',
-      'deleted',
-    ];
-    const RadomStatus =
-      statusList[Math.floor(Math.random() * statusList.length)];
+    // 移除随机状态逻辑，根据当前状态设置新状态
+    const newStatus = status === 'offSale' ? 'onSale' : 'offSale';
 
-    const { success, message, data } =
-      await ProductApi.Product.updateProductSta(productId, RadomStatus);
-    // console.log(response);
+    const { success, message } = await ProductApi.Product.updateProductSta(
+      productId,
+      newStatus
+    );
     if (success) {
       messageApi.open({
         type: 'success',
-        content: 'This is a success message',
+        content: '商品状态更新成功',
       });
-
       getGoodsList();
+    } else {
+      messageApi.open({
+        type: 'error',
+        content: `更新失败: ${message || '未知错误'}`,
+      });
     }
   };
   // 加入回收站
   const AddtoRecycleBin = (record) => {
-    let modalFormRef = null;
-
-    const handleSubmit = async () => {
-      try {
-        const formValues = await modalFormRef.validateFields(); // 获取表单值
-
-        const formData = {
-          originalProduct: record._id || record.id,
-          merchant: record.merchant?._id || record.merchantId,
-          productSnapshot: {
-            productId: record.productId,
-            productName: record.productName,
-            productCategory: record.productCategory,
-            businessType: record.businessType,
-            pricing: record.pricing,
-            inventory: record.inventory,
-            productInfo: record.productInfo,
-          },
-          deleteReason: formValues.deleteReason,
-          deleteReasonDetail: formValues.deleteReasonDetail,
-          autoDeleteAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30天后
-        };
-
-        const { success, message } = await ProductApi.Product.addToRecycleBin(
-          formData
-        );
-        if (success) {
-          messageApi.success('成功加入回收站');
-          getGoodsList(); // 刷新列表
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    const handleEditSubmit = async (updatedRecord) => {
-      console.log(updatedRecord, '编辑提交的数据');
-      try {
-        // 确保updatedRecord中包含productId
-        if (!updatedRecord.productId) {
-          message.error('商品ID不能为空');
-          return;
-        }
-
-        const { success, message } = await ProductApi.Product.updateProductInfo(
-          updatedRecord
-        );
-        if (success) {
-          message.success('编辑成功');
-          setEditVisible(false);
-          getGoodsList(); // 刷新商品列表
-        } else {
-          message.error(message || '编辑失败');
-        }
-      } catch (err) {
-        console.error('编辑失败:', err);
-        message.error('编辑失败: ' + err.message);
-      }
-    };
-
-    const modal = Modal.confirm({
+    Modal.confirm({
       title: '确认加入回收站',
-      icon: null,
       content: (
-        <Form
-          layout="vertical"
-          ref={(ref) => {
-            if (ref) modalFormRef = ref;
-          }}
-          name="deleteReasonForm"
-        >
+        <Form form={recycleForm} layout="vertical">
           <Form.Item
-            name="deleteReason"
             label="删除原因"
+            name="deleteReason"
             rules={[{ required: true, message: '请选择删除原因' }]}
           >
             <Select placeholder="请选择删除原因">
-              <Option value="discontinued">停产</Option>
-              <Option value="expired">过期</Option>
-              <Option value="quality_issue">质量问题</Option>
-              <Option value="policy_violation">违规</Option>
-              <Option value="merchant_request">商家要求</Option>
-              <Option value="system_cleanup">系统清理</Option>
-              <Option value="duplicate">重复</Option>
-              <Option value="other">其他</Option>
+              <Option value="outdated">商品过时</Option>
+              <Option value="noStock">库存不足</Option>
+              <Option value="qualityIssue">质量问题</Option>
+              <Option value="other">其他原因</Option>
             </Select>
           </Form.Item>
-          <Form.Item name="deleteReasonDetail" label="删除原因详情">
-            <Input.TextArea rows={3} placeholder="请输入详细原因（可选）" />
+          <Form.Item label="详细说明" name="deleteReasonDetail">
+            <Input.TextArea rows={4} placeholder="请输入详细删除原因" />
           </Form.Item>
         </Form>
       ),
-      okText: '确认',
-      cancelText: '取消',
-      onOk: handleSubmit,
+      onOk: async () => {
+        try {
+          // 获取表单值
+          const formValue = await recycleForm.validateFields();
+          const { deleteReason, deleteReasonDetail } = formValue;
+
+          // 准备请求数据
+          const requestData = {
+            originalProduct: record._id,
+            merchant: record.merchant?._id || null,
+            productSnapshot: record,
+            deleteReason,
+            deleteReasonDetail,
+            deletedBy: '6891c594711bbd8f373159c3', // 假设当前用户是admin，实际应从登录信息获取
+            autoDeleteAt: dayjs().add(30, 'day').toISOString(), // 30天后自动删除
+          };
+
+          // 调用API6891c594711bbd8f373159c3
+          const response = await ProductApi.Product.addToRecycleBin(
+            requestData
+          );
+          console.log(response, 'ressss');
+
+          if (response.success) {
+            messageApi.success('商品已成功加入回收站');
+            getGoodsList(); // 刷新商品列表
+          } else {
+            messageApi.error(
+              `加入回收站失败: ${response.message || '未知错误'}`
+            );
+          }
+        } catch (error) {
+          console.error('加入回收站失败:', error);
+          messageApi.error('操作失败，请重试');
+        }
+      },
+      onCancel: () => {
+        console.log('取消加入回收站');
+      },
     });
   };
-
-  // 加载数据
-  // const loadData = useCallback(async () => {
-  //   setLoading(true);
-  //   try {
-  //     // 这里应该调用实际的API
-  //     setTimeout(() => {
-  //       setDataSource((data.list || []).filter((item) => !item.isDeleted));
-  //       setPagination((prev) => ({
-  //         ...prev,
-  //         total: data.length,
-  //       }));
-  //       setLoading(false);
-  //     }, 1000);
-  //   } catch (error) {
-  //     message.error('加载数据失败');
-  //     setLoading(false);
-  //   }
-  // }, []);
-
-  // 重置搜索
-  const handleReset = () => {
-    setSearchParams({
-      name: '',
-      category: '',
-      status: '',
-    });
-    getGoodsList(); // 重置后显示全部商品
-  };
-
   // 新增商品
 
   const handleAdd = () => {
@@ -444,21 +414,21 @@ const ListOfCommodities = () => {
         pageSize,
       };
 
-      const {
-        success,
-        data,
-        pagination: serverPagination,
-      } = await ProductApi.Product.searchProducts(params);
+      // 使用searchProducts接口替代getList
+      const { success, data, pagination } =
+        await ProductApi.Product.searchProducts(params);
+
+      // 添加调试代码，查看返回的数据结构
+      console.log('搜索返回数据:', data);
+      console.log('分页数据:', pagination);
 
       if (success) {
-        // ✅ 用搜索返回的数据更新列表
-        setlist(data); // ← 这是关键
-
-        // ✅ 更新分页信息
+        // 直接使用后端返回的分页数据
+        setlist(data);
         setPagination({
-          current: serverPagination.page,
-          pageSize: serverPagination.pageSize,
-          total: serverPagination.total,
+          current: Number(page), // 确保是数字类型
+          pageSize: Number(pageSize), // 确保是数字类型
+          total: Number(pagination.total), // 确保是数字类型
         });
       }
     } catch (error) {
@@ -486,75 +456,175 @@ const ListOfCommodities = () => {
       message.error('编辑失败');
     }
   };
+  const handleReset = () => {
+    // 重置搜索参数
+    setSearchParams({
+      name: '',
+      category: '',
+      status: '',
+      inStock: '',
+    });
+    // 重新加载第一页数据
+    handleSearch(1, pagination.pageSize);
+  };
 
   return (
     <GoodsLayout>
       <div style={{ padding: '24px' }}>
-        {/* 搜索区域 */}
-        <div className="search-bar">
-          <Row gutter={20} style={{ marginBottom: 16 }}>
-            <Col span={6}>
-              <Input
-                placeholder="商品名称"
-                value={searchParams.name}
-                onChange={(e) =>
-                  setSearchParams((prev) => ({ ...prev, name: e.target.value }))
-                }
-                allowClear
-              />
+        {/* 搜索区域 - 优化布局 */}
+        <div
+          className="search-bar"
+          style={{
+            marginBottom: '24px',
+            padding: '16px',
+            backgroundColor: '#f9fafb',
+            borderRadius: '8px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+          }}
+        >
+          <Row gutter={16} align="middle">
+            <Col xs={24} sm={24} md={12} lg={8} xl={6}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  marginBottom: '12px',
+                }}
+              >
+                <span
+                  style={{
+                    width: '80px',
+                    textAlign: 'right',
+                    marginRight: '12px',
+                    fontWeight: 500,
+                  }}
+                >
+                  商品名称:
+                </span>
+                <Input
+                  placeholder="请输入商品名称"
+                  value={searchParams.name}
+                  onChange={(e) =>
+                    setSearchParams((prev) => ({
+                      ...prev,
+                      name: e.target.value,
+                    }))
+                  }
+                  allowClear
+                  onPressEnter={handleSearch}
+                  style={{ flex: 1 }}
+                />
+              </div>
             </Col>
-            <Col span={6}>
-              <Cascader
-                options={categoryData}
-                onChange={(value) =>
-                  setSearchParams((prev) => ({
-                    ...prev,
-                    category: value[value.length - 1],
-                  }))
-                }
-                placeholder="商品分类"
-              />
+            <Col xs={24} sm={24} md={12} lg={8} xl={6}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  marginBottom: '12px',
+                }}
+              >
+                <span
+                  style={{
+                    width: '80px',
+                    textAlign: 'right',
+                    marginRight: '12px',
+                    fontWeight: 500,
+                  }}
+                >
+                  商品分类:
+                </span>
+                <Cascader
+                  options={categoryData}
+                  onChange={(value) =>
+                    setSearchParams((prev) => ({
+                      ...prev,
+                      category: value[value.length - 1],
+                    }))
+                  }
+                  placeholder="请选择分类"
+                  allowClear
+                  style={{ flex: 1 }}
+                />
+              </div>
             </Col>
-            <Col span={6}>
-              <Select
-                placeholder="商品状态"
-                value={searchParams.status}
-                onChange={(value) =>
-                  setSearchParams((prev) => ({ ...prev, status: value }))
-                }
-                allowClear
-                style={{ width: '100px' }}
-                options={[
-                  { value: 'pending', label: '待审核' },
-                  { value: 'approved', label: '已通过' },
-                  { value: 'rejected', label: '已拒绝' },
-                  { value: 'onSale', label: '在售' },
-                  { value: 'offSale', label: '下架' },
-                  { value: 'deleted', label: '已删除' },
-                ]}
-              ></Select>
+            <Col xs={24} sm={24} md={12} lg={8} xl={6}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  marginBottom: '12px',
+                }}
+              >
+                <span
+                  style={{
+                    width: '80px',
+                    textAlign: 'right',
+                    marginRight: '12px',
+                    fontWeight: 500,
+                  }}
+                >
+                  商品状态:
+                </span>
+                <Select
+                  placeholder="请选择状态"
+                  value={searchParams.status}
+                  onChange={(value) =>
+                    setSearchParams((prev) => ({ ...prev, status: value }))
+                  }
+                  allowClear
+                  style={{ flex: 1 }}
+                  options={[
+                    { value: 'pending', label: '待审核' },
+                    { value: 'approved', label: '已通过' },
+                    { value: 'rejected', label: '已拒绝' },
+                    { value: 'onSale', label: '在售' },
+                    { value: 'offSale', label: '下架' },
+                    { value: 'deleted', label: '已删除' },
+                  ]}
+                ></Select>
+              </div>
             </Col>
-            <Col span={6}>
-              <Select
-                placeholder="库存商品"
-                value={searchParams.inStock}
-                onChange={(value) =>
-                  setSearchParams((prev) => ({ ...prev, inStock: value }))
-                }
-                allowClear
-                style={{ width: '100px' }}
-                options={[
-                  { value: '1', label: '是' },
-                  { value: '0', label: '否' },
-                ]}
-              ></Select>
+            <Col xs={24} sm={24} md={12} lg={8} xl={6}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  marginBottom: '12px',
+                }}
+              >
+                <span
+                  style={{
+                    width: '80px',
+                    textAlign: 'right',
+                    marginRight: '12px',
+                    fontWeight: 500,
+                  }}
+                >
+                  库存状态:
+                </span>
+                <Select
+                  placeholder="请选择库存状态"
+                  value={searchParams.inStock}
+                  onChange={(value) =>
+                    setSearchParams((prev) => ({ ...prev, inStock: value }))
+                  }
+                  allowClear
+                  style={{ flex: 1 }}
+                  options={[
+                    { value: '1', label: '有库存' },
+                    { value: '0', label: '无库存' },
+                  ]}
+                ></Select>
+              </div>
             </Col>
-            <Col span={6}>
+            <Col xs={24} style={{ textAlign: 'right' }}>
               <Space>
                 <Button
                   type="primary"
                   icon={<SearchOutlined />}
                   onClick={handleSearch}
+                  style={{ marginRight: '8px' }}
                 >
                   搜索
                 </Button>
@@ -565,7 +635,7 @@ const ListOfCommodities = () => {
         </div>
 
         {/* 操作按钮 */}
-        <div className="operation-button">
+        <div className="operation-button" style={{ marginBottom: '16px' }}>
           <Button
             className="addBtn"
             icon={<PlusOutlined />}
@@ -573,28 +643,36 @@ const ListOfCommodities = () => {
           >
             新增审核
           </Button>
-          <Button className="Export " icon={<ExportSvg />}>
+          <Button
+            className="Export "
+            icon={<ExportSvg />}
+            style={{ marginLeft: '8px' }}
+          >
             导出
           </Button>
         </div>
-
+        {JSON.stringify(list)}
         {/* 表格 */}
         <Table
           columns={columns}
           dataSource={list}
           loading={loading}
-          rowKey="id"
+          rowKey="_id"
           pagination={{
             current: pagination.current,
             pageSize: pagination.pageSize,
             total: pagination.total,
             showSizeChanger: true,
+            pageSizeOptions: ['10', '20', '50', '100'], // 添加这一行
             showQuickJumper: true,
             showTotal: (total) => `共 ${total} 条记录`,
             onChange: (page, pageSize) => {
               handleSearch(page, pageSize); // 分页触发搜索
             },
           }}
+          // locale={{
+          //   emptyText: loading ? '加载中...' : '没有找到匹配的商品',
+          // }}
         />
 
         {/* 新增/编辑商品-审核列表弹窗 */}

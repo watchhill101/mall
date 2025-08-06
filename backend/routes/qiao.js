@@ -362,5 +362,286 @@ router.put('/updateProductInfo', async (req, res) => {
         });
     }
 });
+// 创建新商品API
+router.post('/createProduct', async (req, res) => {
+    try {
+        const { productInfo, merchant, businessType, pricing, inventory, createBy } = req.body;
+
+        // 基本参数验证
+        // if (!productInfo || !productInfo.productName || !merchant || !businessType || !createBy) {
+        //     return res.status(400).json({ success: false, message: '必要参数缺失' });
+        // }
+
+        // 生成商品ID（可以根据实际需求调整生成规则）
+        const productId = 'PROD' + Date.now() + Math.floor(Math.random() * 1000);
+
+        // 创建新商品
+        const newProduct = new Product({
+            productId,
+            productName: productInfo.productName,
+            productCategory: productInfo.productCategory,
+            businessType,
+            merchant,
+            productInfo,
+            pricing: pricing || {},
+            inventory: inventory || { currentStock: 0, totalStock: 0, reservedStock: 0 },
+            status: 'onSale', // 默认为上架状态
+            createBy
+        });
+
+        await newProduct.save();
+        res.json({ success: true, message: '商品创建成功', data: newProduct });
+    } catch (error) {
+        console.error('创建商品失败:', error);
+        res.status(500).json({ success: false, message: '服务器错误', error: error.message });
+    }
+});
+// 从回收站中永久删除商品
+router.delete('/deleteProductFromRecycleBin/:id', async function (req, res) {
+    try {
+        // 1. 获取请求参数
+        const { id } = req.params;
+
+        // 2. 参数验证
+        if (!id) {
+            return res.status(400).json({ success: false, message: '回收站记录ID不能为空' });
+        }
+
+        // 3. 查找并删除回收站记录
+        const deletedItem = await ProductRecycleBin.findByIdAndDelete(id);
+
+        if (!deletedItem) {
+            return res.status(404).json({ success: false, message: '未找到该回收站记录' });
+        }
+
+        // 4. 返回成功响应
+        res.json({
+            success: true,
+            message: '商品已从回收站永久删除',
+            data: {
+                productId: deletedItem.originalProduct,
+                productName: deletedItem.productSnapshot?.productName
+            }
+        });
+    } catch (error) {
+        console.error('删除回收站商品失败:', error);
+        res.status(500).json({ success: false, message: '服务器错误', error: error.message });
+    }
+});
+
+module.exports = router;
+// 获取商品分类数据
+router.get('/productCategories', async function (req, res) {
+    try {
+        // 获取查询参数
+        const {
+            businessType,
+            categoryLevel,
+            status,
+            parentCategory,
+            name,
+            page = 1,
+            pageSize = 10
+        } = req.query;
+
+        // 构建查询条件
+        const query = {};
+
+        // 业务类型过滤
+        if (businessType) {
+            query.businessType = businessType;
+        }
+
+        // 分类级别过滤
+        if (categoryLevel) {
+            query.categoryLevel = Number(categoryLevel);
+        }
+
+        // 状态过滤
+        if (status) {
+            query.status = status;
+        }
+
+        // 父分类过滤
+        if (parentCategory) {
+            query.parentCategory = parentCategory;
+        } else if (parentCategory === 'null') {
+            // 支持查询一级分类（无父分类）
+            query.parentCategory = null;
+        }
+
+        // 分类名称模糊搜索
+        if (name) {
+            query.categoryName = { $regex: name, $options: 'i' };
+        }
+
+        // 计算分页参数
+        const skip = (Number(page) - 1) * Number(pageSize);
+
+        // 查询分类数据
+        const categories = await ProductCategory.find(query)
+            .skip(skip)
+            .limit(Number(pageSize))
+            .sort({ sortOrder: 1, createdAt: -1 }); // 按排序号和创建时间排序
+
+        // 查询总数
+        const total = await ProductCategory.countDocuments(query);
+
+        // 对于二级分类，可能需要补充一级分类名称
+        if (categories.length > 0) {
+            // 提取所有一级分类ID
+            const level1Ids = [...new Set(categories
+                .filter(cat => cat.categoryLevel === 2 && cat.categoryLevel1)
+                .map(cat => cat.categoryLevel1))];
+
+            if (level1Ids.length > 0) {
+                // 查询一级分类信息
+                const level1Categories = await ProductCategory.find({
+                    categoryId: { $in: level1Ids }
+                }).select('categoryId categoryName');
+
+                // 创建一级分类ID到名称的映射
+                const level1Map = {};
+                level1Categories.forEach(cat => {
+                    level1Map[cat.categoryId] = cat.categoryName;
+                });
+
+                // 补充一级分类名称
+                categories.forEach(cat => {
+                    if (cat.categoryLevel === 2 && cat.categoryLevel1) {
+                        cat.level1CategoryName = level1Map[cat.categoryLevel1] || cat.categoryLevel1;
+                    }
+                });
+            }
+        }
+
+        // 返回成功响应
+        res.json({
+            success: true,
+            data: categories,
+            pagination: {
+                total,
+                page: Number(page),
+                pageSize: Number(pageSize),
+                totalPages: Math.ceil(total / Number(pageSize))
+            },
+            message: '获取分类数据成功'
+        });
+    } catch (error) {
+        console.error('获取商品分类数据失败:', error);
+        res.status(500).json({
+            success: false,
+            message: '服务器错误',
+            error: error.message
+        });
+    }
+})
+
+// 增加商品分类接口
+router.post('/productCategories', async function (req, res) {
+    try {
+        // 获取请求参数
+        const {
+            categoryName,
+            businessType,
+            parentCategory = null,
+            sortOrder = 0,
+            status = 'active',
+            categoryImages = {}
+        } = req.body;
+
+        // 基本参数验证
+        if (!categoryName || !businessType) {
+            return res.status(400).json({
+                success: false,
+                message: '分类名称和业务类型不能为空'
+            });
+        }
+
+        // 验证业务类型
+        const validBusinessTypes = ['retail', 'wholesale', 'manufacturer', 'distributor'];
+        if (!validBusinessTypes.includes(businessType)) {
+            return res.status(400).json({
+                success: false,
+                message: '业务类型只能是retail、wholesale、manufacturer或distributor'
+            });
+        }
+
+        // 验证状态
+        const validStatuses = ['active', 'inactive', 'deleted'];
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({
+                success: false,
+                message: '状态只能是active、inactive或deleted'
+            });
+        }
+
+        // 确定分类级别和一级分类
+        let categoryLevel = 1;
+        let categoryLevel1 = null;
+
+        if (parentCategory) {
+            // 查找父分类
+            const parentCat = await ProductCategory.findOne({
+                categoryId: parentCategory
+            });
+
+            if (!parentCat) {
+                return res.status(404).json({
+                    success: false,
+                    message: '找不到指定的父分类'
+                });
+            }
+
+            // 设置分类级别
+            categoryLevel = parentCat.categoryLevel + 1;
+
+            // 确保分类级别不超过2级
+            if (categoryLevel > 2) {
+                return res.status(400).json({
+                    success: false,
+                    message: '分类级别不能超过2级'
+                });
+            }
+
+            // 设置一级分类
+            categoryLevel1 = parentCat.categoryLevel === 1 ? parentCat.categoryId : parentCat.categoryLevel1;
+        }
+
+        // 生成分类ID
+        const categoryId = 'CAT' + Date.now() + Math.floor(Math.random() * 1000);
+
+        // 创建新分类
+        const newCategory = new ProductCategory({
+            categoryId,
+            categoryName,
+            businessType,
+            categoryLevel,
+            parentCategory: parentCategory || null,
+            categoryLevel1,
+            sortOrder,
+            status,
+            categoryImages,
+            createdAt: new Date(),
+            updatedAt: new Date()
+        });
+
+        await newCategory.save();
+
+        // 返回成功响应
+        res.json({
+            success: true,
+            message: '商品分类创建成功',
+            data: newCategory
+        });
+    } catch (error) {
+        console.error('创建商品分类失败:', error);
+        res.status(500).json({
+            success: false,
+            message: '服务器错误',
+            error: error.message
+        });
+    }
+});
 
 module.exports = router;

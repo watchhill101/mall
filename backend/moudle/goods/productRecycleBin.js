@@ -41,7 +41,7 @@ const productRecycleBinSchema = new mongoose.Schema(
 
     deleteReason: {
       type: String,
-      required: true,
+      required: false,
       enum: [
         "discontinued", // 停产
         "expired", // 过期
