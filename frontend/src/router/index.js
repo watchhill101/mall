@@ -36,10 +36,14 @@ const StockOut = lazy(() => import('@/pages/Goods_S/inventory/exWarehouse/exWare
 const Stocktake = lazy(() => import('@/pages/Goods_S/inventory/stocktaking/stocktaking'))
 const StockDetails = lazy(() => import('@/pages/Goods_S/inventory/DetailsOfStockInAndstockOut/DetailsOfStockInAndstockOut'))
 // 订单相关页面
-const OrdersList = lazy(() => import('@/pages/order_S/Orders'))
+const OrdersList = lazy(() => import('@/pages/order_S/ordersList'))
 const AfterSales = lazy(() => import('@/pages/order_S/afterSales'))
 const TallySheet = lazy(() => import('@/pages/order_S/tallySheet'))
 const SortingList = lazy(() => import('@/pages/order_S/sortingList'))
+const PaymentRecord = lazy(() => import('@/pages/order_S/paymentRecord'))
+const AllocationOrder = lazy(() => import('@/pages/order_S/allocationOrder'))
+const WorkOrder = lazy(() => import('@/pages/order_S/workOrder'))
+const LogisticsOrder = lazy(() => import('@/pages/order_S/logisticsOrder'))
 const constantRoutes = [
   { path: '/login', title: '登录', element: <Login /> },
   {
@@ -278,7 +282,39 @@ const constantRoutes = [
             element: <SortingList />,
             hidden: false,
             icon: 'component',
-            menuPath: '/orders/SortingList '
+            menuPath: '/orders/SortingList'
+          },
+          {
+            path: 'payment-record',
+            title: '收款记录',
+            element: <PaymentRecord />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/orders/payment-record'
+          },
+          {
+            path: 'allocation-order',
+            title: '配货单',
+            element: <AllocationOrder />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/orders/allocation-order'
+          },
+          {
+            path: 'work-order',
+            title: '作业单',
+            element: <WorkOrder />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/orders/work-order'
+          },
+          {
+            path: 'logistics-order',
+            title: '物流单',
+            element: <LogisticsOrder />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/orders/logistics-order'
           }
         ]
       },

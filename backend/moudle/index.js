@@ -10,8 +10,7 @@ const connectOptions = {
   maxPoolSize: 10, // 增加连接池大小
 };
 
-mongoose
-  .connect(config.mongodb.uri, connectOptions)
+mongoose.connect(config.mongodb.uri, connectOptions)
   .then(() => {
     console.log("MongoDB connected successfully");
   })

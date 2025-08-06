@@ -20,7 +20,6 @@ import {
   EyeOutlined
 } from '@ant-design/icons';
 import { getTallyOrdersList } from '../../../api/orders';
-import OrderLayout from '../Order_layout/Order_layout';
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
@@ -286,20 +285,19 @@ const TallySheet = () => {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <OrderLayout>
-      <div style={{ padding: '24px', background: '#f5f5f5', minHeight: '100vh' }}>
-        <Card title="理货单" style={{ marginBottom: '16px' }}>
-          {/* 搜索表单 */}
-          <Row gutter={[16, 16]} style={{ marginBottom: '16px' }}>
-            <Col span={6}>
-              <Input
-                placeholder="请输入理货单编号"
-                value={searchParams.tallyOrderNumber}
-                onChange={(e) => setSearchParams({ ...searchParams, tallyOrderNumber: e.target.value })}
-                allowClear
-              />
-            </Col>
-            <Col span={6}>
+    <div style={{ padding: '24px', background: '#f5f5f5', minHeight: '100vh' }}>
+      <Card title="理货单" style={{ marginBottom: '16px' }}>
+        {/* 搜索表单 */}
+        <Row gutter={[16, 16]} style={{ marginBottom: '16px' }}>
+          <Col span={6}>
+            <Input
+              placeholder="请输入理货单编号"
+              value={searchParams.tallyOrderNumber}
+              onChange={(e) => setSearchParams({ ...searchParams, tallyOrderNumber: e.target.value })}
+              allowClear
+            />
+          </Col>
+          <Col span={6}>
             <RangePicker
               placeholder={['生成时间开始', '生成时间结束']}
               onChange={(dates) => setSearchParams({ 
@@ -420,7 +418,6 @@ const TallySheet = () => {
         )}
       </Modal>
     </div>
-    </OrderLayout>
   );
 };
 
