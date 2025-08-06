@@ -26,7 +26,7 @@ import {
   DownloadOutlined,
   FileExcelOutlined
 } from '@ant-design/icons'
-import * as XLSX from 'xlsx'
+// import * as XLSX from 'xlsx'  // 临时注释，需要时请安装: npm install xlsx
 import dayjs from 'dayjs'
 import MerchantLayout from './MerchantLayout'
 import { getSettlementOrderList, testSettlementOrderAPI } from '@/api/settlementOrder'
@@ -163,6 +163,10 @@ const SettlementOrder = () => {
 
   // 导出数据
   const handleExport = () => {
+    alert('导出功能需要安装xlsx库。请运行: npm install xlsx')
+    return
+    
+    /* 原始导出代码（安装xlsx后取消注释）
     try {
       // 创建工作簿
       const workBook = XLSX.utils.book_new()
@@ -268,6 +272,7 @@ const SettlementOrder = () => {
       console.error('导出Excel时出错:', error)
       message.error('导出Excel失败，请重试')
     }
+    */
   }
 
   // 刷新数据
