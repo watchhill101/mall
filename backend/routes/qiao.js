@@ -262,4 +262,32 @@ router.put('/updateAuditStatus', async (req, res) => {
         res.status(500).json({ success: false, message: '服务器错误', error: error.message });
     }
 });
+// 分页版本
+router.get('/searchProducts', async function (req, res) {
+    try {
+        const { name, category, status, page = 1, pageSize = 10 } = req.query;
+        const query = {};
+        // ... 构建查询条件（同上）
+
+        const skip = (page - 1) * pageSize;
+        const products = await Product.find(query)
+            .skip(skip)
+            .limit(Number(pageSize));
+        const total = await Product.countDocuments(query);
+
+        res.json({
+            success: true,
+            data: products,
+            pagination: {
+                total,
+                page: Number(page),
+                pageSize: Number(pageSize),
+                totalPages: Math.ceil(total / pageSize)
+            },
+            message: '搜索成功'
+        });
+    } catch (error) {
+        // ... 错误处理（同上）
+    }
+});
 module.exports = router;

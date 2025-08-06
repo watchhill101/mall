@@ -45,7 +45,10 @@ const ListOfCommodities = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const [list, setlist] = useState([]);
   const getGoodsList = async () => {
-    const { success, data } = await ProductApi.Product.getList();
+    const { success, data } = await ProductApi.Product.getList({
+      page: 1,
+      pageSize: 1,
+    });
     // console.log(success, data);
     if (success) {
       // 过滤掉已删除的商品
@@ -68,6 +71,7 @@ const ListOfCommodities = () => {
     name: '',
     category: '',
     status: '',
+    inStock: '', // 新增库存商品状态
   });
   const [modalVisible, setModalVisible] = useState(false);
   const [editingRecord, setEditingRecord] = useState(null);
@@ -155,7 +159,7 @@ const ListOfCommodities = () => {
       key: 'action',
       render: (text, record) => (
         <Space size="middle">
-          <Button type="link">编辑</Button>
+          {/* <Button type="link">编辑</Button> */}
           <Button
             type="link"
             style={{ color: record.status !== 'offSale' ? 'red' : 'green' }}
@@ -293,19 +297,56 @@ const ListOfCommodities = () => {
   // }, []);
 
   // 搜索处理
-  const handleSearch = () => {
-    // loadData();
+  // const handleSearch = async () => {
+  //   try {
+  //     setLoading(true);
+  //     // 构建搜索参数，包含 inStock
+  //     const params = {
+  //       name: searchParams.name,
+  //       category: searchParams.category,
+  //       status: searchParams.status,
+  //       inStock: searchParams.inStock,
+  //       // page: pagination.current,
+  //       // pageSize: pagination.pageSize,
+  //     };
+
+  //     // 调用搜索 API
+  //     const {
+  //       success,
+  //       data,
+  //       pagination: resPagination,
+  //     } = await ProductApi.Product.getList(params);
+  //     console.log(success, data);
+  //     if (success) {
+  //       // 过滤掉已删除的商品
+  //       const filteredData = data.filter((item) => item.status !== 'deleted');
+  //       setlist(filteredData); // 更新表格使用的数据源
+  //       setPagination((prev) => ({
+  //         ...prev,
+  //         total: resPagination?.total || filteredData.length,
+  //       }));
+  //     }
+  //   } catch (error) {
+  //     message.error('搜索失败: ' + error.message);
+  //     console.error('搜索商品错误:', error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  // 重置搜索
+  const handleReset = () => {
+    setSearchParams({
+      name: '',
+      category: '',
+      status: '',
+      inStock: '',
+    });
+    setPagination((prev) => ({ ...prev, current: 1 }));
+    getGoodsList(); // 重置后显示全部商品
   };
 
-  // 重置搜索handleAddhandleAdd
-  const handleReset = () => {
-    // setSearchParams({
-    //   name: '',
-    //   category: '',
-    //   status: '',
-    // });
-    // loadData();
-  };
+  // 分页变化处理
 
   // 新增商品
 
@@ -394,6 +435,7 @@ const ListOfCommodities = () => {
     console.log(value);
   };
 
+  // 修改搜索区域组件
   return (
     <GoodsLayout>
       <div style={{ padding: '24px' }}>
@@ -413,7 +455,12 @@ const ListOfCommodities = () => {
             <Col span={6}>
               <Cascader
                 options={categoryData}
-                onChange={onChange}
+                onChange={(value) =>
+                  setSearchParams((prev) => ({
+                    ...prev,
+                    category: value[value.length - 1],
+                  }))
+                }
                 placeholder="商品分类"
               />
             </Col>
@@ -421,24 +468,28 @@ const ListOfCommodities = () => {
               <Select
                 placeholder="商品状态"
                 value={searchParams.status}
-                // onChange={(value) =>
-                // setSearchParams((prev) => ({ ...prev, status: value }))
-                // }
+                onChange={(value) =>
+                  setSearchParams((prev) => ({ ...prev, status: value }))
+                }
                 allowClear
                 style={{ width: '100px' }}
                 options={[
-                  { value: 'active', label: '在售中' },
-                  { value: 'inactive', label: '已下架' },
+                  { value: 'pending', label: '待审核' },
+                  { value: 'approved', label: '已通过' },
+                  { value: 'rejected', label: '已拒绝' },
+                  { value: 'onSale', label: '在售' },
+                  { value: 'offSale', label: '下架' },
+                  { value: 'deleted', label: '已删除' },
                 ]}
               ></Select>
             </Col>
             <Col span={6}>
               <Select
                 placeholder="库存商品"
-                value={searchParams.status}
-                // onChange={(value) =>
-                // setSearchParams((prev) => ({ ...prev, status: value }))
-                // }
+                value={searchParams.inStock}
+                onChange={(value) =>
+                  setSearchParams((prev) => ({ ...prev, inStock: value }))
+                }
                 allowClear
                 style={{ width: '100px' }}
                 options={[
@@ -452,7 +503,7 @@ const ListOfCommodities = () => {
                 <Button
                   type="primary"
                   icon={<SearchOutlined />}
-                  onClick={handleSearch}
+                  // onClick={handleSearch}
                 >
                   搜索
                 </Button>
