@@ -3,7 +3,7 @@ const router = express.Router();
 const { jwtAuth } = require('../utils/ejwt');
 const MerchantAccount = require('../moudle/merchant/merchantAccount');
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt'); // 用于密码加密
+const bcrypt = require('bcryptjs'); // 用于密码加密
 
 // 测试接口 - 无需认证
 router.get('/test', async (req, res) => {

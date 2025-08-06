@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo, useCallback, lazy } from "react";
+import React, { useState, useRef, useMemo, useCallback, lazy, useEffect } from "react";
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -19,10 +19,12 @@ import {
   Popconfirm,
   Breadcrumb,
   Alert,
+  message,
 } from "antd";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "@/store/reducers/userSlice";
 import { useNavigate, Link, useLocation } from "react-router-dom";
+import { getToken, getRefreshToken } from "@/utils/auth";
 // 导入css（未模块化）
 import "./Layout.scss";
 // 导入自定义组件
@@ -60,6 +62,75 @@ const LayoutApp = () => {
   /** 通用hook */
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  // 获取用户token状态
+  const token = useSelector((state) => state.user.token);
+  const avatar = useSelector((state) => state.user.userinfo.avatar);
+  
+  // 添加组件挂载状态跟踪
+  const [isMounted, setIsMounted] = useState(false);
+  
+  useEffect(() => {
+    setIsMounted(true);
+    return () => setIsMounted(false);
+  }, []);
+
+  // 监听token状态变化
+  useEffect(() => {
+    // 组件未完全挂载时不执行检查
+    if (!isMounted) return;
+    
+    const checkTokenStatus = () => {
+      const localToken = getToken();
+      const localRefreshToken = getRefreshToken();
+      
+      // 如果Redux中有token但localStorage中没有，说明token被外部删除
+      if (token && !localToken) {
+        console.log('🚨 Layout检测到token被删除，执行登出');
+        message.warning('登录状态已失效，请重新登录');
+        dispatch(logout());
+        navigate('/login', { replace: true });
+        return;
+      }
+      
+      // 如果既没有token也没有refresh token，跳转到登录页
+      if (!token && !localToken && !localRefreshToken) {
+        console.log('🚪 Layout检测到无有效token，跳转登录页');
+        navigate('/login', { replace: true });
+        return;
+      }
+    };
+
+    // 立即检查一次
+    checkTokenStatus();
+    
+    // 设置定期检查（每10秒检查一次，比App.jsx更频繁）
+    const interval = setInterval(checkTokenStatus, 10000);
+    
+    return () => clearInterval(interval);
+  }, [token, dispatch, navigate, isMounted]);
+
+  // 监听localStorage变化（跨标签页同步）
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'ACCESS-TOKEN' || e.key === 'REFRESH-TOKEN') {
+        console.log('🔄 Layout检测到localStorage变化:', e.key, !!e.newValue);
+        
+        // 如果token被删除且当前用户已登录
+        if (!e.newValue && token) {
+          console.log('🚪 Layout检测到token被删除，执行登出');
+          message.warning('登录状态已失效，请重新登录');
+          dispatch(logout());
+          navigate('/login', { replace: true });
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [token, dispatch, navigate]);
 
   // 导航数据管理
   const {
@@ -228,9 +299,6 @@ const LayoutApp = () => {
   const MerchantApplication = lazy(() =>
     import("@/pages/Merchant/MerchantApplication")
   );
-  const DeviceManagement = lazy(() =>
-    import("@/pages/Merchant/DeviceManagement")
-  );
 
   // 导入商品相关组件
   const ListOfCommodities = lazy(() =>
@@ -308,9 +376,6 @@ const LayoutApp = () => {
             case "/shops/merchant-application":
               element = <MerchantApplication />;
               break;
-            case "/shops/device-management":
-              element = <DeviceManagement />;
-              break;
 
             // 商品相关路由
             case "/goods/product-list":
@@ -385,8 +450,7 @@ const LayoutApp = () => {
       .concat(navigationRoutes)
       .concat(getMenus(permissionRoutes));
   }, [navigationData, permissionRoutes]);
-  // 用户头像
-  const avatar = useSelector((state) => state.user.userinfo.avatar);
+  
   /** 下拉菜单 */
   // 下拉菜单项数组
   const dropdownMenuItems = [
@@ -437,10 +501,39 @@ const LayoutApp = () => {
   };
 
   // 退出登录
-  const handleLogout = () => {
-    dispatch(logout());
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      console.log('🚪 用户主动退出登录');
+      
+      // 显示退出提示
+      message.loading('正在退出...', 1);
+      
+      // 执行Redux logout action（会清理localStorage）
+      dispatch(logout());
+      
+      // 延迟跳转，确保状态清理完成
+      setTimeout(() => {
+        navigate("/login", { replace: true });
+        message.success('已安全退出');
+      }, 100);
+      
+    } catch (error) {
+      console.error('❌ 退出登录失败:', error);
+      // 即使出错也要强制清理状态
+      dispatch(logout());
+      navigate("/login", { replace: true });
+      message.error('退出过程中发生错误，但已安全退出');
+    }
   };
+
+  // 检查用户是否已登录，如果没有token则不渲染Layout
+  const hasValidToken = token && getToken();
+  
+  // 如果没有有效token，返回null或加载状态
+  if (!hasValidToken) {
+    console.log('🔒 Layout: 无有效token，不渲染Layout组件');
+    return null;
+  }
   // debugger
 
   console.log(menuItems, "获取菜单");

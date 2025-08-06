@@ -1,5 +1,5 @@
 import Axios from 'axios'
-import { getToken } from '../utils/auth'
+import { getToken, getRefreshToken, setToken, removeToken, removeRefreshToken } from '../utils/auth'
 import { message } from 'antd'
 
 const BASE_URL = process.env.NODE_ENV === 'production' ? '/api' : '/api' //请求接口url 如果不配置 则默认访问链接地址
@@ -16,23 +16,7 @@ const whiteList = [
   '/auth/refresh',
   '/captcha/generate',
   '/captcha/verify',
-  '/captcha/refresh',
-  '/merchant/list',              // 临时添加，用于测试
-  '/merchant/test',              // 测试接口
-  '/merchant-account/list',      // 临时添加，用于测试
-  '/merchant-account/test',      // 测试接口
-  '/account-detail/list',        // 账户明细列表，用于测试
-  '/account-detail/stats',       // 账户明细统计，用于测试
-  '/account-detail/test',        // 账户明细测试接口
-  '/withdraw-account/list',      // 提现账号列表，用于测试
-  '/withdraw-account/test',      // 提现账号测试接口
-  '/withdraw-account/merchants', // 商家列表，用于测试
-  '/merchant-withdraw/list',     // 商家提现列表，用于测试
-  '/merchant-withdraw/test',     // 商家提现测试接口
-  '/merchant-withdraw/audit',    // 商家提现审核接口
-  '/bill/list',                  // 结算账单列表，用于测试
-  '/bill/test',                  // 结算账单测试接口
-  '/bill/stats'                  // 结算账单统计接口
+  '/captcha/refresh'
 ]
 
 // 添加请求拦截器
@@ -43,9 +27,17 @@ instance.interceptors.request.use(
     if (config.url && typeof config.url === 'string') {
       if (!whiteList.includes(config.url)) {
         let token = getToken()
+        let refreshToken = getRefreshToken()
+        
         if (token && token.length > 0) {
           config.headers && (config.headers['Authorization'] = `Bearer ${token}`)
           console.log('🔑 添加 Token:', token.substring(0, 20) + '...');
+        }
+        
+        // 添加refresh token到请求头
+        if (refreshToken && refreshToken.length > 0) {
+          config.headers && (config.headers['X-Refresh-Token'] = refreshToken)
+          console.log('🔄 添加 Refresh Token');
         }
       } else {
         console.log('⚪ 白名单接口，跳过 Token 验证');
@@ -59,10 +51,21 @@ instance.interceptors.request.use(
   }
 )
 
-export function setResponseInterceptor(store, login, logout) {
+export function setResponseInterceptor(store) {
   // 添加响应拦截器
   instance.interceptors.response.use(
     (response) => {
+      // 检查响应头中是否有新的token
+      const newAccessToken = response.headers['x-new-access-token']
+      const tokenRefreshed = response.headers['x-token-refreshed']
+      
+      if (newAccessToken && tokenRefreshed === 'true') {
+        console.log('🔄 检测到token已刷新，更新本地token')
+        setToken(newAccessToken)
+        // 同时更新Redux状态
+        store.dispatch({ type: 'user/login', payload: { token: newAccessToken, refreshToken: getRefreshToken() } })
+      }
+
       // 如果返回的类型为二进制文件类型
       if (response.config.responseType === 'blob') {
         if (response.status !== 200) {
@@ -91,8 +94,49 @@ export function setResponseInterceptor(store, login, logout) {
         return response.data || response
       }
     },
-    (error) => {
+    async (error) => {
       console.error('请求错误:', error)
+      
+      // 处理401错误（token过期）
+      if (error.response && error.response.status === 401) {
+        const refreshToken = getRefreshToken()
+        
+        if (refreshToken) {
+          try {
+            console.log('🔄 尝试刷新token...')
+            // 调用刷新token接口
+            const refreshResponse = await Axios.post('/api/auth/refresh', {
+              refreshToken: refreshToken
+            })
+            
+            if (refreshResponse.data && refreshResponse.data.code === 200) {
+              const { accessToken } = refreshResponse.data.data
+              setToken(accessToken)
+              console.log('✅ Token刷新成功')
+              
+              // 重新发送原始请求
+              const originalRequest = error.config
+              originalRequest.headers['Authorization'] = `Bearer ${accessToken}`
+              return instance(originalRequest)
+            }
+          } catch (refreshError) {
+            console.error('❌ Token刷新失败:', refreshError)
+            // 刷新失败，清除所有token并跳转到登录页
+            removeToken()
+            removeRefreshToken()
+            // 清除Redux状态
+            store.dispatch({ type: 'user/logout' })
+            message.error('登录已过期，请重新登录')
+            return Promise.reject(refreshError)
+          }
+        } else {
+          // 没有refresh token，直接跳转登录
+          message.error('请先登录')
+          store.dispatch({ type: 'user/logout' })
+          return Promise.reject(error)
+        }
+      }
+      
       if (error.code === 'ECONNABORTED') {
         message.error('请求超时，请检查网络连接')
       } else if (error.response) {

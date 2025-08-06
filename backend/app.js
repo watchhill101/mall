@@ -55,34 +55,33 @@ app.use((req, res, next) => {
   }
   next();
 });
-// 添加测试路由
-app.get("/test", (req, res) => {
+// 添加测试路由（需要token验证）
+app.get("/test", jwtAuth, verifyTokenType, (req, res) => {
   res.json({
     code: 200,
     message: "后端服务正常运行",
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    user: req.auth // 返回当前用户信息以验证token
   });
 });
 
-// 路由
+// 不需要token验证的路由（公开路由）
 app.use("/", indexRouter);
-app.use("/users", usersRouter);
-app.use("/auth", authRouter);
-app.use("/merchant", merchantRouter);
-app.use("/merchant-account", merchantAccountRouter);
-app.use("/account-detail", accountDetailRouter);
-app.use("/withdraw-account", withdrawAccountRouter);
-app.use("/merchant-withdraw", merchantWithdrawRouter);
-app.use("/settlement-order", settlementOrderRouter);
-app.use("/bill", billRouter);
-app.use("/captcha", captchaRouter);
-app.use("/merchant-application", merchantApplicationRouter);
-app.use("/api", navigationRouter);
-app.use("/goods", businessRouter);
-app.use("/system", );
+app.use("/auth", authRouter);  // 登录、注册等认证相关
+app.use("/captcha", captchaRouter);  // 验证码
 
-// 需要认证的路由 - 使用express-jwt
-app.use("/merchant/list", jwtAuth, verifyTokenType); // 需要强制验证的路由
+// 需要token验证的路由
+app.use("/users", jwtAuth, verifyTokenType, usersRouter);
+app.use("/merchant", jwtAuth, verifyTokenType, merchantRouter);
+app.use("/merchant-account", jwtAuth, verifyTokenType, merchantAccountRouter);
+app.use("/account-detail", jwtAuth, verifyTokenType, accountDetailRouter);
+app.use("/withdraw-account", jwtAuth, verifyTokenType, withdrawAccountRouter);
+app.use("/merchant-withdraw", jwtAuth, verifyTokenType, merchantWithdrawRouter);
+app.use("/settlement-order", jwtAuth, verifyTokenType, settlementOrderRouter);
+app.use("/bill", jwtAuth, verifyTokenType, billRouter);
+app.use("/merchant-application", jwtAuth, verifyTokenType, merchantApplicationRouter);
+app.use("/api", jwtAuth, verifyTokenType, navigationRouter);
+app.use("/goods", jwtAuth, verifyTokenType, businessRouter);
 
 // JWT错误处理中间件
 app.use(jwtErrorHandler);
