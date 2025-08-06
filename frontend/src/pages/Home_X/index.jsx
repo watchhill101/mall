@@ -3552,6 +3552,14 @@ const Home = () => {
     }
   }, [isDragging, draggableElements, dragStartPos]);
 
+  // 渲染拖拽元素内容
+  const renderElementContent = (element) => {
+    if (element.type === 'panel' && element.id === 'stats-panel') {
+      return <StatusMonitorPanel />;
+    }
+    return element.label;
+  };
+
   // 处理元素点击事件 - 提前定义避免依赖顺序问题
   const handleElementClick = useCallback((elementId) => {
     switch(elementId) {
@@ -3562,7 +3570,7 @@ const Home = () => {
         setGlobeVisible(true);
         break;
       case 'stats-panel':
-        // 统计面板点击逻辑
+        // 统计面板点击逻辑 - 面板本身就是内容，不需要额外操作
         break;
       default:
         break;
@@ -3756,8 +3764,7 @@ const Home = () => {
     <div style={{ position: "relative" }}>
       <Dashboard onRegionClick={handleMapRegionClick} />
 
-              {/* 右下角状态监控面板 - 地图容器内悬浮 */}
-        <StatusMonitorPanel />
+              {/* 右下角状态监控面板现在通过拖拽系统渲染 */}
 
       {/* 左上角销售统计图表 */}
       <SalesOverviewChart
@@ -3789,19 +3796,25 @@ const Home = () => {
             zIndex: isDragging === element.id ? 9999 : 999,
             background: element.type === 'button' 
               ? 'linear-gradient(135deg, rgba(24, 144, 255, 0.95), rgba(16, 112, 224, 0.9))' 
-              : 'linear-gradient(135deg, rgba(45, 55, 72, 0.9), rgba(55, 65, 81, 0.85))',
+              : element.id === 'stats-panel' 
+                ? 'transparent' // 监控面板使用透明背景，让内容自己处理样式
+                : 'linear-gradient(135deg, rgba(45, 55, 72, 0.9), rgba(55, 65, 81, 0.85))',
             border: element.type === 'button' 
               ? '2px solid rgba(59, 130, 246, 0.4)' 
-              : '2px solid rgba(129, 140, 248, 0.4)',
+              : element.id === 'stats-panel'
+                ? 'none' // 监控面板不需要边框
+                : '2px solid rgba(129, 140, 248, 0.4)',
             borderRadius: element.type === 'button' ? '12px' : '16px',
-            boxShadow: isDragging === element.id 
-              ? '0 12px 32px rgba(0, 0, 0, 0.6), 0 0 20px rgba(59, 130, 246, 0.3)' 
-              : '0 6px 20px rgba(0, 0, 0, 0.4), 0 0 10px rgba(0, 0, 0, 0.1)',
-            backdropFilter: 'blur(20px) saturate(180%)',
+            boxShadow: element.id === 'stats-panel' 
+              ? 'none' // 监控面板不需要外部阴影
+              : isDragging === element.id 
+                ? '0 12px 32px rgba(0, 0, 0, 0.6), 0 0 20px rgba(59, 130, 246, 0.3)' 
+                : '0 6px 20px rgba(0, 0, 0, 0.4), 0 0 10px rgba(0, 0, 0, 0.1)',
+            backdropFilter: element.id === 'stats-panel' ? 'none' : 'blur(20px) saturate(180%)',
             cursor: isDragging === element.id ? 'grabbing' : 'grab',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            display: element.type === 'button' ? 'flex' : 'block',
+            alignItems: element.type === 'button' ? 'center' : 'stretch',
+            justifyContent: element.type === 'button' ? 'center' : 'stretch',
             color: '#ffffff',
             fontSize: element.type === 'button' ? '13px' : '12px',
             fontWeight: '600',
@@ -3811,24 +3824,26 @@ const Home = () => {
               ? 'box-shadow 0.1s ease' 
               : 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
             transform: isDragging === element.id ? 'scale(1.02)' : 'scale(1.0)',
-            // 添加微妙的内发光效果
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              borderRadius: 'inherit',
-              padding: '1px',
-              background: 'linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05))',
-              mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-              maskComposite: 'exclude'
-            }
+            // 只对按钮添加内发光效果
+            ...(element.type === 'button' && {
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                borderRadius: 'inherit',
+                padding: '1px',
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05))',
+                mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                maskComposite: 'exclude'
+              }
+            })
           }}
           onMouseDown={(e) => handleMouseDown(e, element.id)}
           onMouseEnter={(e) => {
-            if (isDragging !== element.id) {
+            if (isDragging !== element.id && element.id !== 'stats-panel') {
               e.target.style.transform = 'scale(1.08) translateY(-2px)';
               e.target.style.boxShadow = element.type === 'button' 
                 ? '0 8px 25px rgba(59, 130, 246, 0.4), 0 0 15px rgba(59, 130, 246, 0.2)' 
@@ -3836,19 +3851,27 @@ const Home = () => {
               e.target.style.borderColor = element.type === 'button' 
                 ? 'rgba(59, 130, 246, 0.6)' 
                 : 'rgba(129, 140, 248, 0.6)';
+            } else if (element.id === 'stats-panel' && isDragging !== element.id) {
+              // 监控面板的悬停效果 - 轻微缩放
+              e.target.style.transform = 'scale(1.02)';
+              e.target.style.filter = 'brightness(1.1)';
             }
           }}
           onMouseLeave={(e) => {
-            if (isDragging !== element.id) {
+            if (isDragging !== element.id && element.id !== 'stats-panel') {
               e.target.style.transform = 'scale(1.0) translateY(0px)';
               e.target.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.4), 0 0 10px rgba(0, 0, 0, 0.1)';
               e.target.style.borderColor = element.type === 'button' 
                 ? 'rgba(59, 130, 246, 0.4)' 
                 : 'rgba(129, 140, 248, 0.4)';
+            } else if (element.id === 'stats-panel' && isDragging !== element.id) {
+              // 监控面板恢复
+              e.target.style.transform = 'scale(1.0)';
+              e.target.style.filter = 'brightness(1.0)';
             }
           }}
         >
-          {element.label}
+          {renderElementContent(element)}
         </div>
       ))}
     </div>
