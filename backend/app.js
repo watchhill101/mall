@@ -12,7 +12,11 @@ var merchantRouter = require("./routes/merchant");
 var merchantAccountRouter = require("./routes/merchantAccount");
 var accountDetailRouter = require("./routes/accountDetail");
 var withdrawAccountRouter = require("./routes/withdrawAccount");
+var merchantWithdrawRouter = require("./routes/merchantWithdraw");
+var settlementOrderRouter = require("./routes/settlementOrder");
+var billRouter = require("./routes/bill");
 var captchaRouter = require("./routes/captcha");
+var merchantApplicationRouter = require("./routes/merchantApplication");
 
 // 导入数据库模型（确保数据库连接和模型初始化）
 require("./moudle/index");
@@ -66,7 +70,11 @@ app.use("/merchant", merchantRouter);
 app.use("/merchant-account", merchantAccountRouter);
 app.use("/account-detail", accountDetailRouter);
 app.use("/withdraw-account", withdrawAccountRouter);
+app.use("/merchant-withdraw", merchantWithdrawRouter);
+app.use("/settlement-order", settlementOrderRouter);
+app.use("/bill", billRouter);
 app.use("/captcha", captchaRouter);
+app.use("/merchant-application", merchantApplicationRouter);
 
 // 需要认证的路由 - 使用express-jwt
 app.use("/merchant/list", jwtAuth, verifyTokenType); // 需要强制验证的路由

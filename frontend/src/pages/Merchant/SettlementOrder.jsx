@@ -29,6 +29,7 @@ import {
 import * as XLSX from 'xlsx'
 import dayjs from 'dayjs'
 import MerchantLayout from './MerchantLayout'
+import { getSettlementOrderList, testSettlementOrderAPI } from '@/api/settlementOrder'
 
 const { Title } = Typography
 const { Option } = Select
@@ -37,12 +38,11 @@ const { RangePicker } = DatePicker
 const SettlementOrder = () => {
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
-  const [allData, setAllData] = useState([])
-  const [filteredData, setFilteredData] = useState([])
+  const [dataSource, setDataSource] = useState([])
   const [searchParams, setSearchParams] = useState({})
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 2,
+    pageSize: 10,
     total: 0
   })
 
@@ -53,101 +53,56 @@ const SettlementOrder = () => {
   const [detailModalVisible, setDetailModalVisible] = useState(false)
   const [selectedRecord, setSelectedRecord] = useState(null)
 
-  // 模拟结算订单数据
-  const mockSettlementOrderData = [
-    {
-      id: 1,
-      orderNo: 'SJTX-123312',
-      merchantName: '商家名称商家名称',
-      networkPoint: '网点名称网点名称',
-      productName: '商品名称商品名称',
-      specifications: '规格名称规格名称',
-      supplyPrice: 196,
-      quantity: 1,
-      totalPrice: 196,
-      settlementStatus: 'unsettled',
-      paymentTime: '2023-12-12 14:23:23',
-      settlementTime: ''
-    },
-    {
-      id: 2,
-      orderNo: 'SJTX-123312',
-      merchantName: '商家名称商家名称',
-      networkPoint: '网点名称网点名称',
-      productName: '商品名称商品名称',
-      specifications: '规格名称规格名称',
-      supplyPrice: 196,
-      quantity: 1,
-      totalPrice: 196,
-      settlementStatus: 'settled',
-      paymentTime: '2023-12-12 14:23:23',
-      settlementTime: ''
-    },
-    {
-      id: 3,
-      orderNo: 'SJTX-123312',
-      merchantName: '商家名称商家名称',
-      networkPoint: '网点名称网点名称',
-      productName: '商品名称商品名称',
-      specifications: '规格名称规格名称',
-      supplyPrice: 196,
-      quantity: 1,
-      totalPrice: 196,
-      settlementStatus: 'settled',
-      paymentTime: '2023-12-12 14:23:23',
-      settlementTime: '2023-12-12 14:23:23'
-    },
-    {
-      id: 4,
-      orderNo: 'SJTX-123312',
-      merchantName: '商家名称商家名称',
-      networkPoint: '网点名称网点名称',
-      productName: '商品名称商品名称',
-      specifications: '规格名称规格名称',
-      supplyPrice: 196,
-      quantity: 1,
-      totalPrice: 196,
-      settlementStatus: 'settled',
-      paymentTime: '2023-12-12 14:23:23',
-      settlementTime: '2023-12-12 14:23:23'
-    },
-    {
-      id: 5,
-      orderNo: 'SJTX-123313',
-      merchantName: '清风超市',
-      networkPoint: '清风网点一号店',
-      productName: '苹果iPhone15',
-      specifications: '128GB 黑色',
-      supplyPrice: 5999,
-      quantity: 2,
-      totalPrice: 11998,
-      settlementStatus: 'unsettled',
-      paymentTime: '2023-12-13 10:30:00',
-      settlementTime: ''
-    }
-  ]
+  // 获取结算订单列表
+  const fetchSettlementOrderList = async (params = {}) => {
+    try {
+      setLoading(true)
 
-  // 计算当前页数据
-  const currentPageData = useMemo(() => {
-    const startIndex = (pagination.current - 1) * pagination.pageSize
-    const endIndex = startIndex + pagination.pageSize
-    return filteredData.slice(startIndex, endIndex)
-  }, [filteredData, pagination.current, pagination.pageSize])
-
-  // 检查并修正分页状态
-  useEffect(() => {
-    if (filteredData.length > 0) {
-      const totalPages = Math.ceil(filteredData.length / pagination.pageSize)
-      if (pagination.current > totalPages) {
-        setPagination(prev => ({ ...prev, current: totalPages }))
+      // 处理日期参数
+      let apiParams = { ...params }
+      if (params.selectedDate && params.timeType) {
+        const dateStr = params.selectedDate.format('YYYY-MM-DD')
+        apiParams.startDate = dateStr
+        apiParams.endDate = dateStr
+        delete apiParams.selectedDate
       }
-    }
-  }, [filteredData.length, pagination.current, pagination.pageSize])
 
+      // 合并分页参数
+      apiParams = {
+        page: pagination.current,
+        pageSize: pagination.pageSize,
+        ...apiParams
+      }
+
+      console.log('📋 发送API请求参数:', apiParams)
+
+      const response = await getSettlementOrderList(apiParams)
+
+      if (response.code === 200) {
+        setDataSource(response.data.list || [])
+        setPagination(prev => ({
+          ...prev,
+          total: response.data.pagination?.total || 0,
+          current: response.data.pagination?.current || 1,
+          pageSize: response.data.pagination?.pageSize || 10
+        }))
+        console.log('✅ 获取结算订单列表成功:', response.data)
+      } else {
+        message.error(response.message || '获取结算订单列表失败')
+        setDataSource([])
+      }
+    } catch (error) {
+      console.error('❌ 获取结算订单列表失败:', error)
+      message.error('获取结算订单列表失败，请重试')
+      setDataSource([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // 初始化数据
   useEffect(() => {
-    setAllData(mockSettlementOrderData)
-    setFilteredData(mockSettlementOrderData)
-    setPagination(prev => ({ ...prev, total: mockSettlementOrderData.length }))
+    fetchSettlementOrderList()
   }, [])
 
   // 监听表单时间类型变化
@@ -158,78 +113,20 @@ const SettlementOrder = () => {
     }
   }, [form, selectedTimeType])
 
-  // 筛选数据
-  const filterData = (data, params) => {
-    return data.filter(item => {
-      // 按商家名称筛选
-      if (params.merchantName && !item.merchantName.toLowerCase().includes(params.merchantName.toLowerCase())) {
-        return false
-      }
-
-      // 按网点筛选
-      if (params.networkPoint && !item.networkPoint.toLowerCase().includes(params.networkPoint.toLowerCase())) {
-        return false
-      }
-
-      // 按订单编号筛选
-      if (params.orderNo && !item.orderNo.toLowerCase().includes(params.orderNo.toLowerCase())) {
-        return false
-      }
-
-      // 按商品名称筛选
-      if (params.productName && !item.productName.toLowerCase().includes(params.productName.toLowerCase())) {
-        return false
-      }
-
-      // 按状态筛选
-      if (params.settlementStatus && item.settlementStatus !== params.settlementStatus) {
-        return false
-      }
-
-      // 按日期筛选（根据选择的时间类型）
-      if (params.timeType && params.selectedDate) {
-        const selectedDateStr = params.selectedDate.format('YYYY-MM-DD')
-
-        if (params.timeType === 'paymentTime') {
-          // 按支付日期筛选
-          if (item.paymentTime) {
-            const itemDateStr = item.paymentTime.split(' ')[0] // 提取日期部分
-            if (itemDateStr !== selectedDateStr) {
-              return false
-            }
-          } else {
-            return false // 没有支付时间的记录排除
-          }
-        } else if (params.timeType === 'settlementTime') {
-          // 按结算日期筛选
-          if (item.settlementTime && item.settlementTime.trim() !== '') {
-            const itemDateStr = item.settlementTime.split(' ')[0] // 提取日期部分
-            if (itemDateStr !== selectedDateStr) {
-              return false
-            }
-          } else {
-            // 如果选择结算时间筛选，但该条记录没有结算时间，则排除
-            return false
-          }
-        }
-      }
-
-      return true
-    })
-  }
-
   // 搜索处理
   const handleSearch = (values) => {
     console.log('搜索条件:', values)
-    setLoading(true)
     setSearchParams(values)
+    setPagination(prev => ({ ...prev, current: 1 }))
 
+    // 重新获取数据
     setTimeout(() => {
-      const filtered = filterData(allData, values)
-      setFilteredData(filtered)
-      setPagination(prev => ({ ...prev, current: 1, total: filtered.length }))
-      setLoading(false)
-    }, 500)
+      fetchSettlementOrderList({
+        ...values,
+        page: 1,
+        pageSize: pagination.pageSize
+      })
+    }, 100)
   }
 
   // 重置处理
@@ -237,17 +134,31 @@ const SettlementOrder = () => {
     form.resetFields()
     setSearchParams({})
     setSelectedTimeType('')
-    setFilteredData(allData)
-    setPagination(prev => ({ ...prev, current: 1, total: allData.length }))
+    setPagination(prev => ({ ...prev, current: 1 }))
+
+    // 重新获取数据
+    setTimeout(() => {
+      fetchSettlementOrderList({
+        page: 1,
+        pageSize: pagination.pageSize
+      })
+    }, 100)
   }
 
   // 分页处理
   const handlePaginationChange = (page, pageSize) => {
-    setPagination(prev => ({
-      ...prev,
+    const newPagination = {
       current: page,
-      pageSize: pageSize || prev.pageSize
-    }))
+      pageSize: pageSize || pagination.pageSize
+    }
+    setPagination(prev => ({ ...prev, ...newPagination }))
+
+    // 重新获取数据
+    fetchSettlementOrderList({
+      ...searchParams,
+      page,
+      pageSize: pageSize || pagination.pageSize
+    })
   }
 
   // 导出数据
@@ -257,7 +168,7 @@ const SettlementOrder = () => {
       const workBook = XLSX.utils.book_new()
 
       // 1. 计算统计数据
-      const statistics = allData.reduce((acc, item) => {
+      const statistics = dataSource.reduce((acc, item) => {
         acc.totalOrders += 1
         acc.totalAmount += item.totalPrice
 
@@ -304,7 +215,7 @@ const SettlementOrder = () => {
       XLSX.utils.book_append_sheet(workBook, statisticsSheet, '结算统计')
 
       // 2. 创建详细订单数据工作表
-      const detailData = allData.map((item, index) => {
+      const detailData = dataSource.map((item, index) => {
         const statusMap = {
           unsettled: '未结算',
           settled: '已结算',
@@ -346,12 +257,12 @@ const SettlementOrder = () => {
 
       // 3. 生成文件名
       const now = dayjs().format('YYYY-MM-DD_HH-mm-ss')
-      const fileName = `结算订单明细_全部数据_${now}.xlsx`
+      const fileName = `结算订单明细_当前数据_${now}.xlsx`
 
       // 4. 导出文件
       XLSX.writeFile(workBook, fileName)
 
-      message.success(`成功导出Excel文件：${fileName}，包含 ${allData.length} 条订单记录`)
+      message.success(`成功导出Excel文件：${fileName}，包含 ${dataSource.length} 条订单记录`)
 
     } catch (error) {
       console.error('导出Excel时出错:', error)
@@ -361,13 +272,11 @@ const SettlementOrder = () => {
 
   // 刷新数据
   const handleRefresh = () => {
-    setLoading(true)
-    setTimeout(() => {
-      const filtered = filterData(allData, searchParams)
-      setFilteredData(filtered)
-      setPagination(prev => ({ ...prev, total: filtered.length }))
-      setLoading(false)
-    }, 500)
+    fetchSettlementOrderList({
+      ...searchParams,
+      page: pagination.current,
+      pageSize: pagination.pageSize
+    })
   }
 
   // 表格列定义
@@ -613,7 +522,7 @@ const SettlementOrder = () => {
 
           <Table
             columns={columns}
-            dataSource={currentPageData}
+            dataSource={dataSource}
             rowKey="id"
             pagination={false}
             loading={loading}
@@ -642,8 +551,8 @@ const SettlementOrder = () => {
                 `第 ${range[0]}-${range[1]} 条/共 ${total} 条`
               }
               onChange={handlePaginationChange}
-              pageSizeOptions={['2', '5', '10', '20', '50', '100']}
-              defaultPageSize={2}
+              pageSizeOptions={['10', '20', '50', '100']}
+              defaultPageSize={10}
             />
           </div>
         </Card>

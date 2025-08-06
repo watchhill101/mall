@@ -26,7 +26,13 @@ const whiteList = [
   '/account-detail/test',        // 账户明细测试接口
   '/withdraw-account/list',      // 提现账号列表，用于测试
   '/withdraw-account/test',      // 提现账号测试接口
-  '/withdraw-account/merchants'  // 商家列表，用于测试
+  '/withdraw-account/merchants', // 商家列表，用于测试
+  '/merchant-withdraw/list',     // 商家提现列表，用于测试
+  '/merchant-withdraw/test',     // 商家提现测试接口
+  '/merchant-withdraw/audit',    // 商家提现审核接口
+  '/bill/list',                  // 结算账单列表，用于测试
+  '/bill/test',                  // 结算账单测试接口
+  '/bill/stats'                  // 结算账单统计接口
 ]
 
 // 添加请求拦截器
