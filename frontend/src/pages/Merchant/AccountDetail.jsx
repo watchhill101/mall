@@ -19,7 +19,7 @@ import {
 } from 'antd'
 import { SearchOutlined, ReloadOutlined, EyeOutlined, FileExcelOutlined, FullscreenOutlined, ColumnHeightOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
-import * as XLSX from 'xlsx'
+// import * as XLSX from 'xlsx'  // 临时注释，需要时请安装: npm install xlsx
 import MerchantLayout from './MerchantLayout'
 import accountDetailAPI, { MERCHANT_TYPES, MERCHANT_TYPE_LABELS } from '@/api/accountDetail'
 
@@ -331,6 +331,10 @@ const AccountDetail = () => {
 
   // 导出处理
   const handleExport = () => {
+    alert('导出功能需要安装xlsx库。请运行: npm install xlsx')
+    return
+    
+    /* 原始导出代码（安装xlsx后取消注释）
     try {
       // 创建工作簿
       const workBook = XLSX.utils.book_new()
@@ -409,6 +413,7 @@ const AccountDetail = () => {
       console.error('导出Excel时出错:', error)
       message.error('导出Excel失败，请重试')
     }
+    */
   }
 
   // 关闭详情模态框

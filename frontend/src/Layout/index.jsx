@@ -310,6 +310,11 @@ const LayoutApp = () => {
     import("@/pages/Merchant/MerchantApplication")
   );
 
+  // const DeviceManagement = lazy(() =>
+  //   import("@/pages/Merchant/DeviceManagement")  // 临时注释，组件不存在
+  // );
+
+
   // 导入商品相关组件
   const ListOfCommodities = lazy(() =>
     import("@/pages/Goods_S/ListOfCommodities")
@@ -386,6 +391,12 @@ const LayoutApp = () => {
             case "/shops/merchant-application":
               element = <MerchantApplication />;
               break;
+
+            case "/shops/device-management":
+              // element = <DeviceManagement />;  // 临时注释，组件不存在
+              element = <div style={{padding: '20px', textAlign: 'center'}}>设备管理功能开发中...</div>;
+              break;
+
 
             // 商品相关路由
             case "/goods/product-list":

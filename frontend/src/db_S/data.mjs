@@ -1,186 +1,207 @@
-import Mock from "mockjs"
-// 商品列表模拟数据
-export const data = Mock.mock({
-    // 属性 list 的值是一个数组，其中含有 1 到 10 个元素
-    'list|1-100': [{
-        // 属性 id 是一个自增数，起始值为 1，每次增 1
-        'id|+1': 1,
-        "ProductID": "@guid",
-        "src": "@image('200x200', '#50B347', '#FFF', 'Mock.js')",
-        'ProductName': '@ctitle',
-        'ProductCategory': '@cname',
-        'SellingPrice': '@integer(100, 1000)',
-        'StockCommodities': '@integer(100, 1000)',
-        'TotalInventory': '@integer(100, 1000)',
-        'status': '@pick(["在售","未售"])',
-        'LastUpdateTime': '@date("yyyy-MM-dd hh:mm:ss")',
-        "MarketPrice": '@integer(100, 1000)',
-        'isDeleted': '@boolean'
-    }]
-});
-// 商品分类模拟数据
-export const ProductClassificationData = Mock.mock({
-    'list|1-100': [{
-        'id|+1': 1,
-        'BusinessType': '@pick(["零售","家政"])',
-        'ClassificationID': '@integer(100, 1000)',
-        'CategoryName': "@cname",
-        "ParentCategory": "@cname",
-        "ClassificationRank": "@pick(['一级','二级'])",
-        "ClassificationIcon": "@image('100x100', '#50B347', '#FFF', 'Mock.js')",
-        "ClassificationImg": "@image('200x200', '#50B347', '#FFF', 'Mock.js')",
-        "AfterSalesDays": "@integer(7, 14)",
-        "ClassificationAndSorting": "@integer(1, 100)",
-        "status": "@pick(['正常','禁用'])",
-    }]
+// import Mock from "mockjs"  // 临时注释，使用静态数据替代
 
-})
-// 订单数据
-export const OrderData = Mock.mock({
-    'list|1-100': [{
-        'id|+1': 1,
-        "OrderNumber": "@integer(100, 1000)",
-        "CreationTime": "@date('yyyy-MM-dd hh:mm:ss')",
-        "PaymentTime": "@date('yyyy-MM-dd hh:mm:ss')",
-        "PaymentMethod": "@pick(['微信','钱包','支付宝','余额'])",
-        // 备注 有内容则红色显示
-        "Remarks": "@cparagraph(1, 3)",
-        'ProductInformation': [
-            {
-
-                "id": "@integer(100, 1000)",
-                // 商品名称
-                "ProductName": '@cname',
-                // 规格
-                "Specification": '@pick(["红色", "蓝色", "绿色"])',
-                // 价格
-                "price": "@integer(100, 1000)",
-                // 数量
-                quantity: "@integer(1, 10)",
-            }
-        ],
-        "CustomerInformation": [
-            {
-                "id": "@integer(100, 1000)",
-                "CustomerName": "@cname",
-                "ContactInformation": "@integer(10000000000, 100000000000)"
-            }
-
-        ],
-        // 佣金
-        "Commission": "@integer(100, 1000)",
-        // 店铺名称
-        "StoreName": "@cname",
-        // 网点名称
-        "OutletName": "@cname",
-        // 订单状态
-        "OrderStatus": "@pick([0,1,2,3,4,5])])"
-    }]
-})
-// 回收站数据
-export const TrashData = Mock.mock({
-    "data|10": [{
-        // 商品ID
-        "ProductID": "@integer(100, 1000)",
-        // 商品名称
-        "ProductName": "@cname",
-        "src": "@image('20x20', '#4A7BF7', 'Goods')",
-        "ProductCategory": "@pick(['电子产品','服装'])",
-        "MarketPrice": "@integer(100, 1000)",
-        "LastUpdateTime": "@datetime",
-
-    }]
-})
-
-
-
-// 
-export const GoodsList = [
+// 商品列表静态数据
+export const data = {
+  list: [
     {
-        "list": [
-            {
-                "id": 1,
-                "ProductID": "f91b9f3d-9f63-4a2a-aee3-c8c8b8bfa1c7",
-                "src": "https://dummyimage.com/200x200/50B347/FFF&text=Mock.js",
-                "ProductName": "智能手表",
-                "ProductCategory": "电子产品",
-                "SellingPrice": 876,
-                "StockCommodities": 432,
-                "TotalInventory": 983,
-                "status": "在售",
-                "LastUpdateTime": "2025-07-23 10:23:12",
-                "isDeleted": false
-            },
-            {
-                "id": 2,
-                "ProductID": "14e3f88d-88c6-4e4c-b7fd-f2c4be8fd18c",
-                "src": "https://dummyimage.com/200x200/50B347/FFF&text=Mock.js",
-                "ProductName": "蓝牙耳机",
-                "ProductCategory": "数码配件",
-                "SellingPrice": 645,
-                "StockCommodities": 285,
-                "TotalInventory": 678,
-                "status": "未售",
-                "LastUpdateTime": "2025-06-15 14:12:55",
-                "isDeleted": true
-            },
-            {
-                "id": 3,
-                "ProductID": "7a9e58db-32be-4a76-8e91-1fc452aa3c02",
-                "src": "https://dummyimage.com/200x200/50B347/FFF&text=Mock.js",
-                "ProductName": "空气净化器",
-                "ProductCategory": "家用电器",
-                "SellingPrice": 522,
-                "StockCommodities": 769,
-                "TotalInventory": 921,
-                "status": "在售",
-                "LastUpdateTime": "2025-08-03 09:03:44",
-                "isDeleted": false
-            }
-        ]
+      id: 1,
+      ProductID: "PROD-001",
+      src: "/1.jpg",
+      ProductName: "示例商品1",
+      ProductCategory: "电子产品",
+      SellingPrice: 299,
+      StockCommodities: 100,
+      TotalInventory: 100,
+      status: "在售",
+      LastUpdateTime: "2025-08-06 14:52:00",
+      MarketPrice: 399,
+      isDeleted: false
+    },
+    {
+      id: 2,
+      ProductID: "PROD-002",
+      src: "/2.jpg",
+      ProductName: "示例商品2",
+      ProductCategory: "服装",
+      SellingPrice: 199,
+      StockCommodities: 50,
+      TotalInventory: 50,
+      status: "在售",
+      LastUpdateTime: "2025-08-06 14:52:00",
+      MarketPrice: 299,
+      isDeleted: false
+    },
+    {
+      id: 3,
+      ProductID: "PROD-003",
+      src: "/3.jpg",
+      ProductName: "示例商品3",
+      ProductCategory: "家居用品",
+      SellingPrice: 159,
+      StockCommodities: 75,
+      TotalInventory: 75,
+      status: "在售",
+      LastUpdateTime: "2025-08-06 14:52:00",
+      MarketPrice: 199,
+      isDeleted: false
     }
-
-]
-// 售后订单数据
-export const afterSaleOrder = Mock.mock({
-    "code": 200,
-    "message": "success",
-    "data|20": [ // 生成20条数据
-        {
-            "id|+1": 1,
-            "After-salesOrder": "@guid",
-            "OriginalOrder": "@guid",
-            "After-salesSource": "@pick(['用户申请', '商家发起', '平台介入'])",
-            "MemberInformation": "@cname (@integer(13000000000,13999999999))",
-            "After-salesAmount": "@float(10, 1000, 2, 2)",
-            "Status": "@pick(['待审核', '已完成', '已拒绝', '处理中'])",
-            "RefundAmount": "@float(0, 1000, 2, 2)",
-            "AfterSaleTime": "@datetime('yyyy-MM-dd HH:mm:ss')",
-            "Auditor": "@cname",
-            "ProcessingTime": "@datetime('yyyy-MM-dd HH:mm:ss')",
-            "OrderSource": "@pick(['小程序', 'APP', '公众号', 'PC'])",
-            "IP": "@ip",
-            "HostAddress": "@domain",
-            "MacAddress": "@string('hex', 2):@string('hex', 2):@string('hex', 2):@string('hex', 2):@string('hex', 2):@string('hex', 2)",
-        }
-    ]
-});
-// 理货单
-export const sortingOrderList = {
-    data: [
-        {
-            sortingOrderNo: 'WLD1232132213121212',
-            sortingCount: 5,
-            sortingStatus: '待理货',
-            createTime: '2023-12-12 12:12:12',
-            completeTime: '2023-12-12 12:12:12',
-        },
-        {
-            sortingOrderNo: 'WLD1232132213121212',
-            sortingCount: 5,
-            sortingStatus: '已理货',
-            createTime: '2023-12-12 12:12:12',
-            completeTime: '2023-12-12 12:12:12',
-        },
-    ],
+  ]
 };
+
+// 售后订单数据
+export const afterSaleOrder = {
+  list: [
+    {
+      id: 1,
+      orderNumber: "AS-001",
+      productName: "示例商品1",
+      customerName: "张三",
+      status: "处理中",
+      createTime: "2025-08-06 14:52:00",
+      reason: "质量问题"
+    },
+    {
+      id: 2,
+      orderNumber: "AS-002",
+      productName: "示例商品2",
+      customerName: "李四",
+      status: "已完成",
+      createTime: "2025-08-06 14:52:00",
+      reason: "退换货"
+    }
+  ]
+};
+
+// 分拣订单列表
+export const sortingOrderList = {
+  list: [
+    {
+      id: 1,
+      orderNumber: "SO-001",
+      status: "待分拣",
+      createTime: "2025-08-06 14:52:00",
+      items: 5
+    },
+    {
+      id: 2,
+      orderNumber: "SO-002",
+      status: "已分拣",
+      createTime: "2025-08-06 14:52:00",
+      items: 3
+    }
+  ]
+};
+
+// 订单数据
+export const OrderData = {
+  list: [
+    {
+      id: 1,
+      OrderNumber: "ORD-001",
+      CreationTime: "2025-08-06 14:52:00",
+      PaymentTime: "2025-08-06 15:20:00",
+      PaymentMethod: "微信",
+      Remarks: "请尽快发货",
+      ProductInformation: [
+        {
+          id: 1,
+          ProductName: "示例商品1",
+          Specification: "红色",
+          price: 299,
+          quantity: 2
+        }
+      ],
+      CustomerInformation: [
+        {
+          id: 1,
+          CustomerName: "张三",
+          ContactInformation: "13800138000"
+        }
+      ],
+      Commission: 29.9,
+      StoreName: "示例店铺1",
+      OutletName: "示例网点1",
+      OrderStatus: 1
+    },
+    {
+      id: 2,
+      OrderNumber: "ORD-002",
+      CreationTime: "2025-08-06 13:30:00",
+      PaymentTime: "2025-08-06 14:00:00",
+      PaymentMethod: "支付宝",
+      Remarks: "",
+      ProductInformation: [
+        {
+          id: 2,
+          ProductName: "示例商品2",
+          Specification: "蓝色",
+          price: 199,
+          quantity: 1
+        }
+      ],
+      CustomerInformation: [
+        {
+          id: 2,
+          CustomerName: "李四",
+          ContactInformation: "13900139000"
+        }
+      ],
+      Commission: 19.9,
+      StoreName: "示例店铺2",
+      OutletName: "示例网点2",
+      OrderStatus: 2
+    },
+    {
+      id: 3,
+      OrderNumber: "ORD-003",
+      CreationTime: "2025-08-06 12:15:00",
+      PaymentTime: "2025-08-06 12:45:00",
+      PaymentMethod: "余额",
+      Remarks: "送货上门",
+      ProductInformation: [
+        {
+          id: 3,
+          ProductName: "示例商品3",
+          Specification: "绿色",
+          price: 159,
+          quantity: 3
+        }
+      ],
+      CustomerInformation: [
+        {
+          id: 3,
+          CustomerName: "王五",
+          ContactInformation: "13700137000"
+        }
+      ],
+      Commission: 47.7,
+      StoreName: "示例店铺3",
+      OutletName: "示例网点3",
+      OrderStatus: 3
+    }
+  ]
+};
+
+// 回收站数据
+export const TrashData = {
+  list: [
+    {
+      id: 1,
+      ProductID: "PROD-DEL-001",
+      ProductName: "已删除商品1",
+      deleteTime: "2025-08-06 14:52:00",
+      reason: "下架处理"
+    },
+    {
+      id: 2,
+      ProductID: "PROD-DEL-002",
+      ProductName: "已删除商品2",
+      deleteTime: "2025-08-06 14:52:00",
+      reason: "库存清零"
+    }
+  ]
+};
+
+// 兼容性导出
+export const mockData = data;
+export default data;
