@@ -9,6 +9,17 @@ const User = require("../moudle/user/user");
 // 获取用户列表（分页查询）
 router.get("/users", async (req, res) => {
   try {
+    // 检查当前用户权限（只有管理员可以查看用户列表）
+    const currentUserId = req.auth.id || req.auth.userId;
+    const currentUser = await User.findById(currentUserId).select('-password');
+    
+    if (!currentUser || currentUser.role !== 'admin') {
+      return res.status(403).json({
+        code: 403,
+        message: "权限不足，只有管理员可以查看用户列表",
+      });
+    }
+
     const {
       page = 1,
       pageSize = 10,
@@ -72,6 +83,17 @@ router.get("/users", async (req, res) => {
 // 获取用户详情
 router.get("/users/:id", async (req, res) => {
   try {
+    // 检查当前用户权限（只有管理员可以查看用户详情）
+    const currentUserId = req.auth.id || req.auth.userId;
+    const currentUser = await User.findById(currentUserId).select('-password');
+    
+    if (!currentUser || currentUser.role !== 'admin') {
+      return res.status(403).json({
+        code: 403,
+        message: "权限不足，只有管理员可以查看用户详情",
+      });
+    }
+
     const user = await User.findById(req.params.id).select('-password');
     if (!user) {
       return res.status(404).json({
@@ -98,6 +120,17 @@ router.get("/users/:id", async (req, res) => {
 // 创建新用户
 router.post("/users", async (req, res) => {
   try {
+    // 检查当前用户权限（只有管理员可以创建用户）
+    const currentUserId = req.auth.id || req.auth.userId;
+    const currentUser = await User.findById(currentUserId).select('-password');
+    
+    if (!currentUser || currentUser.role !== 'admin') {
+      return res.status(403).json({
+        code: 403,
+        message: "权限不足，只有管理员可以创建用户",
+      });
+    }
+
     const { username, password, email, phone, role = 'user' } = req.body;
     
     if (!username || !password || !email) {
@@ -153,6 +186,17 @@ router.post("/users", async (req, res) => {
 // 更新用户信息
 router.put("/users/:id", async (req, res) => {
   try {
+    // 检查当前用户权限（只有管理员可以更新用户信息）
+    const currentUserId = req.auth.id || req.auth.userId;
+    const currentUser = await User.findById(currentUserId).select('-password');
+    
+    if (!currentUser || currentUser.role !== 'admin') {
+      return res.status(403).json({
+        code: 403,
+        message: "权限不足，只有管理员可以更新用户信息",
+      });
+    }
+
     const userId = req.params.id;
     const { username, email, phone, role, status } = req.body;
     
@@ -218,6 +262,17 @@ router.put("/users/:id", async (req, res) => {
 // 修改用户权限
 router.put("/users/:id/permissions", async (req, res) => {
   try {
+    // 检查当前用户权限（只有管理员可以修改权限）
+    const currentUserId = req.auth.id || req.auth.userId;
+    const currentUser = await User.findById(currentUserId).select('-password');
+    
+    if (!currentUser || currentUser.role !== 'admin') {
+      return res.status(403).json({
+        code: 403,
+        message: "权限不足，只有管理员可以修改用户权限",
+      });
+    }
+
     const userId = req.params.id;
     const { permissions } = req.body;
 
@@ -262,6 +317,17 @@ router.put("/users/:id/permissions", async (req, res) => {
 // 重置用户密码
 router.put("/users/:id/reset-password", async (req, res) => {
   try {
+    // 检查当前用户权限（只有管理员可以重置用户密码）
+    const currentUserId = req.auth.id || req.auth.userId;
+    const currentUser = await User.findById(currentUserId).select('-password');
+    
+    if (!currentUser || currentUser.role !== 'admin') {
+      return res.status(403).json({
+        code: 403,
+        message: "权限不足，只有管理员可以重置用户密码",
+      });
+    }
+
     const userId = req.params.id;
     const { newPassword } = req.body;
 
@@ -306,6 +372,17 @@ router.put("/users/:id/reset-password", async (req, res) => {
 // 删除用户
 router.delete("/users/:id", async (req, res) => {
   try {
+    // 检查当前用户权限（只有管理员可以删除用户）
+    const currentUserId = req.auth.id || req.auth.userId;
+    const currentUser = await User.findById(currentUserId).select('-password');
+    
+    if (!currentUser || currentUser.role !== 'admin') {
+      return res.status(403).json({
+        code: 403,
+        message: "权限不足，只有管理员可以删除用户",
+      });
+    }
+
     const userId = req.params.id;
     const deletedUser = await User.findByIdAndDelete(userId);
     
@@ -334,6 +411,17 @@ router.delete("/users/:id", async (req, res) => {
 // 批量删除用户
 router.delete("/users/batch-delete", async (req, res) => {
   try {
+    // 检查当前用户权限（只有管理员可以批量删除用户）
+    const currentUserId = req.auth.id || req.auth.userId;
+    const currentUser = await User.findById(currentUserId).select('-password');
+    
+    if (!currentUser || currentUser.role !== 'admin') {
+      return res.status(403).json({
+        code: 403,
+        message: "权限不足，只有管理员可以批量删除用户",
+      });
+    }
+
     const { ids } = req.body;
     
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
@@ -363,6 +451,17 @@ router.delete("/users/batch-delete", async (req, res) => {
 // 获取用户统计信息
 router.get("/stats", async (req, res) => {
   try {
+    // 检查当前用户权限（只有管理员可以查看统计信息）
+    const currentUserId = req.auth.id || req.auth.userId;
+    const currentUser = await User.findById(currentUserId).select('-password');
+    
+    if (!currentUser || currentUser.role !== 'admin') {
+      return res.status(403).json({
+        code: 403,
+        message: "权限不足，只有管理员可以查看统计信息",
+      });
+    }
+
     const totalUsers = await User.countDocuments();
     const activeUsers = await User.countDocuments({ status: 'active' });
     

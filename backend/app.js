@@ -21,6 +21,7 @@ var merchantApplicationRouter = require("./routes/merchantApplication");
 var navigationRouter = require("./routes/navigation");
 var businessRouter = require("./routes/business");
 var userManagementRouter = require("./routes/userManagement");
+var permissionsRouter = require("./routes/permissions");
 
 // 导入数据库模型（确保数据库连接和模型初始化）
 require("./moudle/index");
@@ -87,6 +88,7 @@ app.use("/merchant-application", jwtAuth, verifyTokenType, merchantApplicationRo
 app.use("/api", jwtAuth, verifyTokenType, navigationRouter);
 app.use("/goods", jwtAuth, verifyTokenType, businessRouter);
 app.use("/user-management", jwtAuth, verifyTokenType, userManagementRouter);
+app.use("/api/permissions", jwtAuth, verifyTokenType, permissionsRouter);
 
 // JWT错误处理中间件
 app.use(jwtErrorHandler);
