@@ -39,7 +39,7 @@ function refreshTokenAPI(refreshToken) {
 // 获取用户信息
 function getUserInfoAPI() {
   return request({
-    url: '/auth/me',
+    url: '/auth/userinfo',
     method: 'GET'
   })
 }

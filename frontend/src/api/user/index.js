@@ -9,7 +9,8 @@ const apiMap = {
   // 用户中心
   center: {
     get: getUserInfoAPI,
-    update: updateUserInfoAPI
+    update: updateUserInfoAPI,
+    uploadAvatar: uploadAvatarAPI
   },
   // 用户管理
   manage: {
@@ -54,6 +55,18 @@ function updateUserInfoAPI(data) {
     url: '/auth/update-profile',
     method: 'PUT',
     data
+  })
+}
+
+// 上传头像
+function uploadAvatarAPI(formData) {
+  return request({
+    url: '/auth/upload-avatar',
+    method: 'POST',
+    data: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
   })
 }
 

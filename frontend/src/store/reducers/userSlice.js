@@ -2,6 +2,38 @@ import { createSlice } from '@reduxjs/toolkit'
 // 导入token、refreshToken操作方法
 import { getRefreshToken, getToken, setRefreshToken, setToken, removeToken, removeRefreshToken } from '@/utils/auth'
 
+// 用户信息存储key
+const USER_INFO_KEY = 'mall_user_info'
+
+// 获取存储的用户信息
+const getUserInfoFromStorage = () => {
+  try {
+    const userInfo = localStorage.getItem(USER_INFO_KEY)
+    return userInfo ? JSON.parse(userInfo) : null
+  } catch (error) {
+    console.error('获取存储的用户信息失败:', error)
+    return null
+  }
+}
+
+// 保存用户信息到存储
+const setUserInfoToStorage = (userInfo) => {
+  try {
+    localStorage.setItem(USER_INFO_KEY, JSON.stringify(userInfo))
+  } catch (error) {
+    console.error('保存用户信息失败:', error)
+  }
+}
+
+// 移除存储的用户信息
+const removeUserInfoFromStorage = () => {
+  try {
+    localStorage.removeItem(USER_INFO_KEY)
+  } catch (error) {
+    console.error('移除用户信息失败:', error)
+  }
+}
+
 /**
  * 创建一个用户状态切片
  */
@@ -13,13 +45,18 @@ const userSlice = createSlice({
     // 如果localStorage中有从其中取，否则为null
     const token = getToken() || null
     const refreshToken = getRefreshToken() || null
+    const storedUserInfo = getUserInfoFromStorage()
+    
     return {
       token,
       refreshToken,
-      userinfo: { 
-        avatar: null,
+      userinfo: storedUserInfo || { 
+        _id: null,
         username: '',
-        email: ''
+        nickname: '',
+        email: '',
+        phone: '',
+        avatar: null
       }
     }
   },
@@ -34,19 +71,25 @@ const userSlice = createSlice({
     },
     setUserinfo(state, action) {
       const { payload } = action
-      state.userinfo = payload
+      state.userinfo = { ...state.userinfo, ...payload }
+      // 持久化用户信息
+      setUserInfoToStorage(state.userinfo)
     },
     logout(state, action) {
       state.token = null
       state.refreshToken = null
       state.userinfo = { 
-        avatar: null,
+        _id: null,
         username: '',
-        email: ''
+        nickname: '',
+        email: '',
+        phone: '',
+        avatar: null
       }
       // 移除存储中的信息
       removeToken()
       removeRefreshToken()
+      removeUserInfoFromStorage()
     }
   }
 })
@@ -74,10 +117,12 @@ export const loginAsync = (payload) => async (dispatch) => {
       // 同时获取用户信息
       if (response.data.user) {
         const userInfo = {
-          username: response.data.user.loginAccount,
-          email: response.data.user.email,
-          avatar: null,
-          userId: response.data.user._id
+          _id: response.data.user._id,
+          username: response.data.user.loginAccount || response.data.user.username,
+          nickname: response.data.user.nickname || '',
+          email: response.data.user.email || '',
+          phone: response.data.user.phone || '',
+          avatar: response.data.user.avatar || null
         };
         
         console.log('👤 保存用户信息:', userInfo);
@@ -119,10 +164,12 @@ export const getUserInfoAsync = () => async (dispatch) => {
     
     if (response.code === 200) {
       const userInfo = {
-        username: response.data.loginAccount,
-        email: response.data.email,
-        avatar: null,
-        userId: response.data._id
+        _id: response.data._id,
+        username: response.data.loginAccount || response.data.username,
+        nickname: response.data.nickname || '',
+        email: response.data.email || '',
+        phone: response.data.phone || '',
+        avatar: response.data.avatar || null
       }
       
       dispatch(setUserinfo(userInfo))

@@ -9,6 +9,7 @@ import constantRoutes from './router'
 export default function App() {
   const permissionRoutes = useSelector((state) => state.permission.permissionRoutes)
   const token = useSelector((state) => state.user.token) // 从Redux获取token状态
+  const userinfo = useSelector((state) => state.user.userinfo) // 获取用户信息
   const navigate = useNavigate()
   const location = useLocation()
   const dispatch = useDispatch()
@@ -53,9 +54,13 @@ export default function App() {
         navigate('/home')
       }
       // 可选：获取用户信息
-      dispatch(getUserInfoAsync()).catch(() => {
-        console.log('获取用户信息失败，但不影响访问')
-      })
+      // 如果有token但没有用户信息，或者用户信息不完整，则获取用户信息
+      if (!userinfo._id || !userinfo.username) {
+        console.log('🔄 获取用户信息...')
+        dispatch(getUserInfoAsync()).catch((error) => {
+          console.log('获取用户信息失败:', error)
+        })
+      }
     } else {
       // 没有token，如果不在登录页则跳转到登录页
       if (location.pathname !== '/login') {
@@ -63,7 +68,7 @@ export default function App() {
         navigate('/login')
       }
     }
-  }, [dispatch, navigate, location.pathname, token])
+  }, [dispatch, navigate, location.pathname, token, userinfo._id, userinfo.username])
 
   // 监听localStorage变化（跨标签页同步）
   useEffect(() => {

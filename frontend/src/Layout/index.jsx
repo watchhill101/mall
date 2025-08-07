@@ -65,7 +65,21 @@ const LayoutApp = () => {
 
   // 获取用户token状态
   const token = useSelector((state) => state.user.token);
-  const avatar = useSelector((state) => state.user.userinfo.avatar);
+  const userinfo = useSelector((state) => state.user.userinfo);
+  
+  // 处理头像URL
+  const avatarUrl = useMemo(() => {
+    if (!userinfo.avatar) return null;
+    
+    // 如果已经是完整URL，直接返回
+    if (userinfo.avatar.startsWith('http')) {
+      return userinfo.avatar;
+    }
+    
+    // 如果是相对路径，拼接服务器地址
+    const baseUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:3001';
+    return `${baseUrl}/${userinfo.avatar}`;
+  }, [userinfo.avatar]);
   
   // 添加组件挂载状态跟踪
   const [isMounted, setIsMounted] = useState(false);
@@ -484,19 +498,6 @@ const LayoutApp = () => {
       ),
     },
     {
-      key: "2",
-      label: (
-        <Popconfirm
-          onConfirm={() => toggleResetStatus(true)}
-          title="是否确认重置密码？"
-          okText="重置"
-          cancelText="取消"
-        >
-          <UndoOutlined /> 重置密码
-        </Popconfirm>
-      ),
-    },
-    {
       key: "3",
       label: (
         <Popconfirm
@@ -618,7 +619,7 @@ const LayoutApp = () => {
               <Space>
                 <img
                   src={
-                    avatar ||
+                    avatarUrl ||
                     require("@/assets/images/avatar/default_avatar.jpg")
                   }
                   className="user-icon"
