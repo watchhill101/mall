@@ -13,7 +13,7 @@ export const IconMap = {
   ShopOutlined: <SvgIcon name="shop" style={{ fontSize: '14px', color: '#ccc' }} />,
   GoodsOutlined: <SvgIcon name="goods" style={{ fontSize: '14px', color: '#ccc' }} />,
   OrdersOutlined: <SvgIcon name="orders" style={{ fontSize: '14px', color: '#ccc' }} />,
-  UsersOutlined: <SvgIcon name="users" style={{ fontSize: '14px', color: '#ccc' }} />,
+  SettingOutlined: <SvgIcon name="setting" style={{ fontSize: '14px', color: '#ccc' }} />,
   // 可以继续添加其他图标
 }
 
@@ -29,7 +29,7 @@ export const getBreadcrumbNameMap = (routes) => {
     { path: 'shops', menuPath: '/shops', title: '商家' }, // 添加商家路由
     { path: 'goods', menuPath: '/goods', title: '商品' }, // 添加商品路由
     { path: 'orders', menuPath: '/orders', title: '订单' }, // 添加订单路由
-    { path: 'users', menuPath: '/users', title: '用户' }, // 添加用户路由
+    { path: 'system', menuPath: '/system', title: '系统设置' }, // 更新为系统设置路由
     // 添加商家子路由映射
     { path: 'merchants', menuPath: '/shops/merchants', title: '商家管理' },
     { path: 'merchant-account', menuPath: '/shops/merchant-account', title: '商家账号' },
@@ -39,7 +39,6 @@ export const getBreadcrumbNameMap = (routes) => {
     { path: 'settlement-order', menuPath: '/shops/settlement-order', title: '结算订单' },
     { path: 'settlement-bill', menuPath: '/shops/settlement-bill', title: '结账单' },
     { path: 'merchant-application', menuPath: '/shops/merchant-application', title: '商家申请' },
-    { path: 'device-management', menuPath: '/shops/device-management', title: '设备管理' },
     // 添加商品子路由映射
     { path: 'product-list', menuPath: '/goods/product-list', title: '商品列表' },
     { path: 'audit-list', menuPath: '/goods/audit-list', title: '审核列表' },
@@ -120,7 +119,7 @@ export const getTreeMenu = (menuData) => {
             getItem(
               <Link to={item.menuPath}>{item.title}</Link>,
               item.menuPath,
-              IconMap[item.icon] || <SvgIcon name={item.icon ?? 'component'} width="14" height="14" color="#ccc" />
+              null // 移除子菜单图标
             )
           )
         }
@@ -134,4 +133,7 @@ export const getTreeMenu = (menuData) => {
 export const availableIcons = [
   'HomeOutlined',
   'ShopOutlined',
+  'GoodsOutlined',
+  'OrdersOutlined',
+  'SettingOutlined',
 ]

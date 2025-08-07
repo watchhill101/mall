@@ -27,6 +27,8 @@ import {
   CloseOutlined
 } from '@ant-design/icons'
 import MerchantLayout from './MerchantLayout'
+import merchantApplicationAPI from '../../api/merchantApplication'
+import { maskPhone } from '@/utils/maskUtils'
 
 const { Title } = Typography
 const { Option } = Select
@@ -40,7 +42,7 @@ const MerchantApplication = () => {
   const [searchParams, setSearchParams] = useState({})
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 10,
+    pageSize: 2,
     total: 0
   })
 
@@ -49,149 +51,69 @@ const MerchantApplication = () => {
   const [selectedRecord, setSelectedRecord] = useState(null)
   const [auditAction, setAuditAction] = useState('') // 'approve' 或 'reject'
 
-  // 模拟商家申请数据
-  const mockApplicationData = [
-    {
-      id: 1,
-      contactPerson: '木鱼',
-      contactPhone: '18979881656',
-      merchantType: '文旅',
-      city: '江西省南昌市红谷滩区',
-      remark1: '备注内容备注内容',
-      remark2: '备注内容备注内容',
-      status: 'rejected',
-      applicationTime: '2023-12-12 12:12:12',
-      auditor: '木鱼',
-      auditTime: '2023-12-12 12:12:12'
-    },
-    {
-      id: 2,
-      contactPerson: '木鱼',
-      contactPhone: '18979881656',
-      merchantType: '家政',
-      city: '江西省南昌市红谷滩区',
-      remark1: '备注内容备注内容',
-      remark2: '备注内容备注内容',
-      status: 'approved',
-      applicationTime: '2023-12-12 12:12:12',
-      auditor: '木鱼',
-      auditTime: '2023-12-12 12:12:12'
-    },
-    {
-      id: 3,
-      contactPerson: '木鱼',
-      contactPhone: '18979881656',
-      merchantType: '零售',
-      city: '江西省南昌市红谷滩区',
-      remark1: '备注内容备注内容',
-      remark2: '备注内容备注内容',
-      status: 'pending',
-      applicationTime: '2023-12-12 12:12:12',
-      auditor: '',
-      auditTime: ''
-    },
-    {
-      id: 4,
-      contactPerson: '张三',
-      contactPhone: '13800138000',
-      merchantType: '餐饮',
-      city: '江西省九江市浔阳区',
-      remark1: '备注内容备注内容',
-      remark2: '备注内容备注内容',
-      status: 'pending',
-      applicationTime: '2023-12-13 10:30:00',
-      auditor: '',
-      auditTime: ''
-    },
-    {
-      id: 5,
-      contactPerson: '李四',
-      contactPhone: '13900139000',
-      merchantType: '教育',
-      city: '江西省上饶市信州区',
-      remark1: '备注内容备注内容',
-      remark2: '备注内容备注内容',
-      status: 'pending',
-      applicationTime: '2023-12-14 14:20:00',
-      auditor: '',
-      auditTime: ''
+  // 加载数据
+  const loadData = async (params = {}) => {
+    try {
+      setLoading(true)
+      const response = await merchantApplicationAPI.getList({
+        page: pagination.current,
+        pageSize: pagination.pageSize,
+        ...params
+      })
+
+      if (response.code === 200) {
+        setAllData(response.data.list)
+        setFilteredData(response.data.list)
+        setPagination(prev => ({
+          ...prev,
+          total: response.data.pagination.total,
+          current: response.data.pagination.current
+        }))
+      } else {
+        message.error(response.message || '获取数据失败')
+      }
+    } catch (error) {
+      console.error('获取商家申请列表失败:', error)
+      message.error('获取数据失败，请检查网络连接')
+    } finally {
+      setLoading(false)
     }
-  ]
-
-  // 计算当前页数据
-  const currentPageData = useMemo(() => {
-    const startIndex = (pagination.current - 1) * pagination.pageSize
-    const endIndex = startIndex + pagination.pageSize
-    return filteredData.slice(startIndex, endIndex)
-  }, [filteredData, pagination.current, pagination.pageSize])
-
-  // 检查并修正分页状态
-  useEffect(() => {
-    if (filteredData.length > 0) {
-      const totalPages = Math.ceil(filteredData.length / pagination.pageSize)
-      if (pagination.current > totalPages) {
-        setPagination(prev => ({ ...prev, current: totalPages }))
-      }
-    }
-  }, [filteredData.length, pagination.current, pagination.pageSize])
-
-  useEffect(() => {
-    setAllData(mockApplicationData)
-    setFilteredData(mockApplicationData)
-    setPagination(prev => ({ ...prev, total: mockApplicationData.length }))
-  }, [])
-
-  // 筛选数据
-  const filterData = (data, params) => {
-    return data.filter(item => {
-      // 按联系电话筛选
-      if (params.contactPhone && !item.contactPhone.includes(params.contactPhone)) {
-        return false
-      }
-
-      // 按状态筛选
-      if (params.status && item.status !== params.status) {
-        return false
-      }
-
-      // 按审核时间范围筛选
-      if (params.auditTime && params.auditTime.length === 2) {
-        const [startDate, endDate] = params.auditTime
-        const itemDate = new Date(item.auditTime)
-
-        if (startDate && itemDate < startDate.toDate()) {
-          return false
-        }
-
-        if (endDate && itemDate > endDate.toDate()) {
-          return false
-        }
-      }
-
-      return true
-    })
   }
 
+  // 当前页数据就是filteredData，因为后端已经处理了分页
+  const currentPageData = filteredData
+
+
+
+  useEffect(() => {
+    loadData()
+  }, [])
+
+
+
   // 搜索处理
-  const handleSearch = (values) => {
+  const handleSearch = async (values) => {
     console.log('搜索条件:', values)
-    setLoading(true)
     setSearchParams(values)
 
-    setTimeout(() => {
-      const filtered = filterData(allData, values)
-      setFilteredData(filtered)
-      setPagination(prev => ({ ...prev, current: 1, total: filtered.length }))
-      setLoading(false)
-    }, 500)
+    // 处理日期范围
+    const searchParams = { ...values }
+    if (values.auditTime && values.auditTime.length === 2) {
+      searchParams.auditTime = JSON.stringify([
+        values.auditTime[0].format('YYYY-MM-DD'),
+        values.auditTime[1].format('YYYY-MM-DD')
+      ])
+    }
+
+    await loadData(searchParams)
   }
 
   // 重置处理
   const handleReset = () => {
     form.resetFields()
     setSearchParams({})
-    setFilteredData(allData)
-    setPagination(prev => ({ ...prev, current: 1, total: allData.length }))
+    setPagination(prev => ({ ...prev, current: 1 }))
+    loadData()
   }
 
   // 分页处理
@@ -201,6 +123,13 @@ const MerchantApplication = () => {
       current: page,
       pageSize: pageSize || prev.pageSize
     }))
+
+    // 重新加载数据
+    loadData({
+      ...searchParams,
+      page,
+      pageSize: pageSize || pagination.pageSize
+    })
   }
 
   // 审核处理
@@ -211,28 +140,33 @@ const MerchantApplication = () => {
   }
 
   // 确认审核
-  const handleAuditConfirm = () => {
-    const newStatus = auditAction === 'approve' ? 'approved' : 'rejected'
-    const actionText = auditAction === 'approve' ? '通过' : '拒绝'
+  const handleAuditConfirm = async () => {
+    try {
+      const actionText = auditAction === 'approve' ? '通过' : '拒绝'
 
-    const updatedData = allData.map(item =>
-      item.id === selectedRecord.id ? {
-        ...item,
-        status: newStatus,
-        auditor: '木鱼', // 这里应该是当前登录用户
-        auditTime: new Date().toLocaleString()
-      } : item
-    )
-    setAllData(updatedData)
+      const auditData = {
+        action: auditAction,
+        reviewResult: `申请${actionText}`,
+        rejectionReason: auditAction === 'reject' ? `申请${actionText}` : undefined
+      }
 
-    const filtered = filterData(updatedData, searchParams)
-    setFilteredData(filtered)
-    setPagination(prev => ({ ...prev, total: filtered.length }))
+      const response = await merchantApplicationAPI.audit(selectedRecord.id, auditData)
 
-    message.success(`${actionText}成功`)
-    setAuditModalVisible(false)
-    setSelectedRecord(null)
-    setAuditAction('')
+      if (response.code === 200) {
+        message.success(`${actionText}成功`)
+        // 重新加载数据
+        await loadData(searchParams)
+      } else {
+        message.error(response.message || `${actionText}失败`)
+      }
+    } catch (error) {
+      console.error('审核失败:', error)
+      message.error('审核失败，请检查网络连接')
+    } finally {
+      setAuditModalVisible(false)
+      setSelectedRecord(null)
+      setAuditAction('')
+    }
   }
 
   // 关闭审核模态框
@@ -244,13 +178,7 @@ const MerchantApplication = () => {
 
   // 刷新数据
   const handleRefresh = () => {
-    setLoading(true)
-    setTimeout(() => {
-      const filtered = filterData(allData, searchParams)
-      setFilteredData(filtered)
-      setPagination(prev => ({ ...prev, total: filtered.length }))
-      setLoading(false)
-    }, 500)
+    loadData(searchParams)
   }
 
   // 表格列定义
@@ -268,7 +196,11 @@ const MerchantApplication = () => {
       render: (_, record) => (
         <div>
           <div style={{ fontWeight: 'bold' }}>{record.contactPerson}</div>
-          <div style={{ color: '#999', fontSize: '12px' }}>{record.contactPhone}</div>
+          <div style={{ color: '#999', fontSize: '12px' }}>
+            <Tooltip title={record.contactPhone || '暂无手机号'}>
+              {maskPhone(record.contactPhone)}
+            </Tooltip>
+          </div>
         </div>
       )
     },
@@ -487,8 +419,8 @@ const MerchantApplication = () => {
                 `第 ${range[0]}-${range[1]} 条/共 ${total} 条`
               }
               onChange={handlePaginationChange}
-              pageSizeOptions={['10', '20', '50', '100']}
-              defaultPageSize={10}
+              pageSizeOptions={['2', '5', '10', '20']}
+              defaultPageSize={2}
             />
           </div>
         </Card>
@@ -508,7 +440,7 @@ const MerchantApplication = () => {
               <p>确定要{auditAction === 'approve' ? '通过' : '拒绝'}以下申请吗？</p>
               <div style={{ background: '#f5f5f5', padding: '12px', borderRadius: '4px', marginTop: '12px' }}>
                 <p><strong>申请人：</strong>{selectedRecord.contactPerson}</p>
-                <p><strong>联系电话：</strong>{selectedRecord.contactPhone}</p>
+                <p><strong>联系电话：</strong>{maskPhone(selectedRecord.contactPhone)}</p>
                 <p><strong>商家类型：</strong>{selectedRecord.merchantType}</p>
                 <p><strong>所在城市：</strong>{selectedRecord.city}</p>
                 <p><strong>申请时间：</strong>{selectedRecord.applicationTime}</p>

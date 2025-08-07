@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import {
   Card,
   Typography,
@@ -27,16 +27,20 @@ import {
   DeleteOutlined
 } from '@ant-design/icons'
 import MerchantLayout from './MerchantLayout'
+import withdrawAccountAPI, { ACCOUNT_TYPE_LABELS, ACCOUNT_STATUS_COLORS } from '@/api/withdrawAccount'
 
 const { Title } = Typography
 const { Option } = Select
 
 const WithdrawAccount = () => {
+  // 表单实例
   const [form] = Form.useForm()
   const [modalForm] = Form.useForm()
+
+  // 数据状态
   const [loading, setLoading] = useState(false)
-  const [allData, setAllData] = useState([])
-  const [filteredData, setFilteredData] = useState([])
+  const [withdrawAccountData, setWithdrawAccountData] = useState([])
+  const [merchantList, setMerchantList] = useState([])
   const [searchParams, setSearchParams] = useState({})
   const [pagination, setPagination] = useState({
     current: 1,
@@ -48,124 +52,126 @@ const WithdrawAccount = () => {
   const [modalVisible, setModalVisible] = useState(false)
   const [modalType, setModalType] = useState('add') // 'add' 或 'edit'
   const [selectedRecord, setSelectedRecord] = useState(null)
+  const [forceUpdate, setForceUpdate] = useState(0) // 用于确保状态更新后正确渲染
 
-  // 模拟提现账号数据
-  const mockWithdrawAccountData = [
-    {
-      id: 1,
-      merchantName: '商家名称商家名称',
-      accountType: 'union',
-      bankName: '中国农业银行',
-      accountNumber: '123212321313213',
-      serviceFeeRate: 5,
-      status: 'active',
-      createTime: '2023-12-12 12:12:12',
-      updateTime: '2023-12-12 12:12:12'
-    },
-    {
-      id: 2,
-      merchantName: '商家名称商家名称',
-      accountType: 'wechat',
-      bankName: '',
-      accountNumber: '123212321313213',
-      serviceFeeRate: 5,
-      status: 'active',
-      createTime: '2023-12-12 12:12:12',
-      updateTime: '2023-12-12 12:12:12'
-    },
-    {
-      id: 3,
-      merchantName: '商家名称商家名称',
-      accountType: 'alipay',
-      bankName: '',
-      accountNumber: '123212321313213',
-      serviceFeeRate: 5,
-      status: 'disabled',
-      createTime: '2023-12-12 12:12:12',
-      updateTime: '2023-12-12 12:12:12'
-    },
-    {
-      id: 4,
-      merchantName: '清风超市',
-      accountType: 'union',
-      bankName: '中国工商银行',
-      accountNumber: '987654321098765',
-      serviceFeeRate: 3,
-      status: 'active',
-      createTime: '2023-12-13 10:30:00',
-      updateTime: '2023-12-13 10:30:00'
+
+
+
+
+
+  // 数据加载函数
+  const loadWithdrawAccountList = async (params = {}) => {
+    try {
+      setLoading(true)
+
+      const queryParams = {
+        page: 1,
+        pageSize: 2,
+        ...params
+      }
+
+      const response = await withdrawAccountAPI.getWithdrawAccountList(queryParams)
+
+      if (response && response.data) {
+        const newPagination = {
+          current: queryParams.page,
+          pageSize: queryParams.pageSize,
+          total: response.data.pagination?.total || 0
+        }
+
+        const dataList = response.data.list || []
+        setWithdrawAccountData(dataList)
+        setPagination(newPagination)
+        setForceUpdate(prev => prev + 1) // 确保组件重新渲染
+
+        console.log('✅ 获取提现账号列表成功，共', response.data.list?.length || 0, '条记录')
+        return response.data
+      }
+    } catch (error) {
+      console.error('❌ 获取提现账号列表失败:', error)
+      message.error('获取提现账号列表失败: ' + (error.message || '网络错误'))
+      setWithdrawAccountData([])
+      setPagination({
+        current: 1,
+        pageSize: 2,
+        total: 0
+      })
+    } finally {
+      setLoading(false)
     }
-  ]
-
-  // 计算当前页数据
-  const currentPageData = useMemo(() => {
-    const startIndex = (pagination.current - 1) * pagination.pageSize
-    const endIndex = startIndex + pagination.pageSize
-    return filteredData.slice(startIndex, endIndex)
-  }, [filteredData, pagination.current, pagination.pageSize])
-
-  // 检查并修正分页状态
-  useEffect(() => {
-    if (filteredData.length > 0) {
-      const totalPages = Math.ceil(filteredData.length / pagination.pageSize)
-      if (pagination.current > totalPages) {
-        setPagination(prev => ({ ...prev, current: totalPages }))
-      }
-    }
-  }, [filteredData.length, pagination.current, pagination.pageSize])
-
-  useEffect(() => {
-    setAllData(mockWithdrawAccountData)
-    setFilteredData(mockWithdrawAccountData)
-    setPagination(prev => ({ ...prev, total: mockWithdrawAccountData.length }))
-  }, [])
-
-  // 筛选数据
-  const filterData = (data, params) => {
-    return data.filter(item => {
-      // 按商家名称筛选
-      if (params.merchantName && !item.merchantName.toLowerCase().includes(params.merchantName.toLowerCase())) {
-        return false
-      }
-
-      // 按状态筛选
-      if (params.status && item.status !== params.status) {
-        return false
-      }
-
-      return true
-    })
   }
 
-  // 搜索处理
-  const handleSearch = (values) => {
-    console.log('搜索条件:', values)
-    setLoading(true)
-    setSearchParams(values)
+  const fetchMerchantList = useCallback(async () => {
+    try {
+      const response = await withdrawAccountAPI.getMerchantList()
+      if (response && response.data) {
+        setMerchantList(response.data)
+        console.log('✅ 获取商家列表成功，共', response.data.length, '个商家')
+      }
+    } catch (error) {
+      console.error('❌ 获取商家列表失败:', error)
+      message.error('获取商家列表失败')
+    }
+  }, [])
 
-    setTimeout(() => {
-      const filtered = filterData(allData, values)
-      setFilteredData(filtered)
-      setPagination(prev => ({ ...prev, current: 1, total: filtered.length }))
-      setLoading(false)
-    }, 500)
+  // 初始化数据
+  useEffect(() => {
+    const initData = async () => {
+      try {
+        setLoading(true)
+
+        // 并行获取数据
+        await Promise.all([
+          loadWithdrawAccountList({ page: 1, pageSize: 2 }),
+          fetchMerchantList()
+        ])
+      } catch (error) {
+        console.error('❌ 初始化数据获取失败:', error)
+      }
+    }
+    initData()
+  }, [])
+
+  // 搜索处理
+  const handleSearch = async (values) => {
+    console.log('搜索条件:', values)
+    setSearchParams(values)
+    setPagination(prev => ({ ...prev, current: 1 }))
+
+    // 使用搜索条件重新获取数据
+    const queryParams = { page: 1, pageSize: pagination.pageSize || 2, ...values }
+    await loadWithdrawAccountList(queryParams)
+    message.success('搜索完成')
   }
 
   // 重置处理
-  const handleReset = () => {
+  const handleReset = async () => {
     form.resetFields()
     setSearchParams({})
-    setFilteredData(allData)
-    setPagination(prev => ({ ...prev, current: 1, total: allData.length }))
+    setPagination(prev => ({ ...prev, current: 1 }))
+
+    // 获取所有数据
+    const queryParams = { page: 1, pageSize: 2 }
+    await loadWithdrawAccountList(queryParams)
+    message.info('已重置搜索条件')
   }
 
   // 分页处理
   const handlePaginationChange = (page, pageSize) => {
+    const newPageSize = pageSize || pagination.pageSize
     setPagination(prev => ({
       ...prev,
       current: page,
-      pageSize: pageSize || prev.pageSize
+      pageSize: newPageSize
     }))
+
+    // 获取新页面的数据
+    const queryParams = {
+      page,
+      pageSize: newPageSize,
+      ...searchParams
+    }
+    loadWithdrawAccountList(queryParams)
   }
 
   // 新增账号
@@ -192,17 +198,21 @@ const WithdrawAccount = () => {
     Modal.confirm({
       title: `确认${actionText}`,
       content: `确定要${actionText}该提现账号吗？`,
-      onOk: () => {
-        const updatedData = allData.map(item =>
-          item.id === record.id ? { ...item, status: newStatus, updateTime: new Date().toLocaleString() } : item
-        )
-        setAllData(updatedData)
+      onOk: async () => {
+        try {
+          await withdrawAccountAPI.updateWithdrawAccountStatus(record.id, newStatus)
+          message.success(`${actionText}成功`)
 
-        const filtered = filterData(updatedData, searchParams)
-        setFilteredData(filtered)
-        setPagination(prev => ({ ...prev, total: filtered.length }))
-
-        message.success(`${actionText}成功`)
+          // 刷新数据
+          const queryParams = {
+            page: pagination.current || 1,
+            pageSize: pagination.pageSize || 2,
+            ...searchParams
+          }
+          await loadWithdrawAccountList(queryParams)
+        } catch (error) {
+          message.error(`${actionText}失败: ` + error.message)
+        }
       }
     })
   }
@@ -214,49 +224,48 @@ const WithdrawAccount = () => {
       content: '确定要删除该提现账号吗？此操作不可恢复。',
       okText: '删除',
       okType: 'danger',
-      onOk: () => {
-        const updatedData = allData.filter(item => item.id !== record.id)
-        setAllData(updatedData)
+      onOk: async () => {
+        try {
+          await withdrawAccountAPI.deleteWithdrawAccount(record.id)
+          message.success('删除成功')
 
-        const filtered = filterData(updatedData, searchParams)
-        setFilteredData(filtered)
-        setPagination(prev => ({ ...prev, total: filtered.length }))
-
-        message.success('删除成功')
+          // 刷新数据
+          const queryParams = {
+            page: pagination.current || 1,
+            pageSize: pagination.pageSize || 2,
+            ...searchParams
+          }
+          await loadWithdrawAccountList(queryParams)
+        } catch (error) {
+          message.error('删除失败: ' + error.message)
+        }
       }
     })
   }
 
   // 保存模态框数据
-  const handleModalOk = (values) => {
-    if (modalType === 'add') {
-      const newRecord = {
-        id: Date.now(),
-        ...values,
-        status: 'active',
-        createTime: new Date().toLocaleString(),
-        updateTime: new Date().toLocaleString()
+  const handleModalOk = async (values) => {
+    try {
+      if (modalType === 'add') {
+        await withdrawAccountAPI.createWithdrawAccount(values)
+        message.success('添加成功')
+      } else {
+        await withdrawAccountAPI.updateWithdrawAccount(selectedRecord.id, values)
+        message.success('修改成功')
       }
-      const updatedData = [...allData, newRecord]
-      setAllData(updatedData)
 
-      const filtered = filterData(updatedData, searchParams)
-      setFilteredData(filtered)
-      setPagination(prev => ({ ...prev, total: filtered.length }))
+      setModalVisible(false)
 
-      message.success('添加成功')
-    } else {
-      const updatedData = allData.map(item =>
-        item.id === selectedRecord.id ? { ...item, ...values, updateTime: new Date().toLocaleString() } : item
-      )
-      setAllData(updatedData)
-
-      const filtered = filterData(updatedData, searchParams)
-      setFilteredData(filtered)
-
-      message.success('修改成功')
+      // 刷新数据
+      const queryParams = {
+        page: pagination.current || 1,
+        pageSize: pagination.pageSize || 2,
+        ...searchParams
+      }
+      await loadWithdrawAccountList(queryParams)
+    } catch (error) {
+      message.error((modalType === 'add' ? '添加' : '修改') + '失败: ' + error.message)
     }
-    setModalVisible(false)
   }
 
   // 关闭模态框
@@ -267,14 +276,14 @@ const WithdrawAccount = () => {
   }
 
   // 刷新数据
-  const handleRefresh = () => {
-    setLoading(true)
-    setTimeout(() => {
-      const filtered = filterData(allData, searchParams)
-      setFilteredData(filtered)
-      setPagination(prev => ({ ...prev, total: filtered.length }))
-      setLoading(false)
-    }, 500)
+  const handleRefresh = async () => {
+    const queryParams = {
+      page: pagination.current || 1,
+      pageSize: pagination.pageSize || 2,
+      ...searchParams
+    }
+    await loadWithdrawAccountList(queryParams)
+    message.success('刷新成功')
   }
 
   // 表格列定义
@@ -291,13 +300,7 @@ const WithdrawAccount = () => {
       key: 'accountType',
       width: 120,
       render: (type) => {
-        const typeMap = {
-          union: '银联',
-          wechat: '微信',
-          alipay: '支付宝',
-          bank: '银行卡'
-        }
-        return typeMap[type] || type
+        return ACCOUNT_TYPE_LABELS[type] || type
       }
     },
     {
@@ -328,12 +331,9 @@ const WithdrawAccount = () => {
       width: 100,
       align: 'center',
       render: (status) => {
-        const statusMap = {
-          active: { color: 'green', text: '正常' },
-          disabled: { color: 'red', text: '禁用' }
-        }
-        const statusInfo = statusMap[status] || { color: 'default', text: status }
-        return <Tag color={statusInfo.color}>{statusInfo.text}</Tag>
+        const statusText = status === 'active' ? '正常' : '禁用'
+        const color = ACCOUNT_STATUS_COLORS[status] || 'default'
+        return <Tag color={color}>{statusText}</Tag>
       }
     },
     {
@@ -387,9 +387,19 @@ const WithdrawAccount = () => {
             <Row gutter={16}>
               <Col span={8}>
                 <Form.Item label="所属商家" name="merchantName">
-                  <Select placeholder="搜索" showSearch style={{ width: '100%' }}>
-                    <Option value="商家名称商家名称">商家名称商家名称</Option>
-                    <Option value="清风超市">清风超市</Option>
+                  <Select
+                    placeholder="搜索"
+                    showSearch
+                    style={{ width: '100%' }}
+                    filterOption={(input, option) =>
+                      option?.children?.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                    }
+                  >
+                    {merchantList.map(merchant => (
+                      <Option key={merchant.value} value={merchant.value}>
+                        {merchant.label}
+                      </Option>
+                    ))}
                   </Select>
                 </Form.Item>
               </Col>
@@ -441,6 +451,7 @@ const WithdrawAccount = () => {
               >
                 新增
               </Button>
+
             </div>
             <div className="table-actions">
               <Space>
@@ -466,8 +477,9 @@ const WithdrawAccount = () => {
           </div>
 
           <Table
+            key={`table-${forceUpdate}`}
             columns={columns}
-            dataSource={currentPageData}
+            dataSource={withdrawAccountData}
             rowKey="id"
             pagination={false}
             loading={loading}
@@ -483,8 +495,8 @@ const WithdrawAccount = () => {
             alignItems: 'center',
             marginTop: '16px'
           }}>
-            <div className="pagination-info">
-              <span>共 {pagination.total} 条</span>
+            <div className="pagination-info" key={forceUpdate}>
+              <span>共 {withdrawAccountData.length} 条</span>
             </div>
             <Pagination
               current={pagination.current}
@@ -496,7 +508,7 @@ const WithdrawAccount = () => {
                 `第 ${range[0]}-${range[1]} 条/共 ${total} 条`
               }
               onChange={handlePaginationChange}
-              pageSizeOptions={['2', '5', '10']}
+              pageSizeOptions={['2', '5', '10', '20']}
               defaultPageSize={2}
             />
           </div>
@@ -520,9 +532,21 @@ const WithdrawAccount = () => {
                 <Form.Item
                   label="商家名称"
                   name="merchantName"
-                  rules={[{ required: true, message: '请输入商家名称' }]}
+                  rules={[{ required: true, message: '请选择商家名称' }]}
                 >
-                  <Input placeholder="请输入商家名称" />
+                  <Select
+                    placeholder="请选择商家"
+                    showSearch
+                    filterOption={(input, option) =>
+                      option?.children?.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                    }
+                  >
+                    {merchantList.map(merchant => (
+                      <Option key={merchant.value} value={merchant.value}>
+                        {merchant.label}
+                      </Option>
+                    ))}
+                  </Select>
                 </Form.Item>
               </Col>
               <Col span={12}>

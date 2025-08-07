@@ -8,11 +8,67 @@ const redisClient = redis.createClient({
   host: config.redis.host,
   port: config.redis.port,
   password: config.redis.password,
+  retry_strategy: (options) => {
+    if (options.error && options.error.code === 'ECONNREFUSED') {
+      // Redis服务器拒绝连接
+      console.error('Redis server connection was refused');
+    }
+    if (options.total_retry_time > 1000 * 60 * 60) {
+      // 1小时后停止重试
+      console.error('Redis retry time exhausted');
+      return new Error('Redis retry time exhausted');
+    }
+    if (options.attempt > 10) {
+      // 10次重试后停止
+      return undefined;
+    }
+    // 重连延迟算法：min(指数增长, 3秒)
+    return Math.min(options.attempt * 100, 3000);
+  }
 });
 
-redisClient.connect().catch((err) => {
-  console.log("Redis connection error:", err);
+// Redis连接处理
+const connectRedis = async () => {
+  try {
+    await redisClient.connect();
+    console.log('✅ Redis连接成功');
+  } catch (err) {
+    console.error('❌ Redis连接失败:', err);
+    // 5秒后重试连接
+    setTimeout(connectRedis, 5000);
+  }
+};
+
+// Redis错误事件监听
+redisClient.on('error', (err) => {
+  console.error('Redis连接错误:', err);
 });
+
+redisClient.on('connect', () => {
+  console.log('Redis连接已建立');
+});
+
+redisClient.on('ready', () => {
+  console.log('Redis客户端就绪');
+});
+
+redisClient.on('end', () => {
+  console.log('Redis连接已断开');
+});
+
+// 初始化连接
+connectRedis();
+
+// Redis操作包装函数，增加错误处理
+const safeRedisOperation = async (operation, ...args) => {
+  try {
+    return await operation(...args);
+  } catch (error) {
+    console.error('Redis操作失败:', error);
+    // 如果Redis不可用，允许系统继续运行，但记录错误
+    throw new Error('Redis service temporarily unavailable');
+  }
+};
 
 class JwtUtil {
   /**
@@ -50,9 +106,14 @@ class JwtUtil {
       { expiresIn: config.refreshSecretKeyExpire }
     );
 
-    // 将 Refresh Token 存储到 Redis 中
+    // 将 Refresh Token 存储到 Redis 中（使用安全包装）
     const key = `refreshToken:${payload.userId || payload._id}`;
-    redisClient.setEx(key, config.refreshSecretKeyExpire, refreshToken);
+    safeRedisOperation(
+      () => redisClient.setEx(key, config.refreshSecretKeyExpire, refreshToken)
+    ).catch(err => {
+      console.error('存储RefreshToken到Redis失败:', err);
+    });
+    
     return refreshToken;
   }
 
@@ -90,7 +151,11 @@ class JwtUtil {
       // 验证 Refresh Token
       const decoded = jwt.verify(token, config.jwtRefreshSecretKey);
       const key = `refreshToken:${userId}`;
-      const storedToken = await redisClient.get(key);
+      
+      // 使用安全包装获取Redis中的token
+      const storedToken = await safeRedisOperation(
+        () => redisClient.get(key)
+      );
 
       // 检查 Redis 中存储的 Refresh Token 是否与提供的 token 匹配
       if (storedToken && storedToken === token) {
@@ -112,10 +177,10 @@ class JwtUtil {
   static async refreshAccessToken(refreshToken) {
     try {
       const decoded = jwt.verify(refreshToken, config.jwtRefreshSecretKey);
-      
+
       // 验证 Refresh Token
       await this.verifyRefreshToken(refreshToken, decoded.userId);
-      
+
       // 从数据库获取最新的用户信息
       const user = await User.findById(decoded.userId).select('-password');
       if (!user) {
@@ -130,9 +195,18 @@ class JwtUtil {
         FirstLevelNavigationID: user.FirstLevelNavigationID,
       });
 
+      // 生成新的 Refresh Token（轮换机制）
+      const newRefreshToken = this.generateRefreshToken({
+        userId: user._id,
+        loginAccount: user.loginAccount,
+      });
+
+      // 删除旧的 Refresh Token
+      await this.deleteRefreshToken(decoded.userId);
+
       return {
         accessToken: newAccessToken,
-        refreshToken: refreshToken, // 可以选择是否生成新的refresh token
+        refreshToken: newRefreshToken,
         expiresIn: config.secretKeyExpire,
       };
     } catch (error) {
@@ -146,7 +220,12 @@ class JwtUtil {
    */
   static async deleteRefreshToken(userId) {
     const key = `refreshToken:${userId}`;
-    await redisClient.del(key);
+    try {
+      await safeRedisOperation(() => redisClient.del(key));
+    } catch (error) {
+      console.error('删除RefreshToken失败:', error);
+      // 不抛出错误，允许登出继续进行
+    }
   }
 
   /**

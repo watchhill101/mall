@@ -1,5 +1,9 @@
+import { AUTH_CONFIG } from '../config/auth'
+
 // 设置token键值
-const TokenKey = 'ACCESS-TOKEN'
+const TokenKey = AUTH_CONFIG.ACCESS_TOKEN_KEY
+const RefreshTokenKey = AUTH_CONFIG.REFRESH_TOKEN_KEY
+
 /**
  * 获取token
  */
@@ -19,15 +23,13 @@ const setToken = (token) => {
 const removeToken = () => {
   return window.localStorage.removeItem(TokenKey)
 }
-// refreshToken键值
-const RefreshTokenKey = 'REFRESH-TOKEN'
 
 const getRefreshToken = () => {
   return window.localStorage.getItem(RefreshTokenKey)
 }
 
 const setRefreshToken = (token) => {
-  return window.localStorage.setItem(RefreshTokenKey, token, { expires: 2 })
+  return window.localStorage.setItem(RefreshTokenKey, token)
 }
 
 const removeRefreshToken = () => {

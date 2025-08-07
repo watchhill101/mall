@@ -25,11 +25,11 @@ const productSchema = new mongoose.Schema(
       required: true,
       enum: ["retail", "wholesale", "manufacturer", "distributor"]
     }, // 业务类型
-
-    merchant: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Merchant",
-      required: true
+    
+    merchant: { 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: "merchant", 
+      required: true 
     }, // 所属商家
 
     productInfo: {
@@ -79,9 +79,9 @@ const productSchema = new mongoose.Schema(
 
     auditInfo: {
       auditReason: { type: String }, // 审核原因
-      auditor: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User"
+      auditor: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: "user" 
       }, // 审核人
       auditTime: { type: Date } // 审核时间
     },
@@ -115,16 +115,16 @@ const productSchema = new mongoose.Schema(
       }, // 所属仓库
       location: { type: String } // 存放位置
     },
-
-    lastUpdateBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User"
+    
+    lastUpdateBy: { 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: "user" 
     }, // 最后更新人
-
-    createBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true
+    
+    createBy: { 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: "user", 
+      required: true 
     } // 创建人
   },
   {

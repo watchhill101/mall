@@ -11,7 +11,7 @@ const orderSchema = new mongoose.Schema(
     
     merchant: { 
       type: mongoose.Schema.Types.ObjectId, 
-      ref: "Merchant", 
+      ref: "merchant", 
       required: true 
     }, // 所属商家
     
@@ -146,13 +146,13 @@ const orderSchema = new mongoose.Schema(
     
     createBy: { 
       type: mongoose.Schema.Types.ObjectId, 
-      ref: "User", 
+      ref: "user", 
       required: true 
     }, // 创建人
     
     lastUpdateBy: { 
       type: mongoose.Schema.Types.ObjectId, 
-      ref: "User" 
+      ref: "user" 
     }, // 最后更新人
     
     // 关联其他单据

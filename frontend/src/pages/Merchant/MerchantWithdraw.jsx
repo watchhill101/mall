@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import {
   Card,
   Typography,
@@ -26,7 +26,10 @@ import {
   CheckOutlined,
   CloseOutlined
 } from '@ant-design/icons'
+import dayjs from 'dayjs'
 import MerchantLayout from './MerchantLayout'
+import merchantWithdrawAPI, { WITHDRAW_STATUS_LABELS } from '@/api/merchantWithdraw'
+import { maskPhone } from '@/utils/maskUtils'
 
 const { Title } = Typography
 const { Option } = Select
@@ -35,173 +38,114 @@ const { RangePicker } = DatePicker
 const MerchantWithdraw = () => {
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
-  const [allData, setAllData] = useState([])
-  const [filteredData, setFilteredData] = useState([])
+  const [withdrawData, setWithdrawData] = useState([])
   const [searchParams, setSearchParams] = useState({})
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 2,
     total: 0
   })
+  const [forceUpdate, setForceUpdate] = useState(0) // 用于强制重新渲染
 
   // 审核模态框相关状态
   const [auditModalVisible, setAuditModalVisible] = useState(false)
   const [selectedRecord, setSelectedRecord] = useState(null)
   const [auditAction, setAuditAction] = useState('') // 'approve' 或 'reject'
 
-  // 模拟商家提现数据
-  const mockWithdrawData = [
-    {
-      id: 1,
-      orderNo: 'SJTX-123312',
-      merchantName: '商家名称商家名称',
-      contactPhone: '18979881656',
-      accountType: 'wechat',
-      withdrawAmount: 200,
-      serviceFeeRate: 2,
-      receivedAmount: 196,
-      status: 'pending',
-      applicationTime: '2023-12-12 14:23:23',
-      reviewTime: '',
-      reviewAccount: '财务'
-    },
-    {
-      id: 2,
-      orderNo: 'SJTX-123312',
-      merchantName: '商家名称商家名称',
-      contactPhone: '18979881656',
-      accountType: 'alipay',
-      withdrawAmount: 200,
-      serviceFeeRate: 2,
-      receivedAmount: 196,
-      status: 'rejected',
-      applicationTime: '2023-12-12 14:23:23',
-      reviewTime: '2023-12-12 14:23:23',
-      reviewAccount: '财务'
-    },
-    {
-      id: 3,
-      orderNo: 'SJTX-123312',
-      merchantName: '商家名称商家名称',
-      contactPhone: '18979881656',
-      accountType: 'wechat',
-      withdrawAmount: 200,
-      serviceFeeRate: 2,
-      receivedAmount: 196,
-      status: 'cancelled',
-      applicationTime: '2023-12-12 14:23:23',
-      reviewTime: '',
-      reviewAccount: '财务'
-    },
-    {
-      id: 4,
-      orderNo: 'SJTX-123312',
-      merchantName: '商家名称商家名称',
-      contactPhone: '18979881656',
-      accountType: 'alipay',
-      withdrawAmount: 200,
-      serviceFeeRate: 2,
-      receivedAmount: 196,
-      status: 'approved',
-      applicationTime: '2023-12-12 14:23:23',
-      reviewTime: '2023-12-12 14:23:23',
-      reviewAccount: 'admin'
-    },
-    {
-      id: 5,
-      orderNo: 'SJTX-123313',
-      merchantName: '清风超市',
-      contactPhone: '13800138000',
-      accountType: 'wechat',
-      withdrawAmount: 500,
-      serviceFeeRate: 2,
-      receivedAmount: 490,
-      status: 'pending',
-      applicationTime: '2023-12-13 10:30:00',
-      reviewTime: '',
-      reviewAccount: '财务'
+  // 数据加载函数（不使用useCallback，避免依赖问题）
+  const loadWithdrawList = async (params = {}) => {
+    try {
+      setLoading(true)
+
+      // 构建查询参数
+      const queryParams = {
+        page: params.page || pagination.current,
+        pageSize: params.pageSize || pagination.pageSize
+      }
+
+      // 添加搜索条件
+      const searchConditions = params.searchParams || searchParams
+      if (searchConditions.merchantName) queryParams.merchantName = searchConditions.merchantName
+      if (searchConditions.contactPhone) queryParams.contactPhone = searchConditions.contactPhone
+      if (searchConditions.status) queryParams.status = searchConditions.status
+      if (searchConditions.applicationTime && searchConditions.applicationTime.length === 2) {
+        queryParams.startDate = searchConditions.applicationTime[0].format('YYYY-MM-DD')
+        queryParams.endDate = searchConditions.applicationTime[1].format('YYYY-MM-DD')
+      }
+
+      console.log('📤 发送商家提现列表请求:', queryParams)
+      const response = await merchantWithdrawAPI.getMerchantWithdrawList(queryParams)
+
+      if (response && response.data) {
+        // 处理数据，确保每条记录都有必要的字段
+        const processedData = response.data.list.map(item => ({
+          ...item,
+          key: item._id,
+          id: item._id,
+        }))
+
+        setWithdrawData(processedData)
+        setPagination(prev => ({
+          ...prev,
+          current: queryParams.page,
+          pageSize: queryParams.pageSize,
+          total: response.data.pagination?.total || 0
+        }))
+        setForceUpdate(prev => prev + 1) // 强制重新渲染
+        console.log('✅ 获取商家提现列表成功，共', processedData.length, '条记录')
+      }
+    } catch (error) {
+      console.error('❌ 获取商家提现列表失败:', error)
+      message.error('获取商家提现列表失败: ' + (error.message || '网络错误'))
+      setWithdrawData([])
+    } finally {
+      setLoading(false)
     }
-  ]
-
-  // 计算当前页数据
-  const currentPageData = useMemo(() => {
-    const startIndex = (pagination.current - 1) * pagination.pageSize
-    const endIndex = startIndex + pagination.pageSize
-    return filteredData.slice(startIndex, endIndex)
-  }, [filteredData, pagination.current, pagination.pageSize])
-
-  // 检查并修正分页状态
-  useEffect(() => {
-    if (filteredData.length > 0) {
-      const totalPages = Math.ceil(filteredData.length / pagination.pageSize)
-      if (pagination.current > totalPages) {
-        setPagination(prev => ({ ...prev, current: totalPages }))
-      }
-    }
-  }, [filteredData.length, pagination.current, pagination.pageSize])
-
-  useEffect(() => {
-    setAllData(mockWithdrawData)
-    setFilteredData(mockWithdrawData)
-    setPagination(prev => ({ ...prev, total: mockWithdrawData.length }))
-  }, [])
-
-  // 筛选数据
-  const filterData = (data, params) => {
-    return data.filter(item => {
-      // 按商家名称筛选
-      if (params.merchantName && !item.merchantName.toLowerCase().includes(params.merchantName.toLowerCase())) {
-        return false
-      }
-
-      // 按联系电话筛选
-      if (params.contactPhone && !item.contactPhone.includes(params.contactPhone)) {
-        return false
-      }
-
-      // 按状态筛选
-      if (params.status && item.status !== params.status) {
-        return false
-      }
-
-      // 按申请时间范围筛选
-      if (params.applicationTime && params.applicationTime.length === 2) {
-        const [startDate, endDate] = params.applicationTime
-        const itemDate = new Date(item.applicationTime)
-
-        if (startDate && itemDate < startDate.toDate()) {
-          return false
-        }
-
-        if (endDate && itemDate > endDate.toDate()) {
-          return false
-        }
-      }
-
-      return true
-    })
   }
 
-  // 搜索处理
-  const handleSearch = (values) => {
-    console.log('搜索条件:', values)
-    setLoading(true)
-    setSearchParams(values)
+  // 初始化数据获取
+  useEffect(() => {
+    loadWithdrawList({ page: 1, pageSize: 2 })
+  }, []) // 空依赖数组，只在组件挂载时执行一次
 
-    setTimeout(() => {
-      const filtered = filterData(allData, values)
-      setFilteredData(filtered)
-      setPagination(prev => ({ ...prev, current: 1, total: filtered.length }))
-      setLoading(false)
-    }, 500)
+  // 当前页数据就是从API获取的数据，不需要再次切片
+  const currentPageData = withdrawData
+
+  // 删除客户端筛选逻辑，改为服务端筛选
+
+  // 搜索处理
+  const handleSearch = async (values) => {
+    try {
+      setSearchParams(values)
+      setPagination(prev => ({ ...prev, current: 1 })) // 重置到第一页
+
+      await loadWithdrawList({
+        page: 1,
+        pageSize: pagination.pageSize,
+        searchParams: values
+      })
+      message.success('查询完成')
+    } catch (error) {
+      message.error('查询失败: ' + error.message)
+    }
   }
 
   // 重置处理
-  const handleReset = () => {
-    form.resetFields()
-    setSearchParams({})
-    setFilteredData(allData)
-    setPagination(prev => ({ ...prev, current: 1, total: allData.length }))
+  const handleReset = async () => {
+    try {
+      form.resetFields()
+      setSearchParams({})
+      setPagination(prev => ({ ...prev, current: 1 }))
+
+      await loadWithdrawList({
+        page: 1,
+        pageSize: pagination.pageSize,
+        searchParams: {}
+      })
+      message.info('已重置搜索条件')
+    } catch (error) {
+      message.error('重置失败: ' + error.message)
+    }
   }
 
   // 分页处理
@@ -211,6 +155,12 @@ const MerchantWithdraw = () => {
       current: page,
       pageSize: pageSize || prev.pageSize
     }))
+
+    loadWithdrawList({
+      page: page,
+      pageSize: pageSize || pagination.pageSize,
+      searchParams: searchParams
+    })
   }
 
   // 审核处理
@@ -220,27 +170,32 @@ const MerchantWithdraw = () => {
   }
 
   // 确认审核
-  const handleAuditConfirm = (action) => {
-    const newStatus = action === 'approve' ? 'approved' : 'rejected'
-    const actionText = action === 'approve' ? '通过' : '拒绝'
+  const handleAuditConfirm = async (action) => {
+    try {
+      setLoading(true)
+      const actionText = action === 'approve' ? '通过' : '拒绝'
 
-    const updatedData = allData.map(item =>
-      item.id === selectedRecord.id ? {
-        ...item,
-        status: newStatus,
-        reviewTime: new Date().toLocaleString(),
-        reviewAccount: 'admin' // 这里应该是当前登录用户
-      } : item
-    )
-    setAllData(updatedData)
+      await merchantWithdrawAPI.auditWithdrawApplication(selectedRecord.id, {
+        action,
+        remark: `管理员${actionText}提现申请`
+      })
 
-    const filtered = filterData(updatedData, searchParams)
-    setFilteredData(filtered)
-    setPagination(prev => ({ ...prev, total: filtered.length }))
+      message.success(`${actionText}成功`)
+      setAuditModalVisible(false)
+      setSelectedRecord(null)
 
-    message.success(`${actionText}成功`)
-    setAuditModalVisible(false)
-    setSelectedRecord(null)
+      // 刷新列表数据
+      await loadWithdrawList({
+        page: pagination.current,
+        pageSize: pagination.pageSize,
+        searchParams: searchParams
+      })
+    } catch (error) {
+      console.error('❌ 审核失败:', error)
+      message.error('审核失败: ' + (error.message || '网络错误'))
+    } finally {
+      setLoading(false)
+    }
   }
 
   // 关闭审核模态框
@@ -250,14 +205,17 @@ const MerchantWithdraw = () => {
   }
 
   // 刷新数据
-  const handleRefresh = () => {
-    setLoading(true)
-    setTimeout(() => {
-      const filtered = filterData(allData, searchParams)
-      setFilteredData(filtered)
-      setPagination(prev => ({ ...prev, total: filtered.length }))
-      setLoading(false)
-    }, 500)
+  const handleRefresh = async () => {
+    try {
+      await loadWithdrawList({
+        page: pagination.current,
+        pageSize: pagination.pageSize,
+        searchParams: searchParams
+      })
+      message.info('数据已刷新')
+    } catch (error) {
+      message.error('刷新失败: ' + error.message)
+    }
   }
 
   // 表格列定义
@@ -278,7 +236,12 @@ const MerchantWithdraw = () => {
       title: '联系电话',
       dataIndex: 'contactPhone',
       key: 'contactPhone',
-      width: 140
+      width: 140,
+      render: (phone) => (
+        <Tooltip title={phone || '暂无手机号'}>
+          <span>{maskPhone(phone)}</span>
+        </Tooltip>
+      )
     },
     {
       title: '账号类型',
@@ -332,11 +295,15 @@ const MerchantWithdraw = () => {
       render: (status) => {
         const statusMap = {
           pending: { color: 'orange', text: '待审核' },
-          approved: { color: 'cyan', text: '已通过' },
+          reviewing: { color: 'blue', text: '审核中' },
+          approved: { color: 'green', text: '已通过' },
           rejected: { color: 'red', text: '已拒绝' },
-          cancelled: { color: 'default', text: '已撤销' }
+          cancelled: { color: 'default', text: '已撤销' },
+          processing: { color: 'cyan', text: '处理中' },
+          completed: { color: 'success', text: '已完成' },
+          failed: { color: 'error', text: '失败' }
         }
-        const statusInfo = statusMap[status] || { color: 'default', text: status }
+        const statusInfo = statusMap[status] || { color: 'default', text: WITHDRAW_STATUS_LABELS[status] || status }
         return <Tag color={statusInfo.color}>{statusInfo.text}</Tag>
       }
     },
@@ -457,6 +424,7 @@ const MerchantWithdraw = () => {
             </div>
             <div className="table-actions">
               <Space>
+
                 <Tooltip title="刷新">
                   <Button
                     type="text"
@@ -482,6 +450,7 @@ const MerchantWithdraw = () => {
             columns={columns}
             dataSource={currentPageData}
             rowKey="id"
+            key={forceUpdate} // 确保数据更新时重新渲染
             pagination={false}
             loading={loading}
             scroll={{ x: 1500 }}
@@ -496,7 +465,7 @@ const MerchantWithdraw = () => {
             alignItems: 'center',
             marginTop: '16px'
           }}>
-            <div className="pagination-info">
+            <div className="pagination-info" key={`pagination-${forceUpdate}`}>
               <span>共 {pagination.total} 条</span>
             </div>
             <Pagination
@@ -530,7 +499,7 @@ const MerchantWithdraw = () => {
                   <Col span={12}>
                     <p><strong>订单号：</strong>{selectedRecord.orderNo}</p>
                     <p><strong>商家名称：</strong>{selectedRecord.merchantName}</p>
-                    <p><strong>联系电话：</strong>{selectedRecord.contactPhone}</p>
+                    <p><strong>联系电话：</strong>{maskPhone(selectedRecord.contactPhone)}</p>
                   </Col>
                   <Col span={12}>
                     <p><strong>提现金额：</strong>¥{selectedRecord.withdrawAmount.toFixed(2)}</p>

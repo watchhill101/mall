@@ -3,6 +3,17 @@ var router = express.Router();
 require('../moudle/index'); // 确保用户模型被加载
 var { Product, ProductAudit, ProductRecycleBin, ProductCategory } = require('../moudle/goods');
 var Merchant = require('../moudle/merchant/merchant');
+// 导入订单相关模型
+var { 
+    Order, 
+    AfterSales, 
+    TallyOrder, 
+    SortingOrder, 
+    PaymentRecord, 
+    AllocationOrder, 
+    WorkOrder, 
+    LogisticsOrder 
+} = require('../moudle/goodsOrder');
 // ==================== 订单管理相关接口 ====================
 
 // 获取订单列表

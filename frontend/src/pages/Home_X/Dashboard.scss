@@ -204,3 +204,61 @@
   // 优化渲染性能
   will-change: transform;
 }
+
+// 拖拽相关样式
+.drag-handle {
+  transition: all 0.2s ease;
+  
+  &:hover {
+    color: rgba(226, 232, 240, 1) !important;
+    background: rgba(0, 0, 0, 0.4) !important;
+    transform: scale(1.1);
+  }
+  
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+// 拖拽时的样式
+.dragging {
+  user-select: none;
+  pointer-events: none;
+  
+  * {
+    user-select: none;
+    pointer-events: none;
+  }
+}
+
+// 拖拽按钮容器样式
+.draggable-button-container {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  
+  &:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  }
+  
+  &.dragging {
+    transform: rotate(2deg) scale(1.05);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+  }
+}
+
+// 拖拽统计面板样式
+.draggable-stats-panel {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  
+  &:hover {
+    transform: scale(1.02);
+    box-shadow: 0 12px 40px rgba(129, 140, 248, 0.3);
+  }
+  
+  &.dragging {
+    transform: rotate(-1deg) scale(1.03);
+    box-shadow: 0 16px 48px rgba(129, 140, 248, 0.4);
+    z-index: 9999;
+  }
+}

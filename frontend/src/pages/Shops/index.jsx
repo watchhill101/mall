@@ -8,16 +8,24 @@ import {
   MoneyCollectOutlined,
   CalculatorOutlined,
   FileOutlined,
-  AuditOutlined,
-  DesktopOutlined
+  AuditOutlined
 } from '@ant-design/icons'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation, Outlet } from 'react-router-dom'
 import MerchantLayout from '../Merchant/MerchantLayout'
 
 const { Title } = Typography
 
 const Shops = () => {
   const navigate = useNavigate()
+  const location = useLocation()
+
+  // 检查是否在子路由页面
+  const isSubRoute = location.pathname !== '/shops'
+
+  // 如果在子路由页面，直接渲染子路由内容
+  if (isSubRoute) {
+    return <Outlet />
+  }
 
   // 快捷入口菜单项
   const menuItems = [
@@ -60,11 +68,6 @@ const Shops = () => {
       key: '/shops/merchant-application',
       icon: <AuditOutlined />,
       label: '商家申请',
-    },
-    {
-      key: '/shops/device-management',
-      icon: <DesktopOutlined />,
-      label: '设备管理',
     }
   ]
 

@@ -7,7 +7,7 @@
   position: relative;
   overflow: hidden;
 
-  // 背景装饰
+  // 动态背景装饰
   &::before {
     content: '';
     position: absolute;
@@ -15,9 +15,11 @@
     left: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
-    background-size: 50px 50px;
-    animation: float 20s ease-in-out infinite;
+    background: 
+      radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px),
+      radial-gradient(circle, rgba(255,255,255,0.05) 2px, transparent 2px);
+    background-size: 60px 60px, 120px 120px;
+    animation: float 25s ease-in-out infinite;
   }
 
   &::after {
@@ -28,53 +30,189 @@
     right: 0;
     bottom: 0;
     background: 
-      radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
-      radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
-      radial-gradient(circle at 40% 40%, rgba(120, 119, 198, 0.2) 0%, transparent 50%);
+      radial-gradient(ellipse at 20% 80%, rgba(102, 126, 234, 0.3) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(118, 75, 162, 0.25) 0%, transparent 50%),
+      radial-gradient(ellipse at 40% 40%, rgba(255, 255, 255, 0.1) 0%, transparent 40%),
+      linear-gradient(45deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    animation: backgroundShift 15s ease-in-out infinite alternate;
+  }
+
+  // 动态背景元素
+  .backgroundElements {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+
+    .floatingShape {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      animation: floatUp 15s infinite linear;
+
+      &:nth-child(1) {
+        width: 80px;
+        height: 80px;
+        left: 10%;
+        animation-delay: 0s;
+        animation-duration: 12s;
+      }
+
+      &:nth-child(2) {
+        width: 120px;
+        height: 120px;
+        left: 85%;
+        animation-delay: 5s;
+        animation-duration: 18s;
+      }
+
+      &:nth-child(3) {
+        width: 60px;
+        height: 60px;
+        left: 70%;
+        animation-delay: 10s;
+        animation-duration: 15s;
+      }
+    }
   }
 
   .loginContainer {
     position: relative;
     z-index: 1;
     width: 100%;
-    max-width: 400px;
+    max-width: 420px;
     padding: 20px;
+    animation: slideUp 0.8s ease-out;
   }
 
   .loginCard {
     background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px);
-    border-radius: 16px;
+    backdrop-filter: blur(25px);
+    border-radius: 20px;
     box-shadow: 
-      0 8px 32px rgba(0, 0, 0, 0.1),
-      0 0 0 1px rgba(255, 255, 255, 0.2);
-    padding: 40px 32px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    transition: all 0.3s ease;
+      0 20px 60px rgba(0, 0, 0, 0.15),
+      0 8px 25px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    padding: 48px 40px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+
+    // 卡片内部光效
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, 
+        transparent, 
+        rgba(255, 255, 255, 0.2), 
+        transparent
+      );
+      transition: left 0.6s ease;
+    }
 
     &:hover {
-      transform: translateY(-2px);
+      transform: translateY(-3px) scale(1.01);
       box-shadow: 
-        0 12px 40px rgba(0, 0, 0, 0.15),
-        0 0 0 1px rgba(255, 255, 255, 0.3);
+        0 25px 80px rgba(0, 0, 0, 0.2),
+        0 12px 35px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+
+      &::before {
+        left: 100%;
+      }
     }
   }
 
   .loginHeader {
     text-align: center;
-    margin-bottom: 32px;
+    margin-bottom: 40px;
+    position: relative;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 3px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 2px;
+      animation: expandLine 1s ease-out 0.5s both;
+    }
   }
 
   .loginTitle {
-    font-size: 24px;
-    font-weight: 600;
-    color: #2c3e50;
-    margin: 0;
-    letter-spacing: 0.5px;
+    font-size: 28px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0 0 8px 0;
+    letter-spacing: 0.8px;
+    position: relative;
+    animation: titleGlow 2s ease-in-out infinite alternate;
   }
 
-  .loginContent {
-    // 内容样式在登录组件中定义
+  .loginSubtitle {
+    font-size: 15px;
+    color: #64748b;
+    margin: 0;
+    font-weight: 400;
+    letter-spacing: 0.2px;
+    opacity: 0;
+    animation: fadeInUp 0.8s ease-out 0.3s both;
+  }
+
+  .loginFooter {
+    margin-top: 32px;
+    text-align: center;
+    padding-top: 24px;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+
+    .footerText {
+      font-size: 12px;
+      color: #94a3b8;
+      margin: 0;
+      letter-spacing: 0.2px;
+    }
+  }
+}
+
+@keyframes floatUp {
+  0% {
+    transform: translateY(100vh) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.8;
+  }
+  90% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-100vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -83,7 +221,47 @@
     transform: translateY(0px) rotate(0deg);
   }
   50% {
-    transform: translateY(-20px) rotate(180deg);
+    transform: translateY(-25px) rotate(180deg);
+  }
+}
+
+@keyframes backgroundShift {
+  0% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes expandLine {
+  from {
+    width: 0;
+  }
+  to {
+    width: 60px;
+  }
+}
+
+@keyframes titleGlow {
+  0% {
+    text-shadow: 0 0 10px rgba(52, 152, 219, 0.3);
+  }
+  100% {
+    text-shadow: 0 0 20px rgba(52, 152, 219, 0.6);
   }
 }
 
@@ -92,12 +270,17 @@
   .login {
     padding: 20px;
     
+    .loginContainer {
+      max-width: 380px;
+    }
+    
     .loginCard {
-      padding: 32px 24px;
+      padding: 36px 28px;
+      border-radius: 16px;
     }
     
     .loginTitle {
-      font-size: 20px;
+      font-size: 24px;
     }
   }
 }
@@ -106,12 +289,41 @@
   .login {
     padding: 16px;
     
+    .loginContainer {
+      max-width: 340px;
+    }
+    
+    .loginCard {
+      padding: 28px 24px;
+      border-radius: 12px;
+    }
+    
+    .loginTitle {
+      font-size: 22px;
+      letter-spacing: 0.5px;
+    }
+
+    .loginHeader {
+      margin-bottom: 32px;
+
+      &::after {
+        width: 40px;
+        height: 2px;
+      }
+    }
+  }
+}
+
+@media (max-width: 360px) {
+  .login {
+    padding: 12px;
+    
     .loginCard {
       padding: 24px 20px;
     }
     
     .loginTitle {
-      font-size: 18px;
+      font-size: 20px;
     }
   }
 }

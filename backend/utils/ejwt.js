@@ -48,39 +48,13 @@ const optionalJwtAuth = jwt({
 });
 
 /**
- * 自定义错误处理中间件（支持无感刷新）
+ * 简化的错误处理中间件
  */
 const jwtErrorHandler = async (err, req, res, next) => {
   if (err.name === "UnauthorizedError") {
-    // 检查是否有refresh token
-    const refreshToken = req.headers["x-refresh-token"];
-
-    if (refreshToken) {
-      try {
-        // 尝试刷新token
-        const newTokens = await JwtUtil.refreshAccessToken(refreshToken);
-
-        // 在响应头中返回新的token
-        res.setHeader("x-new-access-token", newTokens.accessToken);
-        res.setHeader("x-token-refreshed", "true");
-
-        // 重新解析新的token并继续请求
-        const decoded = JwtUtil.verifyAccessToken(newTokens.accessToken);
-        req.auth = decoded;
-
-        return next();
-      } catch (refreshError) {
-        return res.status(401).json({
-          code: 401,
-          message: "Token已过期且刷新失败，请重新登录",
-          data: null,
-        });
-      }
-    }
-
     return res.status(401).json({
       code: 401,
-      message: "Token 验证失败",
+      message: "Token验证失败或已过期",
       data: null,
     });
   }

@@ -8,8 +8,20 @@ var logger = require("morgan");
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
 var authRouter = require("./routes/auth");
+var merchantRouter = require("./routes/merchant");
+var merchantAccountRouter = require("./routes/merchantAccount");
+var accountDetailRouter = require("./routes/accountDetail");
+var withdrawAccountRouter = require("./routes/withdrawAccount");
+var merchantWithdrawRouter = require("./routes/merchantWithdraw");
+var settlementOrderRouter = require("./routes/settlementOrder");
+var billRouter = require("./routes/bill");
 var ProductsRouter = require('./routes/qiao')
 var captchaRouter = require("./routes/captcha");
+var merchantApplicationRouter = require("./routes/merchantApplication");
+var navigationRouter = require("./routes/navigation");
+var businessRouter = require("./routes/business");
+var userManagementRouter = require("./routes/userManagement");
+var permissionsRouter = require("./routes/permissions");
 
 // 导入数据库模型（确保数据库连接和模型初始化）
 require("./moudle/index");
@@ -40,27 +52,43 @@ app.use(express.static(path.join(__dirname, "public")));
 
 // 添加请求日志中间件
 app.use((req, res, next) => {
-  console.log(`📥 ${req.method} ${req.path}`, req.body);
+  // 只记录重要的API请求，忽略静态资源
+  if (!req.path.startsWith('/static') && !req.path.endsWith('.ico')) {
+    console.log(`📥 ${req.method} ${req.path}`);
+  }
   next();
 });
-// 添加测试路由
-app.get("/test", (req, res) => {
+// 添加测试路由（需要token验证）
+app.get("/test", jwtAuth, verifyTokenType, (req, res) => {
   res.json({
     code: 200,
     message: "后端服务正常运行",
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    user: req.auth // 返回当前用户信息以验证token
   });
 });
 
-// 路由配置
+// 不需要token验证的路由（公开路由）
 app.use("/", indexRouter);
-app.use("/users", usersRouter);
-app.use("/auth", authRouter);
+app.use("/auth", authRouter);  // 登录、注册等认证相关
+app.use("/captcha", captchaRouter);  // 验证码
 app.use("/qiao", ProductsRouter)
-app.use("/captcha", captchaRouter);
-// 需要认证的路由 - 使用express-jwt
-app.use("/api/protected", jwtAuth, verifyTokenType); // 需要强制验证的路由
 
+
+// 需要token验证的路由
+app.use("/users", jwtAuth, verifyTokenType, usersRouter);
+app.use("/merchant", jwtAuth, verifyTokenType, merchantRouter);
+app.use("/merchant-account", jwtAuth, verifyTokenType, merchantAccountRouter);
+app.use("/account-detail", jwtAuth, verifyTokenType, accountDetailRouter);
+app.use("/withdraw-account", jwtAuth, verifyTokenType, withdrawAccountRouter);
+app.use("/merchant-withdraw", jwtAuth, verifyTokenType, merchantWithdrawRouter);
+app.use("/settlement-order", jwtAuth, verifyTokenType, settlementOrderRouter);
+app.use("/bill", jwtAuth, verifyTokenType, billRouter);
+app.use("/merchant-application", jwtAuth, verifyTokenType, merchantApplicationRouter);
+app.use("/api", jwtAuth, verifyTokenType, navigationRouter);
+app.use("/goods", jwtAuth, verifyTokenType, businessRouter);
+app.use("/user-management", jwtAuth, verifyTokenType, userManagementRouter);
+app.use("/api/permissions", jwtAuth, verifyTokenType, permissionsRouter);
 
 // JWT错误处理中间件
 app.use(jwtErrorHandler);

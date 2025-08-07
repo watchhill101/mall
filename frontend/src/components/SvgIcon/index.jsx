@@ -8,13 +8,27 @@ const SvgIcon = ({
   color = "currentColor",
   className = "icon-svg",
 }) => {
+  // 如果没有提供name，显示默认图标
+  if (!name) {
+    return (
+      <svg
+        className={className}
+        style={{ width, height, fill: color }}
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="3" />
+      </svg>
+    );
+  }
+
   return (
     <svg
       className={className}
       style={{ width, height, fill: color }}
       aria-hidden="true"
     >
-      <use xlinkHref={`#icon-${name}`} />
+      <use href={`#icon-${name}`} />
     </svg>
   );
 };

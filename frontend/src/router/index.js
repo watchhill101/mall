@@ -6,7 +6,6 @@ const Home = lazy(() => import('@/pages/Home_X'))
 const Shops = lazy(() => import('@/pages/Shops'))
 const Goods = lazy(() => import('@/pages/Goods'))
 const Orders = lazy(() => import('@/pages/Orders'))
-const Users = lazy(() => import('@/pages/Users'))
 const Login = lazy(() => import('@/pages/Login'))
 const NotFound = lazy(() => import('@/pages/NotFound'))
 
@@ -19,7 +18,6 @@ const MerchantWithdraw = lazy(() => import('@/pages/Merchant/MerchantWithdraw'))
 const SettlementOrder = lazy(() => import('@/pages/Merchant/SettlementOrder'))
 const SettlementBill = lazy(() => import('@/pages/Merchant/SettlementBill'))
 const MerchantApplication = lazy(() => import('@/pages/Merchant/MerchantApplication'))
-const DeviceManagement = lazy(() => import('@/pages/Merchant/DeviceManagement'))
 
 // 商品相关页面
 const ListOfCommodities = lazy(() => import('@/pages/Goods_S/ListOfCommodities'))
@@ -38,6 +36,10 @@ const StockDetails = lazy(() => import('@/pages/Goods_S/inventory/DetailsOfStock
 // 订单相关页面
 const OrdersList = lazy(() => import('@/pages/order_S/ordersList'))
 const AfterSales = lazy(() => import('@/pages/order_S/afterSales'))
+// 系统设置相关页面
+const Lbt = lazy(() => import('@/pages/Home_X/lbt')) // 轮播图组件
+const Users = lazy(() => import('@/pages/Users'))
+const UserRoot = lazy(() => import('@/pages/UserRoot')) // 用户权限组件
 const TallySheet = lazy(() => import('@/pages/order_S/tallyOrders'))
 const SortingList = lazy(() => import('@/pages/order_S/sortingOrders'))
 const PaymentRecord = lazy(() => import('@/pages/order_S/paymentRecord'))
@@ -52,7 +54,6 @@ const constantRoutes = [
     hidden: true,
     element: <Layout />,
     children: [
-      { index: true, element: <Navigate to={'/home'} replace /> },
       {
         path: 'home',
         title: '首页',
@@ -61,15 +62,15 @@ const constantRoutes = [
         icon: 'HomeOutlined',    // 确认图标名称正确
         menuPath: '/home'
       },
-      {
-        path: 'shops',
-        title: '商家',
-        element: <Shops />,
+
+      { 
+        path: 'shops', 
+        title: '商家', 
+        element: <Shops />, 
         hidden: false,
         icon: 'ShopOutlined',    // 使用存在的图标
         menuPath: '/shops',
         children: [
-          { index: true, element: <Navigate to={'/shops/merchants'} replace /> },
           {
             path: 'merchants',
             title: '商家管理',
@@ -133,14 +134,6 @@ const constantRoutes = [
             hidden: false,
             icon: 'component',
             menuPath: '/shops/merchant-application'
-          },
-          {
-            path: 'device-management',
-            title: '设备管理',
-            element: <DeviceManagement />,
-            hidden: false,
-            icon: 'component',
-            menuPath: '/shops/device-management'
           }
         ]
       },
@@ -152,7 +145,6 @@ const constantRoutes = [
         icon: 'GoodsOutlined',    // 商品图标
         menuPath: '/goods',
         children: [
-          { index: true, element: <Navigate to={'/goods/product-list'} replace /> },
           {
             path: 'product-list',
             title: '商品列表',
@@ -319,12 +311,39 @@ const constantRoutes = [
         ]
       },
       {
-        path: 'users',
-        title: '用户',
-        element: <Users />,
+        path: 'system',
+        title: '系统设置',
+        element: <Users />, // 暂时使用Users组件作为系统设置主页面
         hidden: false,
-        icon: 'UsersOutlined',    // 用户图标
-        menuPath: '/users'
+        icon: 'SettingOutlined',    // 系统设置图标
+        menuPath: '/system',
+        children: [
+          { index: true, element: <Navigate to={'/system/users'} replace /> },
+          {
+            path: 'users',
+            title: '用户',
+            element: <Users />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/system/users'
+          },
+          {
+            path: 'carousel',
+            title: '轮播图',
+            element: <Lbt />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/system/carousel'
+          },
+          {
+            path: 'user-permissions',
+            title: '用户权限',
+            element: <UserRoot />, // 暂时使用Users组件，后续可以创建专门的权限管理组件
+            hidden: false,
+            icon: 'component',
+            menuPath: '/system/user-permissions'
+          }
+        ]
       }
     ]
   },

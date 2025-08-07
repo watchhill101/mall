@@ -91,8 +91,8 @@ const LoginMine = () => {
           layout="vertical"
           initialValues={{
             remember: true,
-            username: "admin",
-            password: "123456",
+            username: "",
+            password: "",
           }}
           onFinish={onFinish}
           onFinishFailed={onFinishFailed}
