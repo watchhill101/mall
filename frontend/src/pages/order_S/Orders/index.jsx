@@ -1,259 +1,125 @@
-import React, { useState } from "react";
-import "./index.scss";
-import { OrderData } from "@/db_S/data.mjs";
-import SearchBar from "@/components/SearchBar";
-import "./index.scss";
+import React from 'react';
+import { Typography } from 'antd';
 import {
-  Button,
-  Popconfirm,
-  Space,
-  Upload,
-  Table,
-  Form,
-  Input,
-  Select,
-  DatePicker,
-} from "antd";
-import dayjs from "dayjs";
-const { RangePicker } = DatePicker;
+  ShoppingCartOutlined,
+  CustomerServiceOutlined,
+  FileTextOutlined,
+  SortAscendingOutlined,
+  DollarOutlined,
+  SwapOutlined,
+  ToolOutlined,
+  TruckOutlined,
+} from '@ant-design/icons';
+import { useNavigate, useLocation, Outlet } from 'react-router-dom';
+import OrderLayout from '../Order_layout/Order_layout';
+
+const { Title } = Typography;
+
 export default function Index() {
-  const [form] = Form.useForm();
-  const [formLayout, setFormLayout] = useState("inline");
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const [btnList] = useState([
-    "全部",
-    "零售",
-    "家政",
-    "烘焙",
-    "文旅",
-    "洗衣",
-    "养老",
-    "食堂",
-  ]);
-  const onFormLayoutChange = ({ layout }) => {
-    setFormLayout(layout);
-  };
+  // 检查是否在子路由页面
+  const isSubRoute = location.pathname !== '/orders';
 
-  const [curIdx, setCurIdx] = useState(0);
+  // 如果在子路由页面，直接渲染子路由内容
+  if (isSubRoute) {
+    return <Outlet />;
+  }
 
-  const [params, setParams] = useState({
-    pageSize: 5,
-    current: 1,
-  });
-  const handleChange = (value) => {
-    console.log(`selected ${value}`);
-  };
-
-  const columns = [
+  // 快捷入口菜单项
+  const menuItems = [
     {
-      title: "订单编号",
-      dataIndex: "OrderNumber",
-      render: (val, row) => renderMergedCell(val, row),
+      key: '/orders/orders-list',
+      icon: <ShoppingCartOutlined />,
+      label: '订单列表',
     },
     {
-      title: "商品信息",
-      render: (_, row) => (
-        <div style={{ display: "flex", gap: "8px" }}>
-          <img src={row.product?.ImageUrl} alt="" width={40} height={40} />
-          <div>
-            <div>{row.product?.ProductName}</div>
-            <div style={{ color: "#999" }}>{row.product?.Specification}</div>
-          </div>
-        </div>
-      ),
+      key: '/orders/afterSales',
+      icon: <CustomerServiceOutlined />,
+      label: '售后管理',
     },
     {
-      title: "价格(元)/数量",
-      render: (text, row) => (
-        <div>
-          ￥{row.product.price} / {row.product.quantity}
-        </div>
-      ),
+      key: '/orders/tallySheet',
+      icon: <FileTextOutlined />,
+      label: '理货单',
     },
     {
-      title: "总价",
-      render: (value, row) => ({
-        children: row.isFirstRow
-          ? `￥${row.ProductInformation.reduce(
-              (sum, p) => sum + p.price * p.quantity,
-              0
-            )}`
-          : null,
-        props: { rowSpan: row.rowSpan },
-      }),
+      key: '/orders/SortingList',
+      icon: <SortAscendingOutlined />,
+      label: '分拣单',
     },
     {
-      title: "客户信息",
-      render: (value, row) => ({
-        children: row.isFirstRow
-          ? row.CustomerInformation.map(
-              (c) => `${c.CustomerName} - ${c.ContactInformation}`
-            ).join(" / ")
-          : null,
-        props: { rowSpan: row.rowSpan },
-      }),
+      key: '/orders/payment-record',
+      icon: <DollarOutlined />,
+      label: '收款记录',
     },
     {
-      title: "订单状态",
-      dataIndex: "OrderStatus",
-      render: (val, row) => ({
-        children: row.isFirstRow
-          ? {
-              0: "待支付",
-              1: "已支付",
-              2: "已完成",
-              3: "已关闭",
-              4: "已退款",
-              5: "部分退款",
-            }[val] || "未知"
-          : null,
-        props: { rowSpan: row.rowSpan },
-      }),
+      key: '/orders/allocation-order',
+      icon: <SwapOutlined />,
+      label: '配货单',
     },
     {
-      title: "分销佣金",
-      dataIndex: "Commission",
-      render: (val, row) => renderMergedCell(`￥${val}`, row),
+      key: '/orders/work-order',
+      icon: <ToolOutlined />,
+      label: '作业单',
     },
     {
-      title: "所属店铺",
-      dataIndex: "StoreName",
-    },
-    {
-      title: "所属网点",
-      dataIndex: "OutletName",
-    },
-    {
-      title: "操作",
-      render: (_, row) => ({
-        children: row.isFirstRow ? (
-          <>
-            <Button type="link">详情</Button>
-            {row.OrderStatus !== 4 && (
-              <>
-                <Button type="link">完成</Button>
-                <Button type="link" danger>
-                  退款
-                </Button>
-              </>
-            )}
-          </>
-        ) : null,
-        props: { rowSpan: row.rowSpan },
-      }),
+      key: '/orders/logistics-order',
+      icon: <TruckOutlined />,
+      label: '物流单',
     },
   ];
 
-  const formatOrderData = (orderList) =>
-    orderList.flatMap((order) =>
-      order.ProductInformation.map((product, index) => ({
-        ...order,
-        product,
-        rowSpan: index === 0 ? order.ProductInformation.length : 0,
-        isFirstRow: index === 0,
-      }))
-    );
-  const expandedData = formatOrderData(OrderData.list);
-  const renderMergedCell = (content, row) => ({
-    children: row.isFirstRow ? content : null,
-    props: { rowSpan: row.rowSpan },
-  });
-  const disabledDate = (current) => {
-    // Can not select days before today and today
-    return current && current < dayjs().endOf("day");
-  };
   return (
-    <div className="OrderS">
-      {/* 顶部按钮切换 */}
-      <div className="header">
-        <ul className="btn-list">
-          {btnList.map((item, index) => (
-            <li key={index}>
-              <a
-                href="#!"
-                className={curIdx === index ? "active" : ""}
-                onClick={() => setCurIdx(index)}
-              >
-                {item}
-              </a>
-            </li>
+    <OrderLayout>
+      <div style={{ padding: '24px' }}>
+        <div style={{ marginBottom: '24px' }}>
+          <Title level={2} style={{ margin: 0, color: '#1890ff' }}>
+            订单管理
+          </Title>
+          <p style={{ color: '#666', margin: '8px 0 0 0' }}>
+            管理平台所有订单相关业务流程
+          </p>
+        </div>
+
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', 
+          gap: '16px',
+          marginTop: '24px'
+        }}>
+          {menuItems.map((item) => (
+            <div
+              key={item.key}
+              style={{
+                padding: '24px',
+                backgroundColor: '#fff',
+                borderRadius: '8px',
+                textAlign: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                border: '1px solid #f0f0f0',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+              }}
+              onClick={() => navigate(item.key)}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.15)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+              }}
+            >
+              <div style={{ fontSize: '24px', marginBottom: '8px', color: '#1890ff' }}>
+                {item.icon}
+              </div>
+              <div style={{ fontWeight: 'bold' }}>{item.label}</div>
+            </div>
           ))}
-        </ul>
-        <div className="searchBox">
-          {/* <Space></Space> */}
-          <Form
-            layout={formLayout}
-            form={form}
-            initialValues={{ layout: formLayout }}
-            onValuesChange={onFormLayoutChange}
-            style={{ maxWidth: "inline" }}
-          >
-            <Form.Item label="订单编号">
-              <Input placeholder="请输入" />
-            </Form.Item>
-            <Form.Item label="所属店铺">
-              <Select
-                defaultValue="店铺1"
-                style={{ width: 120 }}
-                onChange={handleChange}
-                options={[
-                  { value: "店铺1", label: "店铺1" },
-                  { value: "店铺2", label: "店铺2" },
-                ]}
-              />
-            </Form.Item>
-            <Form.Item label="支付时间">
-              <RangePicker disabledDate={disabledDate} />
-            </Form.Item>
-            <Form.Item label="联系电话">
-              <Input placeholder="请输入" />
-            </Form.Item>
-            <Form.Item label="交易类型">
-              <Select
-                defaultValue="消费"
-                style={{ width: 120 }}
-                onChange={handleChange}
-                options={[
-                  { value: "消费", label: "消费" },
-                  { value: "退款", label: "退款" },
-                ]}
-              />
-            </Form.Item>
-            <Form.Item label="支付方式">
-              <Select
-                defaultValue="微信"
-                style={{ width: 120 }}
-                onChange={handleChange}
-                options={[
-                  { value: "微信", label: "微信" },
-                  { value: "支付宝", label: "支付宝" },
-                  { value: "银行卡", label: "银行卡" },
-                ]}
-              ></Select>
-            </Form.Item>
-            <Form.Item>
-              <Button type="primary">搜索</Button>
-              <Button>重置</Button>
-            </Form.Item>
-          </Form>
         </div>
       </div>
-
-      {/* 搜索栏 */}
-      <div className="search-bar">
-        {/* <SearchBar formItemList={[]} onSearch={(v) => console.log(v)} /> */}
-      </div>
-
-      {/* 表格部分 */}
-      <div className="table-section">
-        <Table
-          dataSource={expandedData}
-          columns={columns}
-          pagination={{ pageSize: 5 }}
-          rowKey={(record, index) => `${record.OrderNumber}-${index}`}
-          bordered
-        />
-      </div>
-    </div>
+    </OrderLayout>
   );
 }
