@@ -5,7 +5,6 @@ import {
   DashboardFilled,
   DownOutlined,
   UserOutlined,
-  UndoOutlined,
   LogoutOutlined,
 } from "@ant-design/icons";
 import {
@@ -33,6 +32,7 @@ import CustomModal from "@/components/CustomModal";
 import UserCenterForm from "./components/UserCenterForm";
 import ResetPwdForm from "./components/ResetPwdForm";
 import SvgIcon from "@/components/SvgIcon";
+import AiAssistantWithLive2D from "@/components/AiAssistant/FixedVersion";
 // 导入工具类方法
 import { getBreadcrumbNameMap, getItem, getTreeMenu } from "@/utils/common";
 // 导入导航数据管理Hook
@@ -671,6 +671,9 @@ const LayoutApp = () => {
       <CustomModal title="重置密码" ref={resetPwdRef}>
         <ResetPwdForm toggleResetStatus={toggleResetStatus} />
       </CustomModal>
+      
+      {/* AI助手 - 除登录页外所有页面都显示 */}
+      {pathname !== '/login' && <AiAssistantWithLive2D />}
     </Layout>
   );
 };
