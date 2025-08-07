@@ -4,15 +4,15 @@ require('../moudle/index'); // 确保用户模型被加载
 var { Product, ProductAudit, ProductRecycleBin, ProductCategory } = require('../moudle/goods');
 var Merchant = require('../moudle/merchant/merchant');
 // 导入订单相关模型
-var { 
-    Order, 
-    AfterSales, 
-    TallyOrder, 
-    SortingOrder, 
-    PaymentRecord, 
-    AllocationOrder, 
-    WorkOrder, 
-    LogisticsOrder 
+var {
+    Order,
+    AfterSales,
+    TallyOrder,
+    SortingOrder,
+    PaymentRecord,
+    AllocationOrder,
+    WorkOrder,
+    LogisticsOrder
 } = require('../moudle/goodsOrder');
 // ==================== 订单管理相关接口 ====================
 
@@ -844,7 +844,11 @@ router.put('/updateAuditStatus', async (req, res) => {
 
 router.get('/searchProducts', async function (req, res) {
     try {
-        const { name, category, status, inStock, page = 1, pageSize = 10 } = req.query;
+        const {
+            name, category, status, inStock,
+            brand, minPrice, maxPrice, businessType,
+            page = 1, pageSize = 10
+        } = req.query;
 
         const query = {};
 
@@ -853,7 +857,7 @@ router.get('/searchProducts', async function (req, res) {
             query.productName = { $regex: name, $options: 'i' };
         }
 
-        // 分类精确匹配（后端字段是字符串，如 "A01"）
+        // 分类精确匹配
         if (category) {
             query.productCategory = category;
         }
@@ -863,7 +867,24 @@ router.get('/searchProducts', async function (req, res) {
             query.status = status;
         }
 
-        // 是否有库存：判断 inventory.currentStock 字段
+        // 品牌模糊匹配
+        if (brand) {
+            query['productInfo.brand'] = { $regex: brand, $options: 'i' };
+        }
+
+        // 业务类型匹配
+        if (businessType) {
+            query.businessType = businessType;
+        }
+
+        // 价格范围匹配
+        if (minPrice || maxPrice) {
+            query['pricing.salePrice.min'] = {};
+            if (minPrice) query['pricing.salePrice.min'].$gte = Number(minPrice);
+            if (maxPrice) query['pricing.salePrice.min'].$lte = Number(maxPrice);
+        }
+
+        // 是否有库存
         if (inStock === '1') {
             query['inventory.currentStock'] = { $gt: 0 };
         } else if (inStock === '0') {
@@ -874,7 +895,8 @@ router.get('/searchProducts', async function (req, res) {
 
         const products = await Product.find(query)
             .skip(skip)
-            .limit(Number(pageSize));
+            .limit(Number(pageSize))
+            .sort({ updatedAt: -1 }); // 按更新时间倒序
 
         const total = await Product.countDocuments(query);
 
@@ -1420,3 +1442,4 @@ router.put('/updateProductCategory/:categoryId', async function (req, res) {
         });
     }
 });
+//

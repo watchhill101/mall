@@ -119,7 +119,6 @@ function deleteProductFromRecycleBin(id) {
 // 搜索
 // 添加搜索商品方法
 function searchProducts(params) {
-
     return request({
         url: '/qiao/searchProducts',
         method: 'GET',

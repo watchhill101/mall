@@ -56,13 +56,15 @@ const ListOfCommodities = () => {
     const filteredData = data.filter((item) => item.status !== 'deleted');
     setlist(filteredData);
   };
+  // 删除getGoodsList函数
+  // 修改useEffect初始化加载
   useEffect(() => {
     // 初始加载商品列表
-    getGoodsList();
+    handleSearch();
 
     // 监听刷新事件
     const handleRefresh = () => {
-      getGoodsList();
+      handleSearch();
     };
 
     window.addEventListener('refreshProductList', handleRefresh);
@@ -84,7 +86,11 @@ const ListOfCommodities = () => {
     name: '',
     category: '',
     status: '',
-    inStock: '', // 新增库存商品状态
+    inStock: '',
+    brand: '',
+    minPrice: '',
+    maxPrice: '',
+    businessType: '',
   });
   const [modalVisible, setModalVisible] = useState(false);
   const [editingRecord, setEditingRecord] = useState(null);
@@ -541,7 +547,8 @@ const ListOfCommodities = () => {
                 >
                   {t('goods.productCategory')}:
                 </span>
-                <Cascader
+                <Input placeholder="商品分类"></Input>
+                {/* <Cascader
                   options={categoryData}
                   onChange={(value) =>
                     setSearchParams((prev) => ({
@@ -552,7 +559,7 @@ const ListOfCommodities = () => {
                   placeholder={t('goods.categoryPlaceholder')}
                   allowClear
                   style={{ flex: 1 }}
-                />
+                /> */}
               </div>
             </Col>
             <Col xs={24} sm={24} md={12} lg={8} xl={6}>
