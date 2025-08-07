@@ -38,13 +38,11 @@ router.get('/list', async (req, res) => {
       orderNo = '',
       productName = '',
       status = '',
+      settlementStatus = '',
+      networkPoint = '',
       timeType = '',
       startDate = '',
-      endDate = '',
-      minAmount = '',
-      maxAmount = '',
-      minQuantity = '',
-      maxQuantity = ''
+      endDate = ''
     } = req.query;
 
     // 构建聚合查询管道
@@ -75,11 +73,32 @@ router.get('/list', async (req, res) => {
     }
 
     if (productName) {
-      matchConditions['productInfo.name'] = { $regex: productName, $options: 'i' };
+      // 修复：根据实际数据结构，商品名称存储在 specification 字段
+      matchConditions.specification = { $regex: productName, $options: 'i' };
+    }
+
+    if (networkPoint) {
+      // 添加网点搜索支持
+      matchConditions.requiredOutlet = { $regex: networkPoint, $options: 'i' };
     }
 
     if (status) {
       matchConditions.status = status;
+    }
+
+    // 处理结算状态搜索 - 映射前端状态到后端原始状态
+    if (settlementStatus) {
+      switch (settlementStatus) {
+        case 'unsettled':
+          matchConditions.status = { $in: ['pending', 'confirmed', 'approved', 'shipped', 'delivered'] };
+          break;
+        case 'settled':
+          matchConditions.status = 'completed';
+          break;
+        case 'failed':
+          matchConditions.status = { $in: ['rejected', 'cancelled'] };
+          break;
+      }
     }
 
     // 根据时间类型添加日期筛选
@@ -97,28 +116,6 @@ router.get('/list', async (req, res) => {
           $gte: startDateTime,
           $lte: endDateTime
         };
-      }
-    }
-
-    // 添加金额范围筛选
-    if (minAmount !== '' || maxAmount !== '') {
-      matchConditions.totalAmount = {};
-      if (minAmount !== '') {
-        matchConditions.totalAmount.$gte = parseFloat(minAmount);
-      }
-      if (maxAmount !== '') {
-        matchConditions.totalAmount.$lte = parseFloat(maxAmount);
-      }
-    }
-
-    // 添加数量范围筛选
-    if (minQuantity !== '' || maxQuantity !== '') {
-      matchConditions.quantity = {};
-      if (minQuantity !== '') {
-        matchConditions.quantity.$gte = parseInt(minQuantity);
-      }
-      if (maxQuantity !== '') {
-        matchConditions.quantity.$lte = parseInt(maxQuantity);
       }
     }
 
@@ -193,13 +190,18 @@ router.get('/list', async (req, res) => {
     if (merchantName) searchConditions.push(`商家: ${merchantName}`);
     if (orderNo) searchConditions.push(`订单号: ${orderNo}`);
     if (productName) searchConditions.push(`商品: ${productName}`);
-    if (status) searchConditions.push(`状态: ${status}`);
+    if (networkPoint) searchConditions.push(`网点: ${networkPoint}`);
+    if (status) searchConditions.push(`原始状态: ${status}`);
+    if (settlementStatus) {
+      const statusMap = { unsettled: '未结算', settled: '已结算', failed: '结算失败' };
+      searchConditions.push(`结算状态: ${statusMap[settlementStatus] || settlementStatus}`);
+    }
     if (timeType && startDate && endDate) searchConditions.push(`${timeType === 'paymentTime' ? '支付' : '结算'}时间: ${startDate} ~ ${endDate}`);
-    if (minAmount || maxAmount) searchConditions.push(`金额: ${minAmount || '0'} ~ ${maxAmount || '∞'}`);
-    if (minQuantity || maxQuantity) searchConditions.push(`数量: ${minQuantity || '0'} ~ ${maxQuantity || '∞'}`);
 
     if (searchConditions.length > 0) {
       console.log('🔍 应用的搜索条件:', searchConditions.join(', '));
+    } else {
+      console.log('📝 未应用任何搜索条件，返回所有数据');
     }
 
     res.json({

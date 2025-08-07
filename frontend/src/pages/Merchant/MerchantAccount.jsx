@@ -50,7 +50,7 @@ const MerchantAccount = () => {
   const [merchantFilter, setMerchantFilter] = useState('')
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 10,
+    pageSize: 2,
     total: 0
   })
 

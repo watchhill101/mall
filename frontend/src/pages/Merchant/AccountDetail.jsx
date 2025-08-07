@@ -36,7 +36,7 @@ const AccountDetail = () => {
   const [selectedRecord, setSelectedRecord] = useState(null)
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 10,
+    pageSize: 2,
     total: 0
   })
 
@@ -67,7 +67,7 @@ const AccountDetail = () => {
 
       const queryParams = {
         page: 1,
-        pageSize: 10,
+        pageSize: 2,
         ...params
       }
 
@@ -95,7 +95,7 @@ const AccountDetail = () => {
       setAccountDetailData([])
       setPagination({
         current: 1,
-        pageSize: 10,
+        pageSize: 2,
         total: 0
       })
     } finally {
@@ -124,7 +124,7 @@ const AccountDetail = () => {
     console.log('🧪 开始测试AccountDetail API调用...')
     try {
       console.log('🧪 测试列表接口...')
-      const listResponse = await accountDetailAPI.getAccountDetailList({ page: 1, pageSize: 10 })
+      const listResponse = await accountDetailAPI.getAccountDetailList({ page: 1, pageSize: 2 })
       console.log('🧪 列表API响应:', listResponse)
 
       console.log('🧪 测试统计接口...')
@@ -167,7 +167,7 @@ const AccountDetail = () => {
 
         // 再获取列表数据
         console.log('📋 获取列表数据...')
-        await loadAccountDetailList({ page: 1, pageSize: 10 })
+        await loadAccountDetailList({ page: 1, pageSize: 2 })
 
         console.log('✅ 初始化完成')
       } catch (error) {
@@ -263,7 +263,7 @@ const AccountDetail = () => {
       setPagination(prev => ({ ...prev, current: 1 })) // 重置到第一页
 
       // 立即使用当前的筛选条件进行查询
-      const queryParams = { page: 1, pageSize: pagination.pageSize || 10 }
+      const queryParams = { page: 1, pageSize: pagination.pageSize || 2 }
       if (merchantType) queryParams.merchantType = merchantType
       if (merchantName) queryParams.merchantName = merchantName
       if (dateRange && dateRange.length === 2) {
@@ -293,7 +293,7 @@ const AccountDetail = () => {
       setPagination(prev => ({ ...prev, current: 1 }))
 
       // 使用空的筛选条件重新获取数据
-      const queryParams = { page: 1, pageSize: pagination.pageSize || 10 }
+      const queryParams = { page: 1, pageSize: pagination.pageSize || 2 }
       await Promise.all([
         loadAccountDetailList(queryParams),
         loadAccountDetailStats(queryParams)
@@ -649,8 +649,8 @@ const AccountDetail = () => {
               showSizeChanger: true,
               showQuickJumper: true,
               showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条/共 ${total} 条 (实际数据: ${accountDetailData.length} 条)`,
-              pageSizeOptions: ['5', '10', '20', '50', '100'],
-              defaultPageSize: 10,
+              pageSizeOptions: ['2', '5', '10', '20', '50'],
+              defaultPageSize: 2,
               onShowSizeChange: (current, size) => {
                 setPagination(prev => ({
                   ...prev,

@@ -44,7 +44,7 @@ const WithdrawAccount = () => {
   const [searchParams, setSearchParams] = useState({})
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 10,
+    pageSize: 2,
     total: 0
   })
 
@@ -66,7 +66,7 @@ const WithdrawAccount = () => {
 
       const queryParams = {
         page: 1,
-        pageSize: 10,
+        pageSize: 2,
         ...params
       }
 
@@ -93,7 +93,7 @@ const WithdrawAccount = () => {
       setWithdrawAccountData([])
       setPagination({
         current: 1,
-        pageSize: 10,
+        pageSize: 2,
         total: 0
       })
     } finally {
@@ -122,7 +122,7 @@ const WithdrawAccount = () => {
 
         // 并行获取数据
         await Promise.all([
-          loadWithdrawAccountList({ page: 1, pageSize: 10 }),
+          loadWithdrawAccountList({ page: 1, pageSize: 2 }),
           fetchMerchantList()
         ])
       } catch (error) {
@@ -139,7 +139,7 @@ const WithdrawAccount = () => {
     setPagination(prev => ({ ...prev, current: 1 }))
 
     // 使用搜索条件重新获取数据
-    const queryParams = { page: 1, pageSize: pagination.pageSize || 10, ...values }
+    const queryParams = { page: 1, pageSize: pagination.pageSize || 2, ...values }
     await loadWithdrawAccountList(queryParams)
     message.success('搜索完成')
   }
@@ -151,7 +151,7 @@ const WithdrawAccount = () => {
     setPagination(prev => ({ ...prev, current: 1 }))
 
     // 获取所有数据
-    const queryParams = { page: 1, pageSize: 10 }
+    const queryParams = { page: 1, pageSize: 2 }
     await loadWithdrawAccountList(queryParams)
     message.info('已重置搜索条件')
   }
@@ -206,7 +206,7 @@ const WithdrawAccount = () => {
           // 刷新数据
           const queryParams = {
             page: pagination.current || 1,
-            pageSize: pagination.pageSize || 10,
+            pageSize: pagination.pageSize || 2,
             ...searchParams
           }
           await loadWithdrawAccountList(queryParams)
@@ -232,7 +232,7 @@ const WithdrawAccount = () => {
           // 刷新数据
           const queryParams = {
             page: pagination.current || 1,
-            pageSize: pagination.pageSize || 10,
+            pageSize: pagination.pageSize || 2,
             ...searchParams
           }
           await loadWithdrawAccountList(queryParams)
@@ -259,7 +259,7 @@ const WithdrawAccount = () => {
       // 刷新数据
       const queryParams = {
         page: pagination.current || 1,
-        pageSize: pagination.pageSize || 10,
+        pageSize: pagination.pageSize || 2,
         ...searchParams
       }
       await loadWithdrawAccountList(queryParams)
@@ -279,7 +279,7 @@ const WithdrawAccount = () => {
   const handleRefresh = async () => {
     const queryParams = {
       page: pagination.current || 1,
-      pageSize: pagination.pageSize || 10,
+      pageSize: pagination.pageSize || 2,
       ...searchParams
     }
     await loadWithdrawAccountList(queryParams)
@@ -508,8 +508,8 @@ const WithdrawAccount = () => {
                 `第 ${range[0]}-${range[1]} 条/共 ${total} 条`
               }
               onChange={handlePaginationChange}
-              pageSizeOptions={['5', '10', '20', '50']}
-              defaultPageSize={10}
+              pageSizeOptions={['2', '5', '10', '20']}
+              defaultPageSize={2}
             />
           </div>
         </Card>

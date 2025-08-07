@@ -52,7 +52,7 @@ const Merchant = () => {
     const [typeFilter, setTypeFilter] = useState("");
     const [pagination, setPagination] = useState({
         current: 1,
-        pageSize: 10,
+        pageSize: 2,
         total: 0,
     });
 
@@ -561,7 +561,7 @@ const Merchant = () => {
                             showQuickJumper: true,
                             showTotal: (total, range) =>
                                 `第 ${range[0]}-${range[1]} 条/总共 ${total} 条`,
-                            pageSizeOptions: ["5", "10", "20", "50", "100"],
+                            pageSizeOptions: ["2", "5", "10", "20"],
                             onShowSizeChange: (current, size) => {
                                 setPagination((prev) => ({
                                     ...prev,

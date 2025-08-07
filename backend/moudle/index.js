@@ -2,7 +2,14 @@ var mongoose = require("mongoose");
 const config = require("../config");
 
 mongoose
-  .connect(config.mongodb.uri)
+  .connect(config.mongodb.uri, {
+    // 连接选项
+    serverSelectionTimeoutMS: 10000, // 增加服务器选择超时时间到10秒
+    socketTimeoutMS: 60000, // 增加套接字超时时间到60秒
+    family: 4, // 使用IPv4
+    autoIndex: false, // 生产环境关闭自动索引
+    maxPoolSize: 10, // 增加连接池大小
+  })
   .then(() => {
     console.log("MongoDB connected successfully");
   })

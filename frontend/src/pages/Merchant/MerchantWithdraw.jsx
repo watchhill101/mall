@@ -42,7 +42,7 @@ const MerchantWithdraw = () => {
   const [searchParams, setSearchParams] = useState({})
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 10,
+    pageSize: 2,
     total: 0
   })
   const [forceUpdate, setForceUpdate] = useState(0) // 用于强制重新渲染
@@ -105,7 +105,7 @@ const MerchantWithdraw = () => {
 
   // 初始化数据获取
   useEffect(() => {
-    loadWithdrawList({ page: 1, pageSize: 10 })
+    loadWithdrawList({ page: 1, pageSize: 2 })
   }, []) // 空依赖数组，只在组件挂载时执行一次
 
   // 当前页数据就是从API获取的数据，不需要再次切片

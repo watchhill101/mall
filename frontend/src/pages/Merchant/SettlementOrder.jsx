@@ -16,7 +16,6 @@ import {
   DatePicker,
   Modal,
   message,
-  InputNumber,
   Collapse,
   Divider,
   Alert,
@@ -52,7 +51,7 @@ const SettlementOrder = () => {
   const [searchParams, setSearchParams] = useState({})
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 10,
+    pageSize: 2,
     total: 0
   })
   const [forceUpdate, setForceUpdate] = useState(0) // 用于强制重新渲染
@@ -93,7 +92,7 @@ const SettlementOrder = () => {
         queryParams.productName = params.productName.trim()
       }
       if (params.settlementStatus && params.settlementStatus !== '') {
-        queryParams.status = params.settlementStatus
+        queryParams.settlementStatus = params.settlementStatus
       }
       if (params.networkPoint && params.networkPoint.trim() !== '') {
         queryParams.networkPoint = params.networkPoint.trim()
@@ -112,34 +111,6 @@ const SettlementOrder = () => {
           const dateStr = params.selectedDate.format('YYYY-MM-DD')
           queryParams.startDate = dateStr
           queryParams.endDate = dateStr
-        }
-      }
-
-      // 处理金额范围 - 改进数值判断
-      if (params.minAmount !== undefined && params.minAmount !== null && params.minAmount !== '') {
-        const minAmount = Number(params.minAmount)
-        if (!isNaN(minAmount) && minAmount >= 0) {
-          queryParams.minAmount = minAmount
-        }
-      }
-      if (params.maxAmount !== undefined && params.maxAmount !== null && params.maxAmount !== '') {
-        const maxAmount = Number(params.maxAmount)
-        if (!isNaN(maxAmount) && maxAmount >= 0) {
-          queryParams.maxAmount = maxAmount
-        }
-      }
-
-      // 处理数量范围 - 改进数值判断
-      if (params.minQuantity !== undefined && params.minQuantity !== null && params.minQuantity !== '') {
-        const minQuantity = Number(params.minQuantity)
-        if (!isNaN(minQuantity) && minQuantity >= 0) {
-          queryParams.minQuantity = minQuantity
-        }
-      }
-      if (params.maxQuantity !== undefined && params.maxQuantity !== null && params.maxQuantity !== '') {
-        const maxQuantity = Number(params.maxQuantity)
-        if (!isNaN(maxQuantity) && maxQuantity >= 0) {
-          queryParams.maxQuantity = maxQuantity
         }
       }
 
@@ -187,14 +158,31 @@ const SettlementOrder = () => {
           ).join(', '))
         }
 
+        // 返回搜索结果信息
+        return {
+          success: true,
+          total: response.data.pagination?.total || 0,
+          count: processedData.length
+        }
+
       } else {
         message.error(response.message || '获取结算订单列表失败')
         setDataSource([])
+        return {
+          success: false,
+          total: 0,
+          count: 0
+        }
       }
     } catch (error) {
       console.error('❌ 获取结算订单列表失败:', error)
       message.error('获取结算订单列表失败: ' + (error.message || '网络错误'))
       setDataSource([])
+      return {
+        success: false,
+        total: 0,
+        count: 0
+      }
     } finally {
       setLoading(false)
     }
@@ -232,8 +220,11 @@ const SettlementOrder = () => {
 
   // 初始化数据
   useEffect(() => {
-    loadSettlementOrderList({ page: 1, pageSize: 10 })
-    loadOptions()
+    const initData = async () => {
+      await loadSettlementOrderList({ page: 1, pageSize: 2 })
+      await loadOptions()
+    }
+    initData()
 
     // 加载搜索历史
     const savedHistory = localStorage.getItem('settlementOrder_searchHistory')
@@ -333,25 +324,27 @@ const SettlementOrder = () => {
         resultCount: 0
       }
 
-      await loadSettlementOrderList({
+      const searchResult = await loadSettlementOrderList({
         ...combinedValues,
         page: 1,
         pageSize: pagination.pageSize
       })
 
+      // 获取实际的搜索结果数量
+      const actualResultCount = searchResult?.total || 0
+
       // 更新搜索历史中的结果数量
-      searchHistoryItem.resultCount = pagination.total
+      searchHistoryItem.resultCount = actualResultCount
 
       // 更新搜索历史
       const updatedHistory = [searchHistoryItem, ...searchHistory.slice(0, 9)] // 保留最近10次搜索
       setSearchHistory(updatedHistory)
       localStorage.setItem('settlementOrder_searchHistory', JSON.stringify(updatedHistory))
 
-      const resultCount = pagination.total
-      if (resultCount === 0) {
+      if (actualResultCount === 0) {
         message.info('未找到符合条件的数据')
       } else {
-        message.success(`查询完成，找到 ${resultCount} 条记录`)
+        message.success(`查询完成，找到 ${actualResultCount} 条记录`)
       }
     } catch (error) {
       console.error('❌ 搜索失败:', error)
@@ -553,19 +546,8 @@ const SettlementOrder = () => {
       count++
     }
 
-    // 检查数值类型的字段
-    const numberFields = ['minAmount', 'maxAmount', 'minQuantity', 'maxQuantity']
-    numberFields.forEach(field => {
-      if (values[field] !== undefined && values[field] !== null && values[field] !== '') {
-        const num = Number(values[field])
-        if (!isNaN(num) && num >= 0) {
-          count++
-        }
-      }
-    })
-
     return count
-  }, [form, forceUpdate, searchParams])
+  }, [form])
 
   // 表格列定义
   const columns = [
@@ -778,65 +760,6 @@ const SettlementOrder = () => {
                 </Row>
               </Form>
             </Panel>
-
-            <Panel header="高级搜索" key="advanced">
-              <Form form={form} layout="vertical">
-                <Row gutter={16}>
-                  <Col span={12}>
-                    <Form.Item label="金额范围">
-                      <Input.Group compact>
-                        <Form.Item name="minAmount" noStyle>
-                          <InputNumber
-                            placeholder="最小金额"
-                            style={{ width: '45%' }}
-                            min={0}
-                            precision={2}
-                          />
-                        </Form.Item>
-                        <Input
-                          style={{ width: '10%', textAlign: 'center', border: 0, pointerEvents: 'none' }}
-                          placeholder="~"
-                          disabled
-                        />
-                        <Form.Item name="maxAmount" noStyle>
-                          <InputNumber
-                            placeholder="最大金额"
-                            style={{ width: '45%' }}
-                            min={0}
-                            precision={2}
-                          />
-                        </Form.Item>
-                      </Input.Group>
-                    </Form.Item>
-                  </Col>
-                  <Col span={12}>
-                    <Form.Item label="数量范围">
-                      <Input.Group compact>
-                        <Form.Item name="minQuantity" noStyle>
-                          <InputNumber
-                            placeholder="最小数量"
-                            style={{ width: '45%' }}
-                            min={0}
-                          />
-                        </Form.Item>
-                        <Input
-                          style={{ width: '10%', textAlign: 'center', border: 0, pointerEvents: 'none' }}
-                          placeholder="~"
-                          disabled
-                        />
-                        <Form.Item name="maxQuantity" noStyle>
-                          <InputNumber
-                            placeholder="最大数量"
-                            style={{ width: '45%' }}
-                            min={0}
-                          />
-                        </Form.Item>
-                      </Input.Group>
-                    </Form.Item>
-                  </Col>
-                </Row>
-              </Form>
-            </Panel>
           </Collapse>
 
           <Divider style={{ margin: '16px 0' }} />
@@ -1000,8 +923,8 @@ const SettlementOrder = () => {
                 `第 ${range[0]}-${range[1]} 条/共 ${total} 条`
               }
               onChange={handlePaginationChange}
-              pageSizeOptions={['10', '20', '50', '100']}
-              defaultPageSize={10}
+              pageSizeOptions={['2', '5', '10', '20']}
+              defaultPageSize={2}
             />
           </div>
         </Card>
