@@ -1371,8 +1371,14 @@ const regionSalesData = {
   },
 };
 
-// 状态监控面板组件 - 现在通过ECharts拖拽管理
-const StatusMonitorPanel = () => {
+// 状态监控面板组件 - 现在通过拖拽系统管理
+const StatusMonitorPanel = ({ 
+  isDragging = false, 
+  onMouseDown, 
+  x = 0, 
+  y = 0,
+  containerStyle = {} 
+}) => {
   const navigate = useNavigate();
 
   const [stats, setStats] = useState({
@@ -1555,22 +1561,37 @@ const StatusMonitorPanel = () => {
 
   return (
     <div
+      onMouseDown={onMouseDown}   // 传递拖拽事件
       style={{
-        position: "absolute",
-        bottom: "260px",
-        right: "35px", 
-        zIndex: 998, // 低于ECharts拖拽层级
+        // 移除固定定位，使用相对定位填充容器
+        position: "relative",
+        width: "100%",
+        height: "100%",
+        
+        // 应用传入的样式
+        ...containerStyle,
+        
+        // 保持原有视觉效果
         background: "rgba(45, 55, 72, 0.85)",
         borderRadius: "12px",
         padding: "20px",
         border: "1px solid rgba(129, 140, 248, 0.4)",
         backdropFilter: "blur(15px)",
-        boxShadow: "0 8px 32px rgba(0, 0, 0, 0.2)",
-        pointerEvents: "none", // 让ECharts层处理交互
+        boxShadow: isDragging 
+          ? "0 12px 48px rgba(0, 0, 0, 0.4), 0 0 20px rgba(129, 140, 248, 0.3)" 
+          : "0 8px 32px rgba(0, 0, 0, 0.2)",
+        
+        // 修改交互设置
+        pointerEvents: "auto", // 允许交互
+        cursor: isDragging ? "grabbing" : "grab",
         animation: "slideInFromRight 0.8s ease-out",
         isolation: "isolate",
         userSelect: "none",
         transition: "all 0.3s ease",
+        
+        // 拖拽时的视觉反馈
+        transform: isDragging ? "scale(1.02)" : "scale(1.0)",
+        filter: isDragging ? "brightness(1.1)" : "brightness(1.0)",
       }}
     >
       <div
@@ -3435,7 +3456,7 @@ const Home = () => {
   const [draggableElements, setDraggableElements] = useState(() => [
     { id: 'chart-toggle', x: 280, y: 250, width: 180, height: 40, type: 'button', label: '销售统计', visible: !chartVisible },
     { id: 'globe-toggle', x: (typeof window !== 'undefined' ? window.innerWidth : 1920) - 420, y: 250, width: 160, height: 40, type: 'button', label: '赛博地球', visible: !globeVisible },
-    { id: 'stats-panel', x: (typeof window !== 'undefined' ? window.innerWidth : 1920) - 285, y: (typeof window !== 'undefined' ? window.innerHeight : 1080) - 360, width: 250, height: 300, type: 'panel', label: '监控面板', visible: true }
+    { id: 'stats-panel', x: (typeof window !== 'undefined' ? window.innerWidth : 1920) - 485, y: (typeof window !== 'undefined' ? window.innerHeight : 1080) - 370, width: 470, height: 350, type: 'panel', label: '监控面板', visible: true }
   ]);
   const chartRef = useRef(null);
   const draggingElement = useRef(null);
@@ -3555,7 +3576,18 @@ const Home = () => {
   // 渲染拖拽元素内容
   const renderElementContent = (element) => {
     if (element.type === 'panel' && element.id === 'stats-panel') {
-      return <StatusMonitorPanel />;
+      return (
+        <StatusMonitorPanel 
+          isDragging={isDragging === element.id}
+          onMouseDown={(e) => handleMouseDown(e, element.id)}
+          x={element.x}
+          y={element.y}
+          containerStyle={{
+            width: '100%',
+            height: '100%',
+          }}
+        />
+      );
     }
     return element.label;
   };
@@ -3804,7 +3836,11 @@ const Home = () => {
               : element.id === 'stats-panel'
                 ? 'none' // 监控面板不需要边框
                 : '2px solid rgba(129, 140, 248, 0.4)',
-            borderRadius: element.type === 'button' ? '12px' : '16px',
+            borderRadius: element.type === 'button' 
+              ? '12px' 
+              : element.id === 'stats-panel' 
+                ? '0' // 监控面板完全移除圆角
+                : '16px',
             boxShadow: element.id === 'stats-panel' 
               ? 'none' // 监控面板不需要外部阴影
               : isDragging === element.id 
@@ -3820,10 +3856,19 @@ const Home = () => {
             fontWeight: '600',
             letterSpacing: '0.5px',
             userSelect: 'none',
-            transition: isDragging === element.id 
-              ? 'box-shadow 0.1s ease' 
-              : 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-            transform: isDragging === element.id ? 'scale(1.02)' : 'scale(1.0)',
+            // 针对监控面板移除过渡和变换效果
+            transition: element.id === 'stats-panel' 
+              ? 'none' // 监控面板无过渡动画
+              : isDragging === element.id 
+                ? 'box-shadow 0.1s ease' 
+                : 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+            transform: element.id === 'stats-panel' 
+              ? 'none' // 监控面板无变换效果
+              : isDragging === element.id 
+                ? 'scale(1.02)' 
+                : 'scale(1.0)',
+            // 确保监控面板容器完全透明
+            outline: element.id === 'stats-panel' ? 'none' : 'initial',
             // 只对按钮添加内发光效果
             ...(element.type === 'button' && {
               '&::before': {
@@ -3843,32 +3888,22 @@ const Home = () => {
           }}
           onMouseDown={(e) => handleMouseDown(e, element.id)}
           onMouseEnter={(e) => {
-            if (isDragging !== element.id && element.id !== 'stats-panel') {
+            // 只处理按钮的悬停效果
+            if (isDragging !== element.id && element.type === 'button') {
               e.target.style.transform = 'scale(1.08) translateY(-2px)';
-              e.target.style.boxShadow = element.type === 'button' 
-                ? '0 8px 25px rgba(59, 130, 246, 0.4), 0 0 15px rgba(59, 130, 246, 0.2)' 
-                : '0 8px 25px rgba(129, 140, 248, 0.4), 0 0 15px rgba(129, 140, 248, 0.2)';
-              e.target.style.borderColor = element.type === 'button' 
-                ? 'rgba(59, 130, 246, 0.6)' 
-                : 'rgba(129, 140, 248, 0.6)';
-            } else if (element.id === 'stats-panel' && isDragging !== element.id) {
-              // 监控面板的悬停效果 - 轻微缩放
-              e.target.style.transform = 'scale(1.02)';
-              e.target.style.filter = 'brightness(1.1)';
+              e.target.style.boxShadow = '0 8px 25px rgba(59, 130, 246, 0.4), 0 0 15px rgba(59, 130, 246, 0.2)';
+              e.target.style.borderColor = 'rgba(59, 130, 246, 0.6)';
             }
+            // 监控面板悬停效果由StatusMonitorPanel内部处理
           }}
           onMouseLeave={(e) => {
-            if (isDragging !== element.id && element.id !== 'stats-panel') {
+            // 只处理按钮的悬停恢复
+            if (isDragging !== element.id && element.type === 'button') {
               e.target.style.transform = 'scale(1.0) translateY(0px)';
               e.target.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.4), 0 0 10px rgba(0, 0, 0, 0.1)';
-              e.target.style.borderColor = element.type === 'button' 
-                ? 'rgba(59, 130, 246, 0.4)' 
-                : 'rgba(129, 140, 248, 0.4)';
-            } else if (element.id === 'stats-panel' && isDragging !== element.id) {
-              // 监控面板恢复
-              e.target.style.transform = 'scale(1.0)';
-              e.target.style.filter = 'brightness(1.0)';
+              e.target.style.borderColor = 'rgba(59, 130, 246, 0.4)';
             }
+            // 监控面板恢复由StatusMonitorPanel内部处理
           }}
         >
           {renderElementContent(element)}
