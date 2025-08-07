@@ -162,9 +162,9 @@ const WorkOrder = () => {
       width: 180,
       render: (orderIds) => (
         <div style={{ maxHeight: '60px', overflow: 'auto' }}>
-          {orderIds.map(orderId => (
+          {orderIds && Array.isArray(orderIds) ? orderIds.map(orderId => (
             <div key={orderId} style={{ fontSize: '12px' }}>{orderId}</div>
-          ))}
+          )) : <div style={{ fontSize: '12px', color: '#999' }}>无关联订单</div>}
         </div>
       )
     },
@@ -830,9 +830,12 @@ const WorkOrder = () => {
                 <Col span={24}>
                   <strong>关联订单：</strong>
                   <div style={{ marginTop: '8px' }}>
-                    {selectedRecord.orderIds.map(orderId => (
-                      <Tag key={orderId} style={{ margin: '2px' }}>{orderId}</Tag>
-                    ))}
+                    {selectedRecord.orderIds && Array.isArray(selectedRecord.orderIds) ? 
+                      selectedRecord.orderIds.map(orderId => (
+                        <Tag key={orderId} style={{ margin: '2px' }}>{orderId}</Tag>
+                      )) : 
+                      <span>无关联订单</span>
+                    }
                   </div>
                 </Col>
                 <Col span={24}>
@@ -845,4 +848,6 @@ const WorkOrder = () => {
       </div>
     </OrderLayout>
   );
-}; export default WorkOrder;
+};
+
+export default WorkOrder;

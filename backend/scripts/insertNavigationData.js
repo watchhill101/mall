@@ -106,7 +106,11 @@ async function insertNavigationData() {
       { name: '订单', url: '/orders/orders-list', firstLevelNavigationID: tempId3 },
       { name: '售后', url: '/orders/afterSales', firstLevelNavigationID: tempId3 },
       { name: '理货单', url: '/orders/tallySheet', firstLevelNavigationID: tempId3 },
-      { name: '分拣单', url: '/orders/SortingList', firstLevelNavigationID: tempId3 }
+      { name: '分拣单', url: '/orders/SortingList', firstLevelNavigationID: tempId3 },
+      { name: '收款记录', url: '/orders/payment-record', firstLevelNavigationID: tempId3 },
+      { name: '配货单', url: '/orders/allocation-order', firstLevelNavigationID: tempId3 },
+      { name: '作业单', url: '/orders/work-order', firstLevelNavigationID: tempId3 },
+      { name: '物流单', url: '/orders/logistics-order', firstLevelNavigationID: tempId3 }
     ]);
 
     // 7. 插入订单一级导航

@@ -13,6 +13,7 @@ import {
   DownOutlined,
   UserOutlined,
   LogoutOutlined,
+  GlobalOutlined,
 } from "@ant-design/icons";
 import {
   Layout,
@@ -27,6 +28,7 @@ import {
   Alert,
   message,
 } from "antd";
+import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "@/store/reducers/userSlice";
 import { useNavigate, Link, useLocation } from "react-router-dom";
@@ -69,6 +71,7 @@ const LayoutApp = () => {
   /** 通用hook */
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
 
   // 获取用户token状态
   const token = useSelector((state) => state.user.token);
@@ -172,6 +175,27 @@ const LayoutApp = () => {
   const changeTheme = (value) => {
     setThemeVari(value ? "light" : "dark");
   };
+  
+  // 语言状态管理
+  const [currentLanguage, setCurrentLanguage] = useState(() => {
+    // 从localStorage读取保存的语言设置，默认为中文
+    return localStorage.getItem('app-language') || 'zh';
+  });
+  
+  // 切换语言
+  const toggleLanguage = () => {
+    const newLanguage = currentLanguage === 'zh' ? 'en' : 'zh';
+    setCurrentLanguage(newLanguage);
+    localStorage.setItem('app-language', newLanguage);
+    i18n.changeLanguage(newLanguage); // 使用 i18n 切换语言
+    message.success(t(newLanguage === 'zh' ? 'common.switchedToZh' : 'common.switchedToEn'));
+  };
+  
+  // 获取当前语言显示文本
+  const getLanguageText = () => {
+    return t('common.language');
+  };
+  
   /** 侧边栏菜单 */
   const { pathname } = useLocation();
   const permissionRoutes = useSelector(
@@ -207,17 +231,18 @@ const LayoutApp = () => {
     return pathname;
   }, [pathname]);
   const menuItems = useMemo(() => {
-    // 使用导航数据生成菜单项
+    // 使用导航数据生成菜单项，传递 t 函数用于国际化
     const navigationMenuItems = convertToMenuItems(
       navigationData,
       getItem,
       Link,
-      SvgIcon
+      SvgIcon,
+      t
     );
 
     // 合并导航菜单和权限路由菜单
     return navigationMenuItems.concat(getTreeMenu(permissionRoutes));
-  }, [navigationData, permissionRoutes]);
+  }, [navigationData, permissionRoutes, t]);
   // 设置菜单展开收缩
   const handleMenuOpen = (openKeys) => {
     setSubMenuKeys(openKeys);
@@ -256,14 +281,14 @@ const LayoutApp = () => {
   };
   /** 面包屑 */
   const breadcrumbNameMap = useMemo(() => {
-    // 使用导航数据生成面包屑名称映射
-    const navigationBreadcrumbMap = generateBreadcrumbNameMap(navigationData);
+    // 使用导航数据生成面包屑名称映射，传递 t 函数用于国际化
+    const navigationBreadcrumbMap = generateBreadcrumbNameMap(navigationData, t);
 
     // 合并导航面包屑和权限路由面包屑
     const permissionBreadcrumbMap = getBreadcrumbNameMap(permissionRoutes);
 
     return { ...navigationBreadcrumbMap, ...permissionBreadcrumbMap };
-  }, [navigationData, permissionRoutes]);
+  }, [navigationData, permissionRoutes, t]);
   const breadcrumbItems = useMemo(() => {
     const items = [];
 
@@ -271,7 +296,7 @@ const LayoutApp = () => {
     if (pathname !== "/" && pathname !== "/home") {
       items.push({
         key: "/home",
-        title: <Link to="/home">首页</Link>,
+        title: <Link to="/home">{t('menu.home')}</Link>,
       });
     }
 
@@ -298,7 +323,7 @@ const LayoutApp = () => {
     });
 
     return items;
-  }, [pathname, pathSnippets, breadcrumbNameMap]);
+  }, [pathname, pathSnippets, breadcrumbNameMap, t]);
   /** tabs栏 */
   // 选择选项卡以后，跳转对应路由
   const selectTab = useCallback(
@@ -342,6 +367,12 @@ const LayoutApp = () => {
   const ListOfCommodities = lazy(() =>
     import("@/pages/Goods_S/ListOfCommodities")
   );
+  const AuditList = lazy(() =>
+    import("@/pages/Goods_S/AuditList")
+  );
+  const ExternalProduct = lazy(() =>
+    import("@/pages/Goods_S/ExternalProduct")
+  );
   const ProductCategory = lazy(() =>
     import("@/pages/Goods_S/Classification of Commodities/index")
   );
@@ -365,10 +396,14 @@ const LayoutApp = () => {
   );
 
   // 导入订单相关组件
-  const OrdersList = lazy(() => import("@/pages/order_S/Orders"));
+  const OrdersList = lazy(() => import("@/pages/order_S/ordersList"));
   const AfterSales = lazy(() => import("@/pages/order_S/afterSales"));
   const TallySheet = lazy(() => import("@/pages/order_S/tallySheet"));
-  const SortingList = lazy(() => import("@/pages/order_S/sortingList"));
+  const SortingList = lazy(() => import("@/pages/order_S/sortingOrders"));
+  const PaymentRecord = lazy(() => import("@/pages/order_S/paymentRecord"));
+  const AllocationOrder = lazy(() => import("@/pages/order_S/allocationOrder"));
+  const WorkOrder = lazy(() => import("@/pages/order_S/workOrder"));
+  const LogisticsOrder = lazy(() => import("@/pages/order_S/logisticsOrder"));
 
 
   const formatRoutes = useMemo(() => {
@@ -427,9 +462,13 @@ const LayoutApp = () => {
 
             // 商品相关路由
             case "/goods/product-list":
-            case "/goods/audit-list":
-            case "/goods/external-product":
               element = <ListOfCommodities />;
+              break;
+            case "/goods/audit-list":
+              element = <AuditList />;
+              break;
+            case "/goods/external-product":
+              element = <ExternalProduct />;
               break;
             case "/goods/product-category":
               element = <ProductCategory />;
@@ -465,6 +504,18 @@ const LayoutApp = () => {
               break;
             case "/orders/SortingList":
               element = <SortingList />;
+              break;
+            case "/orders/payment-record":
+              element = <PaymentRecord />;
+              break;
+            case "/orders/allocation-order":
+              element = <AllocationOrder />;
+              break;
+            case "/orders/work-order":
+              element = <WorkOrder />;
+              break;
+            case "/orders/logistics-order":
+              element = <LogisticsOrder />;
               break;
 
             // 系统设置相关路由
@@ -506,7 +557,15 @@ const LayoutApp = () => {
       key: "1",
       label: (
         <div onClick={() => toggleCenterStatus(true)}>
-          <UserOutlined /> 个人中心
+          <UserOutlined /> {t('common.personalCenter')}
+        </div>
+      ),
+    },
+    {
+      key: "2",
+      label: (
+        <div onClick={toggleLanguage}>
+          <GlobalOutlined /> {getLanguageText()}
         </div>
       ),
     },
@@ -515,11 +574,11 @@ const LayoutApp = () => {
       label: (
         <Popconfirm
           onConfirm={() => handleLogout()}
-          title="是否确认退出？"
-          okText="退出"
-          cancelText="取消"
+          title={t('common.logoutConfirm')}
+          okText={t('common.logoutOk')}
+          cancelText={t('common.logoutCancel')}
         >
-          <LogoutOutlined /> 退出登录
+          <LogoutOutlined /> {t('common.logout')}
         </Popconfirm>
       ),
     },
@@ -581,7 +640,7 @@ const LayoutApp = () => {
           <span className="layout-logo">
             <DashboardFilled />
           </span>
-          {!collapsed && <span>后台管理系统</span>}
+          {!collapsed && <span>{t('common.backendManagementSystem')}</span>}
         </div>
         <Switch
           className="sider-switch"

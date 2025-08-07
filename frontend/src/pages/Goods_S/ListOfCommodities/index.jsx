@@ -18,6 +18,7 @@ import {
   message,
   Cascader,
 } from 'antd';
+import { useTranslation } from 'react-i18next';
 import CustomModal from '@/components/CustomModal';
 import dayjs from 'dayjs';
 import {
@@ -40,6 +41,7 @@ import { useNavigate } from 'react-router-dom';
 const { Option } = Select;
 
 const ListOfCommodities = () => {
+  const { t } = useTranslation();
   const addModalRef = useRef(null);
   const navigate = useNavigate();
   const [messageApi, contextHolder] = message.useMessage();
@@ -504,10 +506,10 @@ const ListOfCommodities = () => {
                     fontWeight: 500,
                   }}
                 >
-                  商品名称:
+                  {t('goods.productName')}:
                 </span>
                 <Input
-                  placeholder="请输入商品名称"
+                  placeholder={t('goods.searchPlaceholder')}
                   value={searchParams.name}
                   onChange={(e) =>
                     setSearchParams((prev) => ({
@@ -537,7 +539,7 @@ const ListOfCommodities = () => {
                     fontWeight: 500,
                   }}
                 >
-                  商品分类:
+                  {t('goods.productCategory')}:
                 </span>
                 <Cascader
                   options={categoryData}
@@ -547,7 +549,7 @@ const ListOfCommodities = () => {
                       category: value[value.length - 1],
                     }))
                   }
-                  placeholder="请选择分类"
+                  placeholder={t('goods.categoryPlaceholder')}
                   allowClear
                   style={{ flex: 1 }}
                 />
@@ -631,9 +633,9 @@ const ListOfCommodities = () => {
                   onClick={handleSearch}
                   style={{ marginRight: '8px' }}
                 >
-                  搜索
+                  {t('common.search')}
                 </Button>
-                <Button onClick={handleReset}>重置</Button>
+                <Button onClick={handleReset}>{t('common.reset')}</Button>
               </Space>
             </Col>
           </Row>
@@ -646,7 +648,7 @@ const ListOfCommodities = () => {
             icon={<PlusOutlined />}
             onClick={handleAdd}
           >
-            新增审核
+            {t('common.add')}
           </Button>
           <Button
             className="Export "
@@ -656,7 +658,6 @@ const ListOfCommodities = () => {
             导出
           </Button>
         </div>
-        {JSON.stringify(list)}
         {/* 表格 */}
         <Table
           columns={columns}

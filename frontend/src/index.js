@@ -5,6 +5,8 @@ import App from './App'
 import './index.scss'
 // 全局导入svg图标
 import '@/assets/Icon'
+// 导入国际化配置
+import './i18n'
 // 导入redux相关库及文件
 import store from './store'
 import { Provider } from 'react-redux'

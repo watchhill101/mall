@@ -146,7 +146,7 @@ export const useNavigationData = () => {
 /**
  * 将导航数据转换为Antd Menu需要的格式
  */
-export const convertToMenuItems = (navigationData, getItem, Link, SvgIcon) => {
+export const convertToMenuItems = (navigationData, getItem, Link, SvgIcon, t) => {
   // 图标组件映射
   const iconMap = {
     'HomeOutlined': <HomeOutlined />,
@@ -156,22 +156,40 @@ export const convertToMenuItems = (navigationData, getItem, Link, SvgIcon) => {
     'UsersOutlined': <UserOutlined />
   };
 
+  // URL路径到翻译键的映射
+  const getTranslationKey = (url) => {
+    const pathSegments = url.split('/').filter(Boolean);
+    if (pathSegments.length === 1) {
+      // 一级菜单
+      return `menu.${pathSegments[0]}`;
+    } else if (pathSegments.length === 2) {
+      // 二级菜单
+      return `menu.${pathSegments[1]}`;
+    }
+    return url;
+  };
+
   return navigationData.map(nav => {
     const iconComponent = iconMap[nav.icon] || <AppstoreOutlined />;
+    const titleKey = getTranslationKey(nav.url);
+    const translatedTitle = t ? t(titleKey) : nav.title;
     
     // 如果有子菜单
     if (nav.children && nav.children.length > 0) {
-      const children = nav.children.map(child => 
-        getItem(
-          <Link to={child.url}>{child.name}</Link>,
+      const children = nav.children.map(child => {
+        const childKey = getTranslationKey(child.url);
+        const translatedChildName = t ? t(childKey) : child.name;
+        
+        return getItem(
+          <Link to={child.url}>{translatedChildName}</Link>,
           child.url,
           null // 移除子菜单图标
-        )
-      );
+        );
+      });
 
       // 有子菜单的一级导航，可以点击跳转到过渡页面
       return getItem(
-        nav.title,
+        translatedTitle,
         nav.url,
         React.cloneElement(iconComponent, { style: { fontSize: '14px' } }),
         children
@@ -179,7 +197,7 @@ export const convertToMenuItems = (navigationData, getItem, Link, SvgIcon) => {
     } else {
       // 无子菜单的一级导航，使用Link
       return getItem(
-        <Link to={nav.url}>{nav.title}</Link>,
+        <Link to={nav.url}>{translatedTitle}</Link>,
         nav.url,
         React.cloneElement(iconComponent, { style: { fontSize: '14px' } })
       );
@@ -190,17 +208,32 @@ export const convertToMenuItems = (navigationData, getItem, Link, SvgIcon) => {
 /**
  * 生成面包屑名称映射
  */
-export const generateBreadcrumbNameMap = (navigationData) => {
+export const generateBreadcrumbNameMap = (navigationData, t) => {
   const nameMap = {};
+  
+  // URL路径到翻译键的映射
+  const getTranslationKey = (url) => {
+    const pathSegments = url.split('/').filter(Boolean);
+    if (pathSegments.length === 1) {
+      // 一级菜单
+      return `menu.${pathSegments[0]}`;
+    } else if (pathSegments.length === 2) {
+      // 二级菜单
+      return `menu.${pathSegments[1]}`;
+    }
+    return url;
+  };
   
   navigationData.forEach(nav => {
     // 添加一级导航
-    nameMap[nav.url] = nav.title;
+    const titleKey = getTranslationKey(nav.url);
+    nameMap[nav.url] = t ? t(titleKey) : nav.title;
     
     // 添加二级导航
     if (nav.children && nav.children.length > 0) {
       nav.children.forEach(child => {
-        nameMap[child.url] = child.name;
+        const childKey = getTranslationKey(child.url);
+        nameMap[child.url] = t ? t(childKey) : child.name;
       });
     }
   });

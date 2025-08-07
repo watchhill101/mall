@@ -158,9 +158,9 @@ const AllocationOrder = () => {
       width: 180,
       render: (orderIds) => (
         <div style={{ maxHeight: '60px', overflow: 'auto' }}>
-          {orderIds.map(orderId => (
+          {orderIds && Array.isArray(orderIds) ? orderIds.map(orderId => (
             <div key={orderId} style={{ fontSize: '12px' }}>{orderId}</div>
-          ))}
+          )) : <div style={{ fontSize: '12px', color: '#999' }}>无关联订单</div>}
         </div>
       )
     },
@@ -220,7 +220,7 @@ const AllocationOrder = () => {
       dataIndex: 'totalAmount',
       key: 'totalAmount',
       width: 100,
-      render: (amount) => `¥${amount.toFixed(2)}`
+      render: (amount) => amount != null ? `¥${Number(amount).toFixed(2)}` : '¥0.00'
     },
     {
       title: '创建时间',
@@ -833,7 +833,7 @@ const AllocationOrder = () => {
                   <strong>配货率：</strong>{selectedRecord.allocationRate}%
                 </Col>
                 <Col span={12}>
-                  <strong>总金额：</strong>¥{selectedRecord.totalAmount.toFixed(2)}
+                  <strong>总金额：</strong>¥{selectedRecord.totalAmount != null ? Number(selectedRecord.totalAmount).toFixed(2) : '0.00'}
                 </Col>
                 <Col span={12}>
                   <strong>计划开始时间：</strong>{selectedRecord.planStartTime}
@@ -853,9 +853,12 @@ const AllocationOrder = () => {
                 <Col span={24}>
                   <strong>关联订单：</strong>
                   <div style={{ marginTop: '8px' }}>
-                    {selectedRecord.orderIds.map(orderId => (
-                      <Tag key={orderId} style={{ margin: '2px' }}>{orderId}</Tag>
-                    ))}
+                    {selectedRecord.orderIds && Array.isArray(selectedRecord.orderIds) ? 
+                      selectedRecord.orderIds.map(orderId => (
+                        <Tag key={orderId} style={{ margin: '2px' }}>{orderId}</Tag>
+                      )) : 
+                      <span>无关联订单</span>
+                    }
                   </div>
                 </Col>
                 <Col span={24}>
@@ -868,4 +871,6 @@ const AllocationOrder = () => {
       </div>
     </OrderLayout>
   );
-}; export default AllocationOrder;
+};
+
+export default AllocationOrder;

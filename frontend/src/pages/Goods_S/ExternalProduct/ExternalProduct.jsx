@@ -11,11 +11,13 @@ import {
   Col,
   Form,
 } from 'antd';
+import { useTranslation } from 'react-i18next';
 import GoodsLayout from '../Goods_Layout/Goods_Layout';
 
 const { Option } = Select;
 
 export default function ExternalProduct() {
+  const { t } = useTranslation();
   const [form] = Form.useForm();
   const [dataSource, setDataSource] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -39,7 +41,7 @@ export default function ExternalProduct() {
         brand: 'Sporty',
         model: 'XJ2025',
         unit: '双',
-        images: ['https://cdn.example.com/products/sneaker1.jpg'],
+        images: ['https://img95.699pic.com/photo/60016/7147.jpg_wh860.jpg'],
       },
       categoryInfo: {
         categoryName: '鞋类',

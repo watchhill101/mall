@@ -16,6 +16,7 @@ import {
   Tooltip,
   Pagination
 } from 'antd';
+import { useTranslation } from 'react-i18next';
 import {
   SearchOutlined,
   ReloadOutlined,
@@ -153,14 +154,14 @@ const PaymentRecord = () => {
       dataIndex: 'paymentAmount',
       key: 'paymentAmount',
       width: 100,
-      render: (amount) => `¥${amount.toFixed(2)}`
+      render: (amount) => amount != null ? `¥${Number(amount).toFixed(2)}` : '¥0.00'
     },
     {
       title: '实收金额',
       dataIndex: 'actualAmount',
       key: 'actualAmount',
       width: 100,
-      render: (amount) => `¥${amount.toFixed(2)}`
+      render: (amount) => amount != null ? `¥${Number(amount).toFixed(2)}` : '¥0.00'
     },
     {
       title: '支付状态',
@@ -694,10 +695,10 @@ const PaymentRecord = () => {
                   <strong>支付方式：</strong>{getPaymentMethodText(selectedRecord.paymentMethod)}
                 </Col>
                 <Col span={12}>
-                  <strong>订单金额：</strong>¥{selectedRecord.paymentAmount.toFixed(2)}
+                  <strong>订单金额：</strong>¥{selectedRecord.paymentAmount != null ? Number(selectedRecord.paymentAmount).toFixed(2) : '0.00'}
                 </Col>
                 <Col span={12}>
-                  <strong>实收金额：</strong>¥{selectedRecord.actualAmount.toFixed(2)}
+                  <strong>实收金额：</strong>¥{selectedRecord.actualAmount != null ? Number(selectedRecord.actualAmount).toFixed(2) : '0.00'}
                 </Col>
                 <Col span={12}>
                   <strong>支付状态：</strong>{getPaymentStatusTag(selectedRecord.paymentStatus)}
@@ -721,4 +722,6 @@ const PaymentRecord = () => {
       </div>
     </OrderLayout>
   );
-}; export default PaymentRecord;
+};
+
+export default PaymentRecord;

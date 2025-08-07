@@ -221,9 +221,9 @@ const LogisticsOrder = () => {
       width: 180,
       render: (orderIds) => (
         <div style={{ maxHeight: '60px', overflow: 'auto' }}>
-          {orderIds.map(orderId => (
+          {orderIds && Array.isArray(orderIds) ? orderIds.map(orderId => (
             <div key={orderId} style={{ fontSize: '12px' }}>{orderId}</div>
-          ))}
+          )) : <div style={{ fontSize: '12px', color: '#999' }}>无关联订单</div>}
         </div>
       )
     },
@@ -286,7 +286,7 @@ const LogisticsOrder = () => {
       dataIndex: 'totalFee',
       key: 'totalFee',
       width: 80,
-      render: (fee) => `¥${fee.toFixed(2)}`
+      render: (fee) => fee != null ? `¥${Number(fee).toFixed(2)}` : '¥0.00'
     },
     {
       title: '支付状态',
@@ -676,7 +676,7 @@ const LogisticsOrder = () => {
                   <strong>实际送达时间：</strong>{selectedRecord.actualDeliveryTime || '未送达'}
                 </Col>
                 <Col span={12}>
-                  <strong>运费：</strong>¥{selectedRecord.totalFee.toFixed(2)}
+                  <strong>运费：</strong>¥{selectedRecord.totalFee != null ? Number(selectedRecord.totalFee).toFixed(2) : '0.00'}
                 </Col>
                 <Col span={12}>
                   <strong>支付状态：</strong>{getPaymentStatusTag(selectedRecord.paymentStatus)}
@@ -690,9 +690,12 @@ const LogisticsOrder = () => {
                 <Col span={24}>
                   <strong>关联订单：</strong>
                   <div style={{ marginTop: '8px' }}>
-                    {selectedRecord.orderIds.map(orderId => (
-                      <Tag key={orderId} style={{ margin: '2px' }}>{orderId}</Tag>
-                    ))}
+                    {selectedRecord.orderIds && Array.isArray(selectedRecord.orderIds) ? 
+                      selectedRecord.orderIds.map(orderId => (
+                        <Tag key={orderId} style={{ margin: '2px' }}>{orderId}</Tag>
+                      )) : 
+                      <span>无关联订单</span>
+                    }
                   </div>
                 </Col>
                 <Col span={24}>
@@ -737,4 +740,6 @@ const LogisticsOrder = () => {
     </div>
     </OrderLayout>
   );
-};export default LogisticsOrder;
+};
+
+export default LogisticsOrder;

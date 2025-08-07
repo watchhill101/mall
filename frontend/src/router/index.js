@@ -21,11 +21,10 @@ const MerchantApplication = lazy(() => import('@/pages/Merchant/MerchantApplicat
 
 // 商品相关页面
 const ListOfCommodities = lazy(() => import('@/pages/Goods_S/ListOfCommodities'))
-const AuditList = lazy(() => import('@/pages/Goods_S/AuditList/AuditList'))
+const AuditList = lazy(() => import('@/pages/Goods_S/AuditList'))
 const RecycleBin = lazy(() => import('@/pages/Goods_S/Trash/Trash')) // 回收站
-const ProductCategory = lazy(() => import('@/pages/Goods_S/Classification of Commodities/index'))
-const ExternalProduct = lazy(() => import('@/pages/Goods_S/ExternalProduct/ExternalProduct'))
-const ProductEditor = lazy(() => import('@/pages/Goods_S/ProductEditor/ProductEditor')) //商品编辑
+const ProductCategory = lazy(() => import('@/pages/Goods_S/Classification of Commodities'))
+const ExternalProduct = lazy(() => import('@/pages/Goods_S/ExternalProduct'))
 
 // 库存相关页面
 const CurrentStock = lazy(() => import('@/pages/Goods_S/inventory/CurrentInventory/CurrentInventory'))
@@ -36,16 +35,17 @@ const StockDetails = lazy(() => import('@/pages/Goods_S/inventory/DetailsOfStock
 // 订单相关页面
 const OrdersList = lazy(() => import('@/pages/order_S/ordersList'))
 const AfterSales = lazy(() => import('@/pages/order_S/afterSales'))
-// 系统设置相关页面
-const Lbt = lazy(() => import('@/pages/Home_X/lbt')) // 轮播图组件
-const Users = lazy(() => import('@/pages/Users'))
-const UserRoot = lazy(() => import('@/pages/UserRoot')) // 用户权限组件
-const TallySheet = lazy(() => import('@/pages/order_S/tallyOrders'))
+const TallySheet = lazy(() => import('@/pages/order_S/tallySheet'))
 const SortingList = lazy(() => import('@/pages/order_S/sortingOrders'))
 const PaymentRecord = lazy(() => import('@/pages/order_S/paymentRecord'))
 const AllocationOrder = lazy(() => import('@/pages/order_S/allocationOrder'))
 const WorkOrder = lazy(() => import('@/pages/order_S/workOrder'))
 const LogisticsOrder = lazy(() => import('@/pages/order_S/logisticsOrder'))
+
+// 系统设置相关页面
+const Lbt = lazy(() => import('@/pages/Home_X/lbt')) // 轮播图组件
+const Users = lazy(() => import('@/pages/Users'))
+const UserRoot = lazy(() => import('@/pages/UserRoot')) // 用户权限组件
 const constantRoutes = [
   { path: '/login', title: '登录', element: <Login /> },
   {
@@ -70,7 +70,9 @@ const constantRoutes = [
         hidden: false,
         icon: 'ShopOutlined',    // 使用存在的图标
         menuPath: '/shops',
+        redirect: '/shops/merchants', // 添加默认重定向
         children: [
+          { index: true, element: <Navigate to="/shops/merchants" replace /> },
           {
             path: 'merchants',
             title: '商家管理',
@@ -144,7 +146,9 @@ const constantRoutes = [
         hidden: false,
         icon: 'GoodsOutlined',    // 商品图标
         menuPath: '/goods',
+        redirect: '/goods/product-list', // 添加默认重定向
         children: [
+          { index: true, element: <Navigate to="/goods/product-list" replace /> },
           {
             path: 'product-list',
             title: '商品列表',
@@ -152,15 +156,6 @@ const constantRoutes = [
             hidden: false,
             icon: 'component',
             menuPath: '/goods/product-list'
-          },
-          // 商品编辑
-          {
-            path: 'ProductEditor',
-            title: '商品编辑',
-            element: <ListOfCommodities />,
-            hidden: false,
-            icon: 'component',
-            menuPath: '/goods/ProductEditor'
           },
           {
             path: 'audit-list',
@@ -243,7 +238,9 @@ const constantRoutes = [
         hidden: false,
         icon: 'OrdersOutlined',    // 订单图标
         menuPath: '/orders',
+        redirect: '/orders/orders-list', // 添加默认重定向
         children: [
+          { index: true, element: <Navigate to="/orders/orders-list" replace /> },
           {
             path: 'orders-list',
             title: '订单',
