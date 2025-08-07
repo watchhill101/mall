@@ -4,12 +4,14 @@ const User = require("../moudle/user/user");
 const JwtUtil = require("../utils/jwt");
 const CaptchaUtil = require("../utils/captcha");
 const { jwtAuth, getCurrentUser } = require("../utils/ejwt");
-
 /**
  * 用户登录
  */
 router.post("/login", async (req, res) => {
   console.log("🔐 收到登录请求:", req.body);
+  // const userlist = await User.find();
+  const userlist = await User.find({});
+  console.log(userlist, "123456789");
 
   try {
     const { loginAccount, password, captcha, sessionId } = req.body;

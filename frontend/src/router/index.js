@@ -21,11 +21,11 @@ const MerchantApplication = lazy(() => import('@/pages/Merchant/MerchantApplicat
 
 // 商品相关页面
 const ListOfCommodities = lazy(() => import('@/pages/Goods_S/ListOfCommodities'))
-
-const AuditList = lazy(() => import('@/pages/Goods_S/ListOfCommodities')) // 暂时使用商品列表组件
+const AuditList = lazy(() => import('@/pages/Goods_S/AuditList/AuditList'))
 const RecycleBin = lazy(() => import('@/pages/Goods_S/Trash/Trash')) // 回收站
 const ProductCategory = lazy(() => import('@/pages/Goods_S/Classification of Commodities/index'))
-const ExternalProduct = lazy(() => import('@/pages/Goods_S/ListOfCommodities')) // 暂时使用商品列表组件
+const ExternalProduct = lazy(() => import('@/pages/Goods_S/ExternalProduct/ExternalProduct'))
+const ProductEditor = lazy(() => import('@/pages/Goods_S/ProductEditor/ProductEditor')) //商品编辑
 
 // 库存相关页面
 const CurrentStock = lazy(() => import('@/pages/Goods_S/inventory/CurrentInventory/CurrentInventory'))
@@ -34,7 +34,7 @@ const StockOut = lazy(() => import('@/pages/Goods_S/inventory/exWarehouse/exWare
 const Stocktake = lazy(() => import('@/pages/Goods_S/inventory/stocktaking/stocktaking'))
 const StockDetails = lazy(() => import('@/pages/Goods_S/inventory/DetailsOfStockInAndstockOut/DetailsOfStockInAndstockOut'))
 // 订单相关页面
-const OrdersList = lazy(() => import('@/pages/order_S/Orders'))
+const OrdersList = lazy(() => import('@/pages/order_S/ordersList'))
 const AfterSales = lazy(() => import('@/pages/order_S/afterSales'))
 const TallySheet = lazy(() => import('@/pages/order_S/tallySheet'))
 const SortingList = lazy(() => import('@/pages/order_S/sortingList'))
@@ -42,6 +42,10 @@ const SortingList = lazy(() => import('@/pages/order_S/sortingList'))
 const Lbt = lazy(() => import('@/pages/Home_X/lbt')) // 轮播图组件
 const Users = lazy(() => import('@/pages/Users'))
 const UserRoot = lazy(() => import('@/pages/UserRoot')) // 用户权限组件
+const PaymentRecord = lazy(() => import('@/pages/order_S/paymentRecord'))
+const AllocationOrder = lazy(() => import('@/pages/order_S/allocationOrder'))
+const WorkOrder = lazy(() => import('@/pages/order_S/workOrder'))
+const LogisticsOrder = lazy(() => import('@/pages/order_S/logisticsOrder'))
 const constantRoutes = [
   { path: '/login', title: '登录', element: <Login /> },
   {
@@ -148,6 +152,15 @@ const constantRoutes = [
             hidden: false,
             icon: 'component',
             menuPath: '/goods/product-list'
+          },
+          // 商品编辑
+          {
+            path: 'ProductEditor',
+            title: '商品编辑',
+            element: <ListOfCommodities />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/goods/ProductEditor'
           },
           {
             path: 'audit-list',
@@ -262,6 +275,38 @@ const constantRoutes = [
             hidden: false,
             icon: 'component',
             menuPath: '/orders/SortingList'
+          },
+          {
+            path: 'payment-record',
+            title: '收款记录',
+            element: <PaymentRecord />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/orders/payment-record'
+          },
+          {
+            path: 'allocation-order',
+            title: '配货单',
+            element: <AllocationOrder />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/orders/allocation-order'
+          },
+          {
+            path: 'work-order',
+            title: '作业单',
+            element: <WorkOrder />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/orders/work-order'
+          },
+          {
+            path: 'logistics-order',
+            title: '物流单',
+            element: <LogisticsOrder />,
+            hidden: false,
+            icon: 'component',
+            menuPath: '/orders/logistics-order'
           }
         ]
       },

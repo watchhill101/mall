@@ -34,7 +34,7 @@ function getDictByTypeAPI(type) {
       { label: '禁用', value: '0' }
     ]
   }
-  
+
   return Promise.resolve({
     data: mockDict[type] || []
   })

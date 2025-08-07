@@ -15,6 +15,7 @@ var withdrawAccountRouter = require("./routes/withdrawAccount");
 var merchantWithdrawRouter = require("./routes/merchantWithdraw");
 var settlementOrderRouter = require("./routes/settlementOrder");
 var billRouter = require("./routes/bill");
+var ProductsRouter = require('./routes/qiao')
 var captchaRouter = require("./routes/captcha");
 var merchantApplicationRouter = require("./routes/merchantApplication");
 var navigationRouter = require("./routes/navigation");
@@ -70,6 +71,7 @@ app.get("/test", jwtAuth, verifyTokenType, (req, res) => {
 app.use("/", indexRouter);
 app.use("/auth", authRouter);  // 登录、注册等认证相关
 app.use("/captcha", captchaRouter);  // 验证码
+app.use("/qiao", ProductsRouter)
 
 
 // 需要token验证的路由

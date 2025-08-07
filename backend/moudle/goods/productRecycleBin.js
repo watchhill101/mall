@@ -3,18 +3,18 @@ const mongoose = require("mongoose");
 // 商品回收站模型
 const productRecycleBinSchema = new mongoose.Schema(
   {
-    originalProduct: { 
-      type: mongoose.Schema.Types.ObjectId, 
-      ref: "Product", 
-      required: true 
+    originalProduct: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Product",
+      required: true
     }, // 原商品ID
-    
-    merchant: { 
-      type: mongoose.Schema.Types.ObjectId, 
-      ref: "Merchant", 
-      required: true 
+
+    merchant: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Merchant",
+      // required: true 
     }, // 所属商家
-    
+
     productSnapshot: {
       productId: { type: String, required: true },
       productName: { type: String, required: true },
@@ -38,10 +38,10 @@ const productRecycleBinSchema = new mongoose.Schema(
         images: [{ type: String }]
       }
     }, // 商品快照数据
-    
+
     deleteReason: {
       type: String,
-      required: true,
+      required: false,
       enum: [
         "discontinued", // 停产
         "expired", // 过期
@@ -53,69 +53,69 @@ const productRecycleBinSchema = new mongoose.Schema(
         "other" // 其他
       ]
     }, // 删除原因
-    
-    deleteReasonDetail: { 
-      type: String 
+
+    deleteReasonDetail: {
+      type: String
     }, // 删除原因详情
-    
-    deletedBy: { 
-      type: mongoose.Schema.Types.ObjectId, 
-      ref: "User", 
-      required: true 
+
+    deletedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      // required: true 
     }, // 删除人
-    
-    deletedAt: { 
-      type: Date, 
-      default: Date.now 
+
+    deletedAt: {
+      type: Date,
+      default: Date.now
     }, // 删除时间
-    
-    isRestorable: { 
-      type: Boolean, 
-      default: true 
+
+    isRestorable: {
+      type: Boolean,
+      default: true
     }, // 是否可恢复
-    
-    autoDeleteAt: { 
-      type: Date 
+
+    autoDeleteAt: {
+      type: Date
     }, // 自动删除时间（过期自动清理）
-    
+
     restoreInfo: {
-      isRestored: { 
-        type: Boolean, 
-        default: false 
+      isRestored: {
+        type: Boolean,
+        default: false
       }, // 是否已恢复
-      restoredBy: { 
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: "User" 
+      restoredBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
       }, // 恢复人
-      restoredAt: { 
-        type: Date 
+      restoredAt: {
+        type: Date
       }, // 恢复时间
-      newProductId: { 
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: "Product" 
+      newProductId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Product"
       } // 恢复后的新商品ID
     },
-    
+
     relatedData: {
-      orderCount: { 
-        type: Number, 
-        default: 0 
+      orderCount: {
+        type: Number,
+        default: 0
       }, // 关联订单数
-      totalSales: { 
-        type: Number, 
-        default: 0 
+      totalSales: {
+        type: Number,
+        default: 0
       }, // 总销售额
-      lastOrderDate: { 
-        type: Date 
+      lastOrderDate: {
+        type: Date
       } // 最后订单日期
     },
-    
-    adminNotes: { 
-      type: String 
+
+    adminNotes: {
+      type: String
     }, // 管理员备注
-    
-    tags: [{ 
-      type: String 
+
+    tags: [{
+      type: String
     }] // 标签
   },
   {

@@ -3,23 +3,23 @@ const mongoose = require("mongoose");
 // 商品模型
 const productSchema = new mongoose.Schema(
   {
-    productId: { 
-      type: String, 
-      required: true, 
-      unique: true 
+    productId: {
+      type: String,
+      required: true,
+      unique: true
     }, // 商品ID
-    
-    productName: { 
-      type: String, 
-      required: true 
+
+    productName: {
+      type: String,
+      required: false
     }, // 商品名称
-    
-    productCategory: { 
-      type: mongoose.Schema.Types.ObjectId, 
-      ref: "ProductCategory", 
-      required: true 
+
+    productCategory: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "ProductCategory",
+      required: false
     }, // 商品分类
-    
+
     businessType: {
       type: String,
       required: true,
@@ -31,7 +31,7 @@ const productSchema = new mongoose.Schema(
       ref: "merchant", 
       required: true 
     }, // 所属商家
-    
+
     productInfo: {
       description: { type: String }, // 商品描述
       specifications: { type: String }, // 规格型号
@@ -40,43 +40,43 @@ const productSchema = new mongoose.Schema(
       unit: { type: String, default: "件" }, // 单位
       images: [{ type: String }] // 商品图片数组
     },
-    
+
     pricing: {
-      salePrice: { 
+      salePrice: {
         min: { type: Number, required: true },
         max: { type: Number }
       }, // 销售价格范围
-      marketPrice: { 
-        type: Number 
+      marketPrice: {
+        type: Number
       }, // 市场售价
-      cost: { 
-        type: Number 
+      cost: {
+        type: Number
       } // 成本价
     },
-    
+
     inventory: {
-      currentStock: { 
-        type: Number, 
-        required: true, 
-        default: 0 
+      currentStock: {
+        type: Number,
+        required: true,
+        default: 0
       }, // 当前库存
-      totalStock: { 
-        type: Number, 
-        default: 0 
+      totalStock: {
+        type: Number,
+        default: 0
       }, // 总库存
-      reservedStock: { 
-        type: Number, 
-        default: 0 
+      reservedStock: {
+        type: Number,
+        default: 0
       } // 预留库存
     },
-    
+
     status: {
       type: String,
       required: true,
       enum: ["pending", "approved", "rejected", "onSale", "offSale", "deleted"],
       default: "pending"
     }, // 商品状态：待审核、已通过、已拒绝、在售、下架、已删除
-    
+
     auditInfo: {
       auditReason: { type: String }, // 审核原因
       auditor: { 
@@ -85,33 +85,33 @@ const productSchema = new mongoose.Schema(
       }, // 审核人
       auditTime: { type: Date } // 审核时间
     },
-    
-    isExternal: { 
-      type: Boolean, 
-      default: false 
+
+    isExternal: {
+      type: Boolean,
+      default: false
     }, // 是否为外部商品
-    
+
     externalInfo: {
       sourceSystem: { type: String }, // 来源系统
       externalId: { type: String }, // 外部ID
       syncTime: { type: Date } // 同步时间
     },
-    
+
     salesData: {
-      totalSales: { 
-        type: Number, 
-        default: 0 
+      totalSales: {
+        type: Number,
+        default: 0
       }, // 总销量
-      monthlyStock: { 
-        type: Number, 
-        default: 0 
+      monthlyStock: {
+        type: Number,
+        default: 0
       } // 月库存
     },
-    
+
     warehouseInfo: {
-      warehouse: { 
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: "Warehouse" 
+      warehouse: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Warehouse"
       }, // 所属仓库
       location: { type: String } // 存放位置
     },
