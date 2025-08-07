@@ -13,6 +13,7 @@ import {
   DownOutlined,
   UserOutlined,
   LogoutOutlined,
+  GlobalOutlined,
 } from "@ant-design/icons";
 import {
   Layout,
@@ -30,6 +31,7 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "@/store/reducers/userSlice";
 import { useNavigate, Link, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { getToken, getRefreshToken } from "@/utils/auth";
 // 导入css（未模块化）
 import "./Layout.scss";
@@ -88,6 +90,7 @@ const LayoutApp = () => {
   /** 通用hook */
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
 
   // 获取用户token状态
   const token = useSelector((state) => state.user.token);
@@ -359,7 +362,7 @@ const LayoutApp = () => {
     const OrdersList = lazy(() => import("@/pages/order_S/Orders"));
     const AfterSales = lazy(() => import("@/pages/order_S/afterSales"));
     const TallySheet = lazy(() => import("@/pages/order_S/tallySheet"));
-    const SortingList = lazy(() => import("@/pages/order_S/sortingList"));
+    const SortingList = lazy(() => import("@/pages/order_S/sortingOrders"));
 
     // 返回路由到组件的映射
     return {
@@ -457,40 +460,24 @@ const LayoutApp = () => {
     return routes.concat(getMenus(permissionRoutes));
   }, [navigationData, permissionRoutes, componentRegistry]);
 
-  /** 下拉菜单 */
-  // 下拉菜单项数组
-  const dropdownMenuItems = [
-    {
-      key: "1",
-      label: (
-        <div onClick={() => toggleCenterStatus(true)}>
-          <UserOutlined /> 个人中心
-        </div>
-      ),
-    },
-    {
-      key: "3",
-      label: (
-        <Popconfirm
-          onConfirm={() => handleLogout()}
-          title="是否确认退出？"
-          okText="退出"
-          cancelText="取消"
-        >
-          <LogoutOutlined /> 退出登录
-        </Popconfirm>
-      ),
-    },
-  ];
   /** 个人中心 */
   const userCenterRef = useRef();
   const toggleCenterStatus = (status) => {
     userCenterRef.current.toggleShowStatus(status);
   };
+
   /** 重置密码 */
   const resetPwdRef = useRef();
   const toggleResetStatus = (status) => {
     resetPwdRef.current.toggleShowStatus(status);
+  };
+
+  // 语言切换
+  const handleLanguageChange = () => {
+    const currentLang = i18n.language;
+    const newLang = currentLang === 'zh' ? 'en' : 'zh';
+    i18n.changeLanguage(newLang);
+    message.success(t('common.switchedTo' + (newLang === 'zh' ? 'Zh' : 'En')));
   };
 
   // 退出登录
@@ -517,6 +504,40 @@ const LayoutApp = () => {
       message.error("退出过程中发生错误，但已安全退出");
     }
   };
+
+  /** 下拉菜单 */
+  // 下拉菜单项数组
+  const dropdownMenuItems = [
+    {
+      key: "1",
+      label: (
+        <div onClick={() => toggleCenterStatus(true)}>
+          <UserOutlined /> {t('common.personalCenter')}
+        </div>
+      ),
+    },
+    {
+      key: "2",
+      label: (
+        <div onClick={handleLanguageChange}>
+          <GlobalOutlined /> {t('common.language')}
+        </div>
+      ),
+    },
+    {
+      key: "3",
+      label: (
+        <Popconfirm
+          onConfirm={() => handleLogout()}
+          title={t('common.logoutConfirm')}
+          okText={t('common.logoutOk')}
+          cancelText={t('common.logoutCancel')}
+        >
+          <LogoutOutlined /> {t('common.logout')}
+        </Popconfirm>
+      ),
+    },
+  ];
 
   // 检查用户是否已登录，如果没有token则不渲染Layout
   const hasValidToken = token && getToken();
@@ -643,7 +664,7 @@ const LayoutApp = () => {
       <CustomModal title="重置密码" ref={resetPwdRef}>
         <ResetPwdForm toggleResetStatus={toggleResetStatus} />
       </CustomModal>
-      
+
       {/* AI助手 - 除登录页外所有页面都显示 */}
       {pathname !== '/login' && <AiAssistantWithLive2D />}
     </Layout>
