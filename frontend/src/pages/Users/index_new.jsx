@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Card,
   Table,
@@ -21,7 +21,6 @@ import {
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
-  SearchOutlined,
   ReloadOutlined,
   UserOutlined,
   TeamOutlined,
@@ -30,10 +29,8 @@ import {
   KeyOutlined
 } from '@ant-design/icons';
 import userManagementAPI, {
-  USER_STATUS,
   USER_STATUS_LABELS,
   USER_STATUS_COLORS,
-  USER_ROLES,
   USER_ROLE_LABELS
 } from '@/api/userManagement';
 import { maskPhone } from '@/utils/maskUtils';
@@ -67,7 +64,7 @@ const Users = () => {
   const [form] = Form.useForm();
 
   // 获取用户列表
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
       const response = await userManagementAPI.getUserList({
@@ -77,7 +74,7 @@ const Users = () => {
         status: statusFilter,
         role: roleFilter
       });
-      
+
       if (response && response.data) {
         setUsers(response.data.users || []);
         setTotal(response.data.total || 0);
@@ -88,7 +85,7 @@ const Users = () => {
     } finally {
       setLoading(false);
     }
-  };
+  });
 
   // 获取统计数据
   const fetchStats = async () => {
@@ -104,8 +101,11 @@ const Users = () => {
 
   useEffect(() => {
     fetchUsers();
+  }, [currentPage, pageSize, searchText, statusFilter, roleFilter, fetchUsers]);
+
+  useEffect(() => {
     fetchStats();
-  }, [currentPage, pageSize, searchText, statusFilter, roleFilter]);
+  }, []);
 
   // 搜索处理
   const handleSearch = (value) => {
@@ -137,11 +137,15 @@ const Users = () => {
     setIsEditing(true);
     setEditingUser(record);
     setIsModalVisible(true);
+
+    // 处理角色数据：如果是对象则取name字段
+    const roleName = typeof record.role === 'object' && record.role ? record.role.name : record.role;
+
     form.setFieldsValue({
       username: record.username,
       email: record.email,
       phone: record.phone,
-      role: record.role,
+      role: roleName,
       status: record.status
     });
   };
@@ -177,17 +181,37 @@ const Users = () => {
   // 保存用户
   const handleSave = async (values) => {
     try {
+      console.log('🔄 保存用户数据:', values);
+
       if (isEditing) {
-        await userManagementAPI.updateUser(editingUser._id, values);
+        // 更新用户 - 只发送基本信息，不包含角色
+        const updateData = {
+          username: values.username,
+          email: values.email,
+          phone: values.phone,
+          status: values.status
+        };
+        console.log('📝 更新用户数据:', updateData);
+        await userManagementAPI.updateUser(editingUser._id, updateData);
         message.success('更新成功');
       } else {
-        await userManagementAPI.createUser(values);
+        // 创建用户 - 发送roleName字段
+        const createData = {
+          username: values.username,
+          password: values.password,
+          email: values.email,
+          phone: values.phone,
+          roleName: values.role
+        };
+        console.log('➕ 创建用户数据:', createData);
+        await userManagementAPI.createUser(createData);
         message.success('创建成功');
       }
       setIsModalVisible(false);
       fetchUsers();
     } catch (error) {
       message.error(isEditing ? '更新失败' : '创建失败');
+      console.error('❌ 保存用户失败:', error);
     }
   };
 
@@ -226,7 +250,7 @@ const Users = () => {
       key: 'phone',
       render: (phone) => (
         <Tooltip title={phone || '暂无手机号'}>
-          {maskPhone(phone)}
+          <span>{maskPhone(phone)}</span>
         </Tooltip>
       )
     },
@@ -234,11 +258,15 @@ const Users = () => {
       title: '角色',
       dataIndex: 'role',
       key: 'role',
-      render: (role) => (
-        <Tag color="blue">
-          {USER_ROLE_LABELS[role] || role}
-        </Tag>
-      )
+      render: (role) => {
+        // 处理角色数据：如果是对象则取name字段，否则直接使用
+        const roleName = typeof role === 'object' && role ? role.name : role;
+        return (
+          <Tag color="blue">
+            {USER_ROLE_LABELS[roleName] || roleName || '未设置'}
+          </Tag>
+        );
+      }
     },
     {
       title: '状态',
@@ -386,9 +414,12 @@ const Users = () => {
               style={{ width: '100%' }}
               onChange={handleRoleFilter}
             >
-              {Object.entries(USER_ROLE_LABELS).map(([key, label]) => (
-                <Option key={key} value={key}>{label}</Option>
-              ))}
+              <Option value="超级管理员">超级管理员</Option>
+              <Option value="普通管理员">普通管理员</Option>
+              <Option value="商家管理员">商家管理员</Option>
+              <Option value="普通商家">普通商家</Option>
+              <Option value="审计员">审计员</Option>
+              <Option value="普通员工">普通员工</Option>
             </Select>
           </Col>
           <Col span={10} style={{ textAlign: 'right' }}>
@@ -490,7 +521,22 @@ const Users = () => {
             rules={[{ required: true, message: '请选择角色' }]}
           >
             <Select placeholder="请选择角色">
-              {Object.entries(USER_ROLE_LABELS).map(([key, label]) => (
+              <Option value="超级管理员">超级管理员</Option>
+              <Option value="普通管理员">普通管理员</Option>
+              <Option value="商家管理员">商家管理员</Option>
+              <Option value="普通商家">普通商家</Option>
+              <Option value="审计员">审计员</Option>
+              <Option value="普通员工">普通员工</Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            name="status"
+            label="状态"
+            initialValue="active"
+          >
+            <Select placeholder="请选择状态">
+              {Object.entries(USER_STATUS_LABELS).map(([key, label]) => (
                 <Option key={key} value={key}>{label}</Option>
               ))}
             </Select>

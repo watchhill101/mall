@@ -10,7 +10,7 @@ const firstLevelNavigationSchema = new mongoose.Schema({
   subText: { type: String, required: true }, // 二级文本
 });
 const FirstLevelNavigation = mongoose.model(
-  "firstLevelNavigation",
+  "FirstLevelNavigation",
   firstLevelNavigationSchema,
   "firstLevelNavigation"
 );

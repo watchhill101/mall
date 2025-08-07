@@ -11,12 +11,11 @@ const userSchema = new mongoose.Schema({
   phone: { type: String }, // 手机号
 
   // 角色和状态
-  role: 
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "role",
-    },
-   // 用户角色
+  role: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "role",
+  },
+  // 用户角色
   status: {
     type: String,
     enum: ["active", "inactive", "suspended", "deleted"],

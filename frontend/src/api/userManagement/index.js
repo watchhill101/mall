@@ -96,16 +96,23 @@ const userManagementAPI = {
   },
 
   /**
-   * 更新用户权限
+   * 更新用户角色
    * @param {string} id - 用户ID
-   * @param {Array} permissions - 权限列表
+   * @param {string} roleName - 角色名称
    * @returns {Promise} 更新结果
    */
-  updateUserPermissions: (id, permissions) => {
+  updateUserRole: (id, roleName) => {
+    console.log('📤 API调用 - 更新用户角色:', {
+      id,
+      roleName,
+      url: `/user-management/users/${id}/permissions`,
+      data: { roleName }
+    });
+    
     return request({
       url: `/user-management/users/${id}/permissions`,
       method: 'PUT',
-      data: { permissions }
+      data: { roleName }
     });
   },
 
@@ -130,6 +137,17 @@ const userManagementAPI = {
   getUserStats: () => {
     return request({
       url: '/user-management/stats',
+      method: 'GET'
+    });
+  },
+
+  /**
+   * 获取角色列表
+   * @returns {Promise} 角色列表数据
+   */
+  getRoleList: () => {
+    return request({
+      url: '/user-management/roles',
       method: 'GET'
     });
   }
@@ -161,18 +179,33 @@ export const USER_STATUS_COLORS = {
 
 // 用户角色枚举
 export const USER_ROLES = {
-  ADMIN: 'admin',           // 管理员
-  USER: 'user',             // 普通用户
-  MERCHANT: 'merchant',     // 商户
-  OPERATOR: 'operator'      // 操作员
+  SUPER_ADMIN: '超级管理员',    // 超级管理员
+  ADMIN: '管理员',             // 管理员
+  USER: '普通用户',            // 普通用户
+  MERCHANT: '商户',            // 商户
+  OPERATOR: '操作员'           // 操作员
 };
 
 // 用户角色标签映射
 export const USER_ROLE_LABELS = {
-  [USER_ROLES.ADMIN]: '管理员',
-  [USER_ROLES.USER]: '普通用户',
-  [USER_ROLES.MERCHANT]: '商户',
-  [USER_ROLES.OPERATOR]: '操作员'
+  // 数据库中的实际角色名（主要）
+  '超级管理员': '超级管理员',
+  '普通管理员': '普通管理员',
+  '商家管理员': '商家管理员',
+  '普通商家': '普通商家',
+  '审计员': '审计员',
+  '普通员工': '普通员工',
+  // 兼容旧的角色名
+  '管理员': '普通管理员',
+  '普通用户': '普通员工',
+  '商户': '普通商家',
+  '操作员': '普通员工',
+  // 兼容英文角色名
+  'super_admin': '超级管理员',
+  'admin': '普通管理员',
+  'user': '普通员工',
+  'merchant': '普通商家',
+  'operator': '普通员工'
 };
 
 export default userManagementAPI;

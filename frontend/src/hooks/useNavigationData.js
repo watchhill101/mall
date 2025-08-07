@@ -98,6 +98,37 @@ export const useNavigationData = () => {
   const [isFromBackend, setIsFromBackend] = useState(false);
   const [error, setError] = useState(null);
 
+  // 数据验证和转换函数
+  const validateAndTransformData = (data) => {
+    if (!Array.isArray(data)) {
+      throw new Error('导航数据格式错误：应为数组');
+    }
+
+    return data.map(nav => {
+      // 确保必要字段存在
+      if (!nav._id || !nav.title || !nav.url) {
+        console.warn('导航项缺少必要字段:', nav);
+        return null;
+      }
+
+      // 转换数据格式，确保与前端期望一致
+      return {
+        _id: nav._id,
+        title: nav.title,
+        icon: nav.icon || 'AppstoreOutlined', // 确保图标字段存在
+        url: nav.url,
+        subTitle: nav.subTitle || '',
+        subText: nav.subText || '',
+        children: Array.isArray(nav.children) ? nav.children.map(child => ({
+          _id: child._id,
+          name: child.name,
+          url: child.url,
+          firstLevelNavigationID: child.firstLevelNavigationID
+        })) : []
+      };
+    }).filter(Boolean); // 过滤掉无效项
+  };
+
   // 获取导航数据
   const fetchNavigationData = async () => {
     setLoading(true);
@@ -109,7 +140,10 @@ export const useNavigationData = () => {
       
       if (response.code === 200 && response.data) {
         console.log('✅ 成功从后端获取导航数据:', response.data);
-        setNavigationData(response.data);
+        
+        // 验证和转换数据
+        const transformedData = validateAndTransformData(response.data);
+        setNavigationData(transformedData);
         setIsFromBackend(true);
       } else {
         throw new Error(response.message || '获取导航数据失败');
@@ -132,7 +166,7 @@ export const useNavigationData = () => {
   // 组件挂载时获取数据
   useEffect(() => {
     fetchNavigationData();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
     navigationData,
@@ -147,16 +181,21 @@ export const useNavigationData = () => {
  * 将导航数据转换为Antd Menu需要的格式
  */
 export const convertToMenuItems = (navigationData, getItem, Link, SvgIcon) => {
-  // 图标组件映射
+  // 图标组件映射 - 支持更多图标类型
   const iconMap = {
     'HomeOutlined': <HomeOutlined />,
     'ShopOutlined': <ShopOutlined />, 
     'GoodsOutlined': <ShoppingOutlined />,
     'OrdersOutlined': <FileTextOutlined />,
-    'UsersOutlined': <UserOutlined />
+    'UsersOutlined': <UserOutlined />,
+    'UserOutlined': <UserOutlined />,
+    'SettingOutlined': <AppstoreOutlined />,
+    'FileTextOutlined': <FileTextOutlined />,
+    'AppstoreOutlined': <AppstoreOutlined />
   };
 
   return navigationData.map(nav => {
+    // 获取图标组件，支持后端返回的标准格式
     const iconComponent = iconMap[nav.icon] || <AppstoreOutlined />;
     
     // 如果有子菜单

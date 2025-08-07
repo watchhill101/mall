@@ -49,6 +49,25 @@ import {
   generateBreadcrumbNameMap,
 } from "@/hooks/useNavigationData";
 
+// 错误边界组件
+const ComponentErrorBoundary = ({ children, fallback }) => {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setHasError(false);
+  }, [children]);
+
+  if (hasError) {
+    return fallback || (
+      <div style={{ padding: "20px", textAlign: "center", color: "#999" }}>
+        组件加载失败，请刷新页面重试
+      </div>
+    );
+  }
+
+  return children;
+};
+
 const { Header, Sider, Content } = Layout;
 // 提取底层路由方法
 const getMenus = (routes) => {
@@ -251,7 +270,11 @@ const LayoutApp = () => {
         }
       }
 
+      // 执行路由跳转
       navigate(key);
+    } else {
+      console.warn(`无效的路由路径: ${key}`);
+      message.warning('该功能暂未开放');
     }
   };
   /** 面包屑 */
@@ -307,197 +330,132 @@ const LayoutApp = () => {
     },
     [navigate]
   );
-  // 格式化路由数组
-  const Home = lazy(() => import("@/pages/Home_X"));
-  const Shops = lazy(() => import("@/pages/Shops"));
-  const Goods = lazy(() => import("@/pages/Goods"));
-  const Orders = lazy(() => import("@/pages/Orders"));
-  const Users = lazy(() => import("@/pages/Users"));
-  const Lbt = lazy(() => import("@/pages/Home_X/lbt"));
-  const Merchants = lazy(() => import("@/pages/Merchant/Merchant"));
-  const UserRoot = lazy(() => import("@/pages/UserRoot"));
-  const MerchantAccount = lazy(() =>
-    import("@/pages/Merchant/MerchantAccount")
-  );
-  const WithdrawAccount = lazy(() =>
-    import("@/pages/Merchant/WithdrawAccount")
-  );
-  const AccountDetail = lazy(() => import("@/pages/Merchant/AccountDetail"));
-  const MerchantWithdraw = lazy(() =>
-    import("@/pages/Merchant/MerchantWithdraw")
-  );
-  const SettlementOrder = lazy(() =>
-    import("@/pages/Merchant/SettlementOrder")
-  );
-  const SettlementBill = lazy(() => import("@/pages/Merchant/SettlementBill"));
-  const MerchantApplication = lazy(() =>
-    import("@/pages/Merchant/MerchantApplication")
-  );
+  // 动态组件注册表 - 集中管理所有路由组件
+  const componentRegistry = useMemo(() => {
+    // 懒加载组件
+    const Home = lazy(() => import("@/pages/Home_X"));
+    const Shops = lazy(() => import("@/pages/Shops"));
+    const Goods = lazy(() => import("@/pages/Goods"));
+    const Orders = lazy(() => import("@/pages/Orders"));
+    const Users = lazy(() => import("@/pages/Users"));
+    const Lbt = lazy(() => import("@/pages/Home_X/lbt"));
+    const Merchants = lazy(() => import("@/pages/Merchant/Merchant"));
+    const UserRoot = lazy(() => import("@/pages/UserRoot"));
+    const MerchantAccount = lazy(() => import("@/pages/Merchant/MerchantAccount"));
+    const WithdrawAccount = lazy(() => import("@/pages/Merchant/WithdrawAccount"));
+    const AccountDetail = lazy(() => import("@/pages/Merchant/AccountDetail"));
+    const MerchantWithdraw = lazy(() => import("@/pages/Merchant/MerchantWithdraw"));
+    const SettlementOrder = lazy(() => import("@/pages/Merchant/SettlementOrder"));
+    const SettlementBill = lazy(() => import("@/pages/Merchant/SettlementBill"));
+    const MerchantApplication = lazy(() => import("@/pages/Merchant/MerchantApplication"));
+    const ListOfCommodities = lazy(() => import("@/pages/Goods_S/ListOfCommodities"));
+    const ProductCategory = lazy(() => import("@/pages/Goods_S/Classification of Commodities/index"));
+    const RecycleBin = lazy(() => import("@/pages/Goods_S/Trash/Trash"));
+    const CurrentStock = lazy(() => import("@/pages/Goods_S/inventory/CurrentInventory/CurrentInventory"));
+    const StockIn = lazy(() => import("@/pages/Goods_S/inventory/enterTheWarehouse/enterTheWarehouse"));
+    const StockOut = lazy(() => import("@/pages/Goods_S/inventory/exWarehouse/exWarehouse"));
+    const Stocktake = lazy(() => import("@/pages/Goods_S/inventory/stocktaking/stocktaking"));
+    const StockDetails = lazy(() => import("@/pages/Goods_S/inventory/DetailsOfStockInAndstockOut/DetailsOfStockInAndstockOut"));
+    const OrdersList = lazy(() => import("@/pages/order_S/Orders"));
+    const AfterSales = lazy(() => import("@/pages/order_S/afterSales"));
+    const TallySheet = lazy(() => import("@/pages/order_S/tallySheet"));
+    const SortingList = lazy(() => import("@/pages/order_S/sortingList"));
 
-  // const DeviceManagement = lazy(() =>
-  //   import("@/pages/Merchant/DeviceManagement")  // 临时注释，组件不存在
-  // );
+    // 返回路由到组件的映射
+    return {
+      // 主页面
+      '/home': Home,
+      '/shops': Shops,
+      '/goods': Goods,
+      '/orders': Orders,
+      '/system': Users,
 
-  // 导入商品相关组件
-  const ListOfCommodities = lazy(() =>
-    import("@/pages/Goods_S/ListOfCommodities")
-  );
-  const ProductCategory = lazy(() =>
-    import("@/pages/Goods_S/Classification of Commodities/index")
-  );
-  const RecycleBin = lazy(() => import("@/pages/Goods_S/Trash/Trash"));
-  const CurrentStock = lazy(() =>
-    import("@/pages/Goods_S/inventory/CurrentInventory/CurrentInventory")
-  );
-  const StockIn = lazy(() =>
-    import("@/pages/Goods_S/inventory/enterTheWarehouse/enterTheWarehouse")
-  );
-  const StockOut = lazy(() =>
-    import("@/pages/Goods_S/inventory/exWarehouse/exWarehouse")
-  );
-  const Stocktake = lazy(() =>
-    import("@/pages/Goods_S/inventory/stocktaking/stocktaking")
-  );
-  const StockDetails = lazy(() =>
-    import(
-      "@/pages/Goods_S/inventory/DetailsOfStockInAndstockOut/DetailsOfStockInAndstockOut"
-    )
-  );
+      // 商家相关路由
+      '/shops/merchants': Merchants,
+      '/shops/merchant-account': MerchantAccount,
+      '/shops/withdraw-account': WithdrawAccount,
+      '/shops/account-detail': AccountDetail,
+      '/shops/merchant-withdraw': MerchantWithdraw,
+      '/shops/settlement-order': SettlementOrder,
+      '/shops/settlement-bill': SettlementBill,
+      '/shops/merchant-application': MerchantApplication,
+      '/shops/device-management': () => (
+        <div style={{ padding: "20px", textAlign: "center" }}>
+          设备管理功能开发中...
+        </div>
+      ),
 
-  // 导入订单相关组件
-  const OrdersList = lazy(() => import("@/pages/order_S/Orders"));
-  const AfterSales = lazy(() => import("@/pages/order_S/afterSales"));
-  const TallySheet = lazy(() => import("@/pages/order_S/tallySheet"));
-  const SortingList = lazy(() => import("@/pages/order_S/sortingList"));
+      // 商品相关路由
+      '/goods/product-list': ListOfCommodities,
+      '/goods/audit-list': ListOfCommodities,
+      '/goods/external-product': ListOfCommodities,
+      '/goods/product-category': ProductCategory,
+      '/goods/recycle-bin': RecycleBin,
+      '/goods/inventory/current-stock': CurrentStock,
+      '/goods/inventory/stock-in': StockIn,
+      '/goods/inventory/stock-out': StockOut,
+      '/goods/inventory/stocktake': Stocktake,
+      '/goods/inventory/stock-details': StockDetails,
+
+      // 订单相关路由
+      '/orders/orders-list': OrdersList,
+      '/orders/afterSales': AfterSales,
+      '/orders/tallySheet': TallySheet,
+      '/orders/SortingList': SortingList,
+
+      // 系统设置相关路由
+      '/system/users': Users,
+      '/system/carousel': Lbt,
+      '/system/user-permissions': UserRoot,
+    };
+  }, []);
 
 
   const formatRoutes = useMemo(() => {
-    // 基础路由
-    const baseRoutes = [
-      { title: "首页", menuPath: "/home", element: <Home /> },
-      { title: "商家", menuPath: "/shops", element: <Shops /> },
-      { title: "商品", menuPath: "/goods", element: <Goods /> },
-      { title: "订单", menuPath: "/orders", element: <Orders /> },
-      { title: "系统设置", menuPath: "/system", element: <Users /> },
-    ];
+    const routes = [];
 
-    // 从导航数据动态生成子路由
-    const navigationRoutes = [];
+    // 从导航数据动态生成路由
     navigationData.forEach((nav) => {
+      // 添加一级导航路由
+      const MainComponent = componentRegistry[nav.url];
+      if (MainComponent) {
+        routes.push({
+          title: nav.title,
+          menuPath: nav.url,
+          element: React.createElement(MainComponent),
+        });
+      }
+
+      // 添加二级导航路由
       if (nav.children && nav.children.length > 0) {
         nav.children.forEach((child) => {
-          let element = null;
-
-          // 根据URL路径匹配对应的组件
-          switch (child.url) {
-            // 商家相关路由
-            case "/shops/merchants":
-              element = <Merchants />;
-              break;
-            case "/shops/merchant-account":
-              element = <MerchantAccount />;
-              break;
-            case "/shops/withdraw-account":
-              element = <WithdrawAccount />;
-              break;
-            case "/shops/account-detail":
-              element = <AccountDetail />;
-              break;
-            case "/shops/merchant-withdraw":
-              element = <MerchantWithdraw />;
-              break;
-            case "/shops/settlement-order":
-              element = <SettlementOrder />;
-              break;
-            case "/shops/settlement-bill":
-              element = <SettlementBill />;
-              break;
-            case "/shops/merchant-application":
-              element = <MerchantApplication />;
-              break;
-
-            case "/shops/device-management":
-              // element = <DeviceManagement />;  // 临时注释，组件不存在
-              element = (
-                <div style={{ padding: "20px", textAlign: "center" }}>
-                  设备管理功能开发中...
-                </div>
-              );
-              break;
-
-            // 商品相关路由
-            case "/goods/product-list":
-            case "/goods/audit-list":
-            case "/goods/external-product":
-              element = <ListOfCommodities />;
-              break;
-            case "/goods/product-category":
-              element = <ProductCategory />;
-              break;
-            case "/goods/recycle-bin":
-              element = <RecycleBin />;
-              break;
-            case "/goods/inventory/current-stock":
-              element = <CurrentStock />;
-              break;
-            case "/goods/inventory/stock-in":
-              element = <StockIn />;
-              break;
-            case "/goods/inventory/stock-out":
-              element = <StockOut />;
-              break;
-            case "/goods/inventory/stocktake":
-              element = <Stocktake />;
-              break;
-            case "/goods/inventory/stock-details":
-              element = <StockDetails />;
-              break;
-
-            // 订单相关路由
-            case "/orders/orders-list":
-              element = <OrdersList />;
-              break;
-            case "/orders/afterSales":
-              element = <AfterSales />;
-              break;
-            case "/orders/tallySheet":
-              element = <TallySheet />;
-              break;
-            case "/orders/SortingList":
-              element = <SortingList />;
-              break;
-
-            // 系统设置相关路由
-            case "/system/users":
-              element = <Users />;
-              break;
-            case "/system/carousel":
-              element = <Lbt />;
-              break;
-            case "/system/user-permissions":
-              element = <UserRoot />; // 暂时使用Users组件，后续可以创建专门的权限管理组件
-              break;
-
-            default:
-              console.warn(`未找到路由 ${child.url} 对应的组件`);
-              break;
-          }
-
-          if (element) {
-            navigationRoutes.push({
+          const ChildComponent = componentRegistry[child.url];
+          if (ChildComponent) {
+            routes.push({
               title: child.name,
               menuPath: child.url,
-              element: element,
+              element: React.createElement(ChildComponent),
+            });
+          } else {
+            console.warn(`未找到路由 ${child.url} 对应的组件`);
+            // 添加占位组件
+            routes.push({
+              title: child.name,
+              menuPath: child.url,
+              element: (
+                <div style={{ padding: "20px", textAlign: "center" }}>
+                  {child.name} 功能开发中...
+                </div>
+              ),
             });
           }
         });
       }
     });
 
-    return baseRoutes
-      .concat(navigationRoutes)
-      .concat(getMenus(permissionRoutes));
-  }, [navigationData, permissionRoutes]);
+    // 合并权限路由
+    return routes.concat(getMenus(permissionRoutes));
+  }, [navigationData, permissionRoutes, componentRegistry]);
 
   /** 下拉菜单 */
   // 下拉菜单项数组
@@ -670,11 +628,13 @@ const LayoutApp = () => {
             />
           )}
 
-          <TabsView
-            pathname={pathname}
-            formatRoutes={formatRoutes}
-            selectTab={selectTab}
-          />
+          <ComponentErrorBoundary>
+            <TabsView
+              pathname={pathname}
+              formatRoutes={formatRoutes}
+              selectTab={selectTab}
+            />
+          </ComponentErrorBoundary>
         </Content>
       </Layout>
       <CustomModal title="个人中心" ref={userCenterRef}>

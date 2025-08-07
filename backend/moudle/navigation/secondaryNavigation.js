@@ -13,7 +13,7 @@ const secondaryNavigationSchema = new mongoose.Schema({
 });
 
 const SecondaryNavigation = mongoose.model(
-  "secondaryNavigation",
+  "SecondaryNavigation",
   secondaryNavigationSchema,
   "secondaryNavigation"
 );
