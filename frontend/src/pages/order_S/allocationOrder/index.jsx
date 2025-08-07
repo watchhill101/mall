@@ -25,7 +25,12 @@ import {
   EditOutlined,
   CheckOutlined,
 } from '@ant-design/icons';
-import { getAllocationOrdersList, getAllocationOrderDetail } from '../../../api/orders';
+import {
+  getAllocationOrdersList,
+  getAllocationOrderDetail,
+  generateAllocationTestData,
+  clearAllocationTestData
+} from '../../../api/orders';
 import OrderLayout from '../Order_layout/Order_layout';
 
 const { RangePicker } = DatePicker;
@@ -38,7 +43,7 @@ const AllocationOrder = () => {
   const [filteredData, setFilteredData] = useState([]);
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 10,
+    pageSize: 2,
     total: 0
   });
   const [detailModalVisible, setDetailModalVisible] = useState(false);
@@ -55,7 +60,7 @@ const AllocationOrder = () => {
         ...searchParams,
         ...params,
       });
-      
+
       if (response.code === 200) {
         setAllData(response.data.list || []);
         setFilteredData(response.data.list || []);
@@ -83,18 +88,17 @@ const AllocationOrder = () => {
 
   // 配货类型选项
   const allocationTypeOptions = [
-    { value: 'normal', label: '正常配货' },
-    { value: 'urgent', label: '紧急配货' },
-    { value: 'batch', label: '批量配货' },
-    { value: 'partial', label: '部分配货' }
+    { value: 'order_allocation', label: '订单配货' },
+    { value: 'stock_transfer', label: '库存调拨' },
+    { value: 'emergency_allocation', label: '紧急配货' },
+    { value: 'bulk_allocation', label: '批量配货' }
   ];
 
   // 配货状态选项
   const statusOptions = [
     { value: 'pending', label: '待配货' },
-    { value: 'in_progress', label: '配货中' },
     { value: 'allocated', label: '已配货' },
-    { value: 'shortage', label: '缺货' },
+    { value: 'confirmed', label: '已确认' },
     { value: 'cancelled', label: '已取消' }
   ];
 
@@ -117,9 +121,8 @@ const AllocationOrder = () => {
   const getStatusTag = (status) => {
     const statusConfig = {
       pending: { color: 'default', text: '待配货' },
-      in_progress: { color: 'processing', text: '配货中' },
-      allocated: { color: 'success', text: '已配货' },
-      shortage: { color: 'warning', text: '缺货' },
+      allocated: { color: 'processing', text: '已配货' },
+      confirmed: { color: 'success', text: '已确认' },
       cancelled: { color: 'error', text: '已取消' }
     };
     const config = statusConfig[status] || { color: 'default', text: status };
@@ -195,9 +198,9 @@ const AllocationOrder = () => {
       width: 120,
       render: (rate, record) => (
         <div>
-          <Progress 
-            percent={rate} 
-            size="small" 
+          <Progress
+            percent={rate}
+            size="small"
             status={rate === 100 ? 'success' : rate < 60 ? 'exception' : 'active'}
           />
           <div style={{ fontSize: '12px', marginTop: '2px' }}>
@@ -232,8 +235,8 @@ const AllocationOrder = () => {
       fixed: 'right',
       render: (_, record) => (
         <Space>
-          <Button 
-            type="link" 
+          <Button
+            type="link"
             size="small"
             icon={<EyeOutlined />}
             onClick={() => handleViewDetail(record)}
@@ -241,8 +244,8 @@ const AllocationOrder = () => {
             详情
           </Button>
           {record.status === 'pending' && (
-            <Button 
-              type="link" 
+            <Button
+              type="link"
               size="small"
               icon={<EditOutlined />}
               onClick={() => handleEdit(record)}
@@ -250,9 +253,9 @@ const AllocationOrder = () => {
               编辑
             </Button>
           )}
-          {(record.status === 'pending' || record.status === 'in_progress') && (
-            <Button 
-              type="link" 
+          {(record.status === 'pending' || record.status === 'allocated') && (
+            <Button
+              type="link"
               size="small"
               icon={<CheckOutlined />}
               onClick={() => handleConfirm(record)}
@@ -311,24 +314,95 @@ const AllocationOrder = () => {
     });
   };
 
-  // 搜索处理
-  const handleSearch = (values) => {
+  // 搜索处理 - 使用服务端搜索
+  const handleSearch = async (values) => {
     setLoading(true);
+    try {
+      // 处理搜索参数
+      const searchParams = {};
 
-    setTimeout(() => {
-      const filtered = filterData(allData, values);
-      setFilteredData(filtered);
-      setPagination(prev => ({ ...prev, current: 1, total: filtered.length }));
+      if (values.allocationId) {
+        searchParams.allocationId = values.allocationId.trim();
+      }
+
+      if (values.merchantName) {
+        searchParams.merchantName = values.merchantName.trim();
+      }
+
+      if (values.allocationType) {
+        searchParams.allocationType = values.allocationType;
+      }
+
+      if (values.status) {
+        searchParams.status = values.status;
+      }
+
+      if (values.priority) {
+        searchParams.priority = values.priority;
+      }
+
+      // 处理时间范围
+      if (values.createTime && values.createTime.length === 2) {
+        searchParams.createTimeStart = values.createTime[0].format('YYYY-MM-DD HH:mm:ss');
+        searchParams.createTimeEnd = values.createTime[1].format('YYYY-MM-DD HH:mm:ss');
+      }
+
+      // 调用API进行搜索
+      const response = await getAllocationOrdersList({
+        page: 1, // 搜索时重置到第一页
+        pageSize: pagination.pageSize,
+        ...searchParams
+      });
+
+      if (response.code === 200) {
+        setAllData(response.data.list || []);
+        setFilteredData(response.data.list || []);
+        setPagination(prev => ({
+          ...prev,
+          current: 1,
+          total: response.data.total || 0
+        }));
+        message.success(`找到 ${response.data.total || 0} 条匹配记录`);
+      } else {
+        message.error(response.message || '搜索失败');
+      }
+    } catch (error) {
+      console.error('搜索失败:', error);
+      message.error('搜索失败');
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
-  // 重置处理
-  const handleReset = () => {
+  // 重置处理 - 重新获取所有数据
+  const handleReset = async () => {
     form.resetFields();
-    setFilteredData(allData);
-    setPagination(prev => ({ ...prev, current: 1, total: allData.length }));
-    message.info('已重置搜索条件');
+    setLoading(true);
+
+    try {
+      const response = await getAllocationOrdersList({
+        page: 1,
+        pageSize: pagination.pageSize
+      });
+
+      if (response.code === 200) {
+        setAllData(response.data.list || []);
+        setFilteredData(response.data.list || []);
+        setPagination(prev => ({
+          ...prev,
+          current: 1,
+          total: response.data.total || 0
+        }));
+        message.success('已重置搜索条件');
+      } else {
+        message.error('重置失败');
+      }
+    } catch (error) {
+      console.error('重置失败:', error);
+      message.error('重置失败');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // 查看详情
@@ -354,34 +428,206 @@ const AllocationOrder = () => {
   };
 
   // 导出处理
-  const handleExport = () => {
-    message.success('导出成功');
+  const handleExport = async () => {
+    if (filteredData.length === 0) {
+      message.warning('没有数据可导出');
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // 获取当前搜索条件的所有数据
+      const formValues = form.getFieldsValue();
+      const searchParams = {};
+
+      if (formValues.allocationId) searchParams.allocationId = formValues.allocationId.trim();
+      if (formValues.merchantName) searchParams.merchantName = formValues.merchantName.trim();
+      if (formValues.allocationType) searchParams.allocationType = formValues.allocationType;
+      if (formValues.status) searchParams.status = formValues.status;
+      if (formValues.priority) searchParams.priority = formValues.priority;
+
+      if (formValues.createTime && formValues.createTime.length === 2) {
+        searchParams.createTimeStart = formValues.createTime[0].format('YYYY-MM-DD HH:mm:ss');
+        searchParams.createTimeEnd = formValues.createTime[1].format('YYYY-MM-DD HH:mm:ss');
+      }
+
+      // 获取所有数据用于导出
+      const response = await getAllocationOrdersList({
+        page: 1,
+        pageSize: 10000, // 获取大量数据用于导出
+        ...searchParams
+      });
+
+      if (response.code === 200) {
+        const exportData = response.data.list || [];
+
+        // 创建CSV内容
+        const headers = [
+          '配货单号', '所属商家', '配货类型', '状态', '优先级',
+          '配货进度', '配货员', '总金额', '创建时间', '备注'
+        ];
+
+        const csvContent = [
+          headers.join(','),
+          ...exportData.map(record => [
+            record.allocationId || '',
+            record.merchantName || '',
+            getAllocationTypeText(record.allocationType) || '',
+            record.status || '',
+            record.priority || '',
+            `${record.allocationRate || 0}%`,
+            record.allocator || '',
+            record.totalAmount ? `¥${Number(record.totalAmount).toFixed(2)}` : '',
+            record.createTime ? new Date(record.createTime).toLocaleString('zh-CN') : '',
+            record.remarks || ''
+          ].join(','))
+        ].join('\n');
+
+        // 下载文件
+        const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `配货单_${new Date().toISOString().slice(0, 10)}.csv`;
+        link.click();
+
+        message.success(`成功导出 ${exportData.length} 条记录`);
+      } else {
+        message.error('导出失败：' + response.message);
+      }
+    } catch (error) {
+      console.error('导出失败:', error);
+      message.error('导出失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 生成测试数据
+  const handleGenerateTestData = async () => {
+    setLoading(true);
+    try {
+      const response = await generateAllocationTestData({ count: 10 });
+      if (response.code === 200) {
+        message.success(response.message);
+        // 重新获取数据
+        await fetchData();
+      } else {
+        message.error(response.message || '生成测试数据失败');
+      }
+    } catch (error) {
+      console.error('生成测试数据失败:', error);
+      message.error('生成测试数据失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 清空测试数据
+  const handleClearTestData = async () => {
+    Modal.confirm({
+      title: '确认清空数据',
+      content: '确定要清空所有配货单数据吗？此操作不可恢复。',
+      okText: '确定',
+      cancelText: '取消',
+      onOk: async () => {
+        setLoading(true);
+        try {
+          const response = await clearAllocationTestData();
+          if (response.code === 200) {
+            message.success(response.message);
+            // 重新获取数据
+            await fetchData();
+          } else {
+            message.error(response.message || '清空数据失败');
+          }
+        } catch (error) {
+          console.error('清空数据失败:', error);
+          message.error('清空数据失败');
+        } finally {
+          setLoading(false);
+        }
+      }
+    });
   };
 
   // 刷新处理
-  const handleRefresh = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      message.success('刷新成功');
-    }, 1000);
+  const handleRefresh = async () => {
+    await fetchData();
+    message.success('刷新成功');
   };
 
   // 分页处理
   const handleTableChange = (paginationConfig) => {
+    if (!paginationConfig) return;
+
     setPagination(prev => ({
       ...prev,
-      current: paginationConfig.current,
-      pageSize: paginationConfig.pageSize
+      current: paginationConfig.current || prev.current,
+      pageSize: paginationConfig.pageSize || prev.pageSize
     }));
   };
 
-  // 当前页数据
-  const currentPageData = useMemo(() => {
-    const startIndex = (pagination.current - 1) * pagination.pageSize;
-    const endIndex = startIndex + pagination.pageSize;
-    return filteredData.slice(startIndex, endIndex);
-  }, [filteredData, pagination]);
+  // 处理页码变化
+  const handlePageChange = (page, pageSize) => {
+    const newPagination = {
+      ...pagination,
+      current: page,
+      pageSize: pageSize || pagination.pageSize
+    };
+    setPagination(newPagination);
+
+    // 重新获取数据
+    fetchDataWithPagination(newPagination);
+  };
+
+  // 处理页大小变化
+  const handlePageSizeChange = (current, size) => {
+    const newPagination = {
+      ...pagination,
+      current: 1, // 改变页大小时重置到第一页
+      pageSize: size
+    };
+    setPagination(newPagination);
+
+    // 重新获取数据
+    fetchDataWithPagination(newPagination);
+  };
+
+  // 带分页参数获取数据
+  const fetchDataWithPagination = async (paginationParams = pagination) => {
+    setLoading(true);
+    try {
+      const response = await getAllocationOrdersList({
+        page: paginationParams.current,
+        pageSize: paginationParams.pageSize,
+      });
+
+      if (response.code === 200) {
+        setAllData(response.data.list || []);
+        setFilteredData(response.data.list || []);
+        setPagination(prev => ({
+          ...prev,
+          total: response.data.total || 0,
+          current: response.data.page || paginationParams.current,
+          pageSize: response.data.pageSize || paginationParams.pageSize
+        }));
+      } else {
+        message.error(response.message || '获取数据失败');
+        setAllData([]);
+        setFilteredData([]);
+      }
+    } catch (error) {
+      console.error('获取配货单列表失败:', error);
+      message.error('获取数据失败');
+      setAllData([]);
+      setFilteredData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 注意：现在使用服务端分页，filteredData已经是当前页的数据
 
   return (
     <OrderLayout>
@@ -397,10 +643,7 @@ const AllocationOrder = () => {
               </Col>
               <Col span={6}>
                 <Form.Item label="所属商家" name="merchantName">
-                  <Select placeholder="搜索商家" showSearch style={{ width: '100%' }}>
-                    <Option value="清风便利店">清风便利店</Option>
-                    <Option value="星期八超市">星期八超市</Option>
-                  </Select>
+                  <Input placeholder="请输入商家名称" />
                 </Form.Item>
               </Col>
               <Col span={6}>
@@ -441,22 +684,34 @@ const AllocationOrder = () => {
                   <RangePicker showTime style={{ width: '100%' }} />
                 </Form.Item>
               </Col>
-              <Col span={12}>
-                <Form.Item label=" " colon={false}>
-                  <Space>
-                    <Button 
-                      type="primary" 
+            </Row>
+            <Row>
+              <Col span={24}>
+                <Form.Item style={{ marginBottom: 0, textAlign: 'center' }}>
+                  <Space size="middle">
+                    <Button
+                      type="primary"
                       htmlType="submit"
                       icon={<SearchOutlined />}
                       loading={loading}
+                      size="large"
                     >
                       搜索
                     </Button>
-                    <Button 
+                    <Button
                       icon={<ReloadOutlined />}
                       onClick={handleReset}
+                      size="large"
                     >
                       重置
+                    </Button>
+                    <Button
+                      type="dashed"
+                      icon={<FileExcelOutlined />}
+                      onClick={handleExport}
+                      size="large"
+                    >
+                      导出Excel
                     </Button>
                   </Space>
                 </Form.Item>
@@ -480,6 +735,21 @@ const AllocationOrder = () => {
               <Space>
                 <Button
                   type="primary"
+                  onClick={handleGenerateTestData}
+                  loading={loading}
+                >
+                  生成测试数据
+                </Button>
+                <Button
+                  type="default"
+                  danger
+                  onClick={handleClearTestData}
+                  loading={loading}
+                >
+                  清空数据
+                </Button>
+                <Button
+                  type="primary"
                   icon={<FileExcelOutlined />}
                   onClick={handleExport}
                 >
@@ -499,39 +769,25 @@ const AllocationOrder = () => {
 
           <Table
             columns={columns}
-            dataSource={currentPageData}
+            dataSource={filteredData}
             rowKey="id"
-            pagination={false}
+            pagination={{
+              current: pagination.current,
+              pageSize: pagination.pageSize,
+              total: pagination.total,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total, range) =>
+                `第 ${range[0]}-${range[1]} 条/共 ${total} 条`,
+              pageSizeOptions: ['2', '5', '10', '20'],
+              onChange: handlePageChange,
+              onShowSizeChange: handlePageSizeChange
+            }}
             loading={loading}
             scroll={{ x: 1500 }}
             size="middle"
             className="data-table"
           />
-
-          {/* 分页 */}
-          <div className="pagination-container" style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginTop: '16px'
-          }}>
-            <div className="pagination-info">
-              <span>共 {pagination.total} 条</span>
-            </div>
-            <Pagination
-              current={pagination.current}
-              pageSize={pagination.pageSize}
-              total={pagination.total}
-              showSizeChanger
-              showQuickJumper
-              showTotal={(total, range) =>
-                `第 ${range[0]}-${range[1]} 条/共 ${total} 条`
-              }
-              onChange={handleTableChange}
-              pageSizeOptions={['10', '20', '50', '100']}
-              defaultPageSize={10}
-            />
-          </div>
         </Card>
 
         {/* 详情模态框 */}
@@ -607,9 +863,9 @@ const AllocationOrder = () => {
                 </Col>
               </Row>
             </div>
-        )}
-      </Modal>
-    </div>
+          )}
+        </Modal>
+      </div>
     </OrderLayout>
   );
-};export default AllocationOrder;
+}; export default AllocationOrder;

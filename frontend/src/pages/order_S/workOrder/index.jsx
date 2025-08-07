@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   Table,
@@ -24,7 +24,12 @@ import {
   PlayCircleOutlined,
   CheckCircleOutlined,
 } from '@ant-design/icons';
-import { getWorkOrdersList, getWorkOrderDetail } from '../../../api/orders';
+import {
+  getWorkOrdersList,
+  getWorkOrderDetail,
+  generateWorkOrderTestData,
+  clearWorkOrderTestData
+} from '../../../api/orders';
 import OrderLayout from '../Order_layout/Order_layout';
 
 const { RangePicker } = DatePicker;
@@ -37,102 +42,46 @@ const WorkOrder = () => {
   const [filteredData, setFilteredData] = useState([]);
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 10,
+    pageSize: 2,
     total: 0
   });
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
 
-  // 模拟数据
-  const mockData = useMemo(() => [
-    {
-      id: 1,
-      workOrderId: 'WO202312010001',
-      orderIds: ['ORD202312010001'],
-      merchantName: '清风便利店',
-      workType: 'picking',
-      status: 'pending',
-      priority: 3,
-      assignedWorker: '张三',
-      plannedStartTime: '2023-12-01 09:00:00',
-      plannedEndTime: '2023-12-01 10:00:00',
-      actualStartTime: '',
-      actualEndTime: '',
-      estimatedDuration: 60,
-      actualDuration: 0,
-      location: '仓库A区',
-      equipment: 'PDA001',
-      createTime: '2023-12-01 08:30:00',
-      remarks: '拣货作业'
-    },
-    {
-      id: 2,
-      workOrderId: 'WO202312010002',
-      orderIds: ['ORD202312010002', 'ORD202312010003'],
-      merchantName: '星期八超市',
-      workType: 'packing',
-      status: 'in_progress',
-      priority: 4,
-      assignedWorker: '李四',
-      plannedStartTime: '2023-12-01 10:00:00',
-      plannedEndTime: '2023-12-01 11:30:00',
-      actualStartTime: '2023-12-01 10:05:00',
-      actualEndTime: '',
-      estimatedDuration: 90,
-      actualDuration: 45,
-      location: '包装区B',
-      equipment: '包装台002',
-      createTime: '2023-12-01 09:45:00',
-      remarks: '批量包装作业'
-    },
-    {
-      id: 3,
-      workOrderId: 'WO202312010003',
-      orderIds: ['ORD202312010004'],
-      merchantName: '清风便利店',
-      workType: 'loading',
-      status: 'completed',
-      priority: 2,
-      assignedWorker: '王五',
-      plannedStartTime: '2023-12-01 14:00:00',
-      plannedEndTime: '2023-12-01 15:00:00',
-      actualStartTime: '2023-12-01 13:55:00',
-      actualEndTime: '2023-12-01 14:50:00',
-      estimatedDuration: 60,
-      actualDuration: 55,
-      location: '装车区C',
-      equipment: '叉车003',
-      createTime: '2023-12-01 13:20:00',
-      remarks: '装车作业完成'
-    },
-    {
-      id: 4,
-      workOrderId: 'WO202312010004',
-      orderIds: ['ORD202312010005'],
-      merchantName: '星期八超市',
-      workType: 'inspection',
-      status: 'cancelled',
-      priority: 1,
-      assignedWorker: '赵六',
-      plannedStartTime: '2023-12-01 16:00:00',
-      plannedEndTime: '2023-12-01 16:30:00',
-      actualStartTime: '',
-      actualEndTime: '',
-      estimatedDuration: 30,
-      actualDuration: 0,
-      location: '质检区D',
-      equipment: '检测仪004',
-      createTime: '2023-12-01 15:30:00',
-      remarks: '订单取消，作业单取消'
+  // 获取数据
+  const fetchData = async (params = {}) => {
+    setLoading(true);
+    try {
+      const response = await getWorkOrdersList({
+        page: pagination.current,
+        pageSize: pagination.pageSize,
+        ...params,
+      });
+
+      if (response.code === 200) {
+        setAllData(response.data.list || []);
+        setFilteredData(response.data.list || []);
+        setPagination(prev => ({
+          ...prev,
+          total: response.data.total || 0,
+          current: response.data.page || 1,
+          pageSize: response.data.pageSize || 2
+        }));
+      } else {
+        message.error(response.message || '获取数据失败');
+      }
+    } catch (error) {
+      console.error('获取作业单列表失败:', error);
+      message.error('获取数据失败');
+    } finally {
+      setLoading(false);
     }
-  ], []);
+  };
 
   // 初始化数据
   useEffect(() => {
-    setAllData(mockData);
-    setFilteredData(mockData);
-    setPagination(prev => ({ ...prev, total: mockData.length }));
-  }, [mockData]);
+    fetchData();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 作业类型选项
   const workTypeOptions = [
@@ -291,8 +240,8 @@ const WorkOrder = () => {
       fixed: 'right',
       render: (_, record) => (
         <Space>
-          <Button 
-            type="link" 
+          <Button
+            type="link"
             size="small"
             icon={<EyeOutlined />}
             onClick={() => handleViewDetail(record)}
@@ -300,8 +249,8 @@ const WorkOrder = () => {
             详情
           </Button>
           {record.status === 'pending' && (
-            <Button 
-              type="link" 
+            <Button
+              type="link"
               size="small"
               icon={<PlayCircleOutlined />}
               onClick={() => handleStart(record)}
@@ -310,8 +259,8 @@ const WorkOrder = () => {
             </Button>
           )}
           {record.status === 'in_progress' && (
-            <Button 
-              type="link" 
+            <Button
+              type="link"
               size="small"
               icon={<CheckCircleOutlined />}
               onClick={() => handleComplete(record)}
@@ -324,75 +273,101 @@ const WorkOrder = () => {
     }
   ];
 
-  // 数据筛选
-  const filterData = (data, params) => {
-    return data.filter(item => {
-      // 按作业单号筛选
-      if (params.workOrderId && !item.workOrderId.toLowerCase().includes(params.workOrderId.toLowerCase())) {
-        return false;
+
+
+  // 搜索处理 - 使用服务端搜索
+  const handleSearch = async (values) => {
+    setLoading(true);
+    try {
+      // 处理搜索参数
+      const searchParams = {};
+
+      if (values.workOrderId) {
+        searchParams.workOrderId = values.workOrderId.trim();
       }
 
-      // 按商家名称筛选
-      if (params.merchantName && !item.merchantName.toLowerCase().includes(params.merchantName.toLowerCase())) {
-        return false;
+      if (values.merchantName) {
+        searchParams.merchantName = values.merchantName.trim();
       }
 
-      // 按作业类型筛选
-      if (params.workType && item.workType !== params.workType) {
-        return false;
+      if (values.workType) {
+        searchParams.workType = values.workType;
       }
 
-      // 按状态筛选
-      if (params.status && item.status !== params.status) {
-        return false;
+      if (values.status) {
+        searchParams.status = values.status;
       }
 
-      // 按优先级筛选
-      if (params.priority && item.priority !== params.priority) {
-        return false;
+      if (values.priority) {
+        searchParams.priority = values.priority;
       }
 
-      // 按分配工人筛选
-      if (params.assignedWorker && !item.assignedWorker.toLowerCase().includes(params.assignedWorker.toLowerCase())) {
-        return false;
+      if (values.assignedWorker) {
+        searchParams.assignedWorker = values.assignedWorker.trim();
       }
 
-      // 按创建时间范围筛选
-      if (params.createTime && params.createTime.length === 2) {
-        const [startDate, endDate] = params.createTime;
-        const itemDate = new Date(item.createTime);
-
-        if (startDate && itemDate < startDate.toDate()) {
-          return false;
-        }
-
-        if (endDate && itemDate > endDate.toDate()) {
-          return false;
-        }
+      // 处理时间范围
+      if (values.createTime && values.createTime.length === 2) {
+        searchParams.createTimeStart = values.createTime[0].format('YYYY-MM-DD HH:mm:ss');
+        searchParams.createTimeEnd = values.createTime[1].format('YYYY-MM-DD HH:mm:ss');
       }
 
-      return true;
-    });
+      // 调用API进行搜索
+      const response = await getWorkOrdersList({
+        page: 1, // 搜索时重置到第一页
+        pageSize: pagination.pageSize,
+        ...searchParams
+      });
+
+      if (response.code === 200) {
+        setAllData(response.data.list || []);
+        setFilteredData(response.data.list || []);
+        setPagination(prev => ({
+          ...prev,
+          current: 1,
+          total: response.data.total || 0
+        }));
+        message.success(`找到 ${response.data.total || 0} 条匹配记录`);
+      } else {
+        message.error(response.message || '搜索失败');
+      }
+    } catch (error) {
+      console.error('搜索失败:', error);
+      message.error('搜索失败');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // 搜索处理
-  const handleSearch = (values) => {
+  // 重置处理 - 重新获取所有数据
+  const handleReset = async () => {
+    form.resetFields();
     setLoading(true);
 
-    setTimeout(() => {
-      const filtered = filterData(allData, values);
-      setFilteredData(filtered);
-      setPagination(prev => ({ ...prev, current: 1, total: filtered.length }));
-      setLoading(false);
-    }, 500);
-  };
+    try {
+      const response = await getWorkOrdersList({
+        page: 1,
+        pageSize: pagination.pageSize
+      });
 
-  // 重置处理
-  const handleReset = () => {
-    form.resetFields();
-    setFilteredData(allData);
-    setPagination(prev => ({ ...prev, current: 1, total: allData.length }));
-    message.info('已重置搜索条件');
+      if (response.code === 200) {
+        setAllData(response.data.list || []);
+        setFilteredData(response.data.list || []);
+        setPagination(prev => ({
+          ...prev,
+          current: 1,
+          total: response.data.total || 0
+        }));
+        message.success('已重置搜索条件');
+      } else {
+        message.error('重置失败');
+      }
+    } catch (error) {
+      console.error('重置失败:', error);
+      message.error('重置失败');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // 查看详情
@@ -423,35 +398,208 @@ const WorkOrder = () => {
     });
   };
 
+  // 生成测试数据
+  const handleGenerateTestData = async () => {
+    setLoading(true);
+    try {
+      const response = await generateWorkOrderTestData({ count: 10 });
+      if (response.code === 200) {
+        message.success(response.message);
+        // 重新获取数据
+        await fetchData();
+      } else {
+        message.error(response.message || '生成测试数据失败');
+      }
+    } catch (error) {
+      console.error('生成测试数据失败:', error);
+      message.error('生成测试数据失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 清空测试数据
+  const handleClearTestData = async () => {
+    Modal.confirm({
+      title: '确认清空数据',
+      content: '确定要清空所有作业单数据吗？此操作不可恢复。',
+      okText: '确定',
+      cancelText: '取消',
+      onOk: async () => {
+        setLoading(true);
+        try {
+          const response = await clearWorkOrderTestData();
+          if (response.code === 200) {
+            message.success(response.message);
+            // 重新获取数据
+            await fetchData();
+          } else {
+            message.error(response.message || '清空数据失败');
+          }
+        } catch (error) {
+          console.error('清空数据失败:', error);
+          message.error('清空数据失败');
+        } finally {
+          setLoading(false);
+        }
+      }
+    });
+  };
+
   // 导出处理
-  const handleExport = () => {
-    message.success('导出成功');
+  const handleExport = async () => {
+    if (filteredData.length === 0) {
+      message.warning('没有数据可导出');
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // 获取当前搜索条件的所有数据
+      const formValues = form.getFieldsValue();
+      const searchParams = {};
+
+      if (formValues.workOrderId) searchParams.workOrderId = formValues.workOrderId.trim();
+      if (formValues.merchantName) searchParams.merchantName = formValues.merchantName.trim();
+      if (formValues.workType) searchParams.workType = formValues.workType;
+      if (formValues.status) searchParams.status = formValues.status;
+      if (formValues.priority) searchParams.priority = formValues.priority;
+      if (formValues.assignedWorker) searchParams.assignedWorker = formValues.assignedWorker.trim();
+
+      if (formValues.createTime && formValues.createTime.length === 2) {
+        searchParams.createTimeStart = formValues.createTime[0].format('YYYY-MM-DD HH:mm:ss');
+        searchParams.createTimeEnd = formValues.createTime[1].format('YYYY-MM-DD HH:mm:ss');
+      }
+
+      // 获取所有数据用于导出
+      const response = await getWorkOrdersList({
+        page: 1,
+        pageSize: 10000, // 获取大量数据用于导出
+        ...searchParams
+      });
+
+      if (response.code === 200) {
+        const exportData = response.data.list || [];
+
+        // 创建CSV内容
+        const headers = [
+          '作业单号', '所属商家', '作业类型', '状态', '优先级', '分配工人',
+          '作业位置', '使用设备', '预计时长', '实际时长', '创建时间', '备注'
+        ];
+
+        const csvContent = [
+          headers.join(','),
+          ...exportData.map(record => [
+            record.workOrderId || '',
+            record.merchantName || '',
+            getWorkTypeText(record.workType) || '',
+            record.status || '',
+            record.priority || '',
+            record.assignedWorker || '',
+            record.location || '',
+            record.equipment || '',
+            record.estimatedDuration ? `${record.estimatedDuration}分钟` : '',
+            record.actualDuration > 0 ? `${record.actualDuration}分钟` : '',
+            record.createTime ? new Date(record.createTime).toLocaleString('zh-CN') : '',
+            record.remarks || ''
+          ].join(','))
+        ].join('\n');
+
+        // 下载文件
+        const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `作业单_${new Date().toISOString().slice(0, 10)}.csv`;
+        link.click();
+
+        message.success(`成功导出 ${exportData.length} 条记录`);
+      } else {
+        message.error('导出失败：' + response.message);
+      }
+    } catch (error) {
+      console.error('导出失败:', error);
+      message.error('导出失败');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // 刷新处理
-  const handleRefresh = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      message.success('刷新成功');
-    }, 1000);
+  const handleRefresh = async () => {
+    await fetchData();
+    message.success('刷新成功');
   };
 
   // 分页处理
   const handleTableChange = (paginationConfig) => {
+    if (!paginationConfig) return;
+
     setPagination(prev => ({
       ...prev,
-      current: paginationConfig.current,
-      pageSize: paginationConfig.pageSize
+      current: paginationConfig.current || prev.current,
+      pageSize: paginationConfig.pageSize || prev.pageSize
     }));
   };
 
-  // 当前页数据
-  const currentPageData = useMemo(() => {
-    const startIndex = (pagination.current - 1) * pagination.pageSize;
-    const endIndex = startIndex + pagination.pageSize;
-    return filteredData.slice(startIndex, endIndex);
-  }, [filteredData, pagination]);
+  // 处理页码变化
+  const handlePageChange = (page, pageSize) => {
+    const newPagination = {
+      ...pagination,
+      current: page,
+      pageSize: pageSize || pagination.pageSize
+    };
+    setPagination(newPagination);
+
+    // 重新获取数据
+    fetchDataWithPagination(newPagination);
+  };
+
+  // 处理页大小变化
+  const handlePageSizeChange = (current, size) => {
+    const newPagination = {
+      ...pagination,
+      current: 1, // 改变页大小时重置到第一页
+      pageSize: size
+    };
+    setPagination(newPagination);
+
+    // 重新获取数据
+    fetchDataWithPagination(newPagination);
+  };
+
+  // 带分页参数获取数据
+  const fetchDataWithPagination = async (paginationParams = pagination) => {
+    setLoading(true);
+    try {
+      const response = await getWorkOrdersList({
+        page: paginationParams.current,
+        pageSize: paginationParams.pageSize,
+      });
+
+      if (response.code === 200) {
+        setAllData(response.data.list || []);
+        setFilteredData(response.data.list || []);
+        setPagination(prev => ({
+          ...prev,
+          total: response.data.total || 0,
+          current: response.data.page || paginationParams.current,
+          pageSize: response.data.pageSize || paginationParams.pageSize
+        }));
+      } else {
+        message.error(response.message || '获取数据失败');
+        setAllData([]);
+        setFilteredData([]);
+      }
+    } catch (error) {
+      console.error('获取作业单列表失败:', error);
+      message.error('获取数据失败');
+      setAllData([]);
+      setFilteredData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <OrderLayout>
@@ -467,10 +615,7 @@ const WorkOrder = () => {
               </Col>
               <Col span={6}>
                 <Form.Item label="所属商家" name="merchantName">
-                  <Select placeholder="搜索商家" showSearch style={{ width: '100%' }}>
-                    <Option value="清风便利店">清风便利店</Option>
-                    <Option value="星期八超市">星期八超市</Option>
-                  </Select>
+                  <Input placeholder="请输入商家名称" />
                 </Form.Item>
               </Col>
               <Col span={6}>
@@ -516,22 +661,34 @@ const WorkOrder = () => {
                   <RangePicker showTime style={{ width: '100%' }} />
                 </Form.Item>
               </Col>
-              <Col span={6}>
-                <Form.Item label=" " colon={false}>
-                  <Space>
-                    <Button 
-                      type="primary" 
+            </Row>
+            <Row>
+              <Col span={24}>
+                <Form.Item style={{ marginBottom: 0, textAlign: 'center' }}>
+                  <Space size="middle">
+                    <Button
+                      type="primary"
                       htmlType="submit"
                       icon={<SearchOutlined />}
                       loading={loading}
+                      size="large"
                     >
                       搜索
                     </Button>
-                    <Button 
+                    <Button
                       icon={<ReloadOutlined />}
                       onClick={handleReset}
+                      size="large"
                     >
                       重置
+                    </Button>
+                    <Button
+                      type="dashed"
+                      icon={<FileExcelOutlined />}
+                      onClick={handleExport}
+                      size="large"
+                    >
+                      导出Excel
                     </Button>
                   </Space>
                 </Form.Item>
@@ -555,6 +712,21 @@ const WorkOrder = () => {
               <Space>
                 <Button
                   type="primary"
+                  onClick={handleGenerateTestData}
+                  loading={loading}
+                >
+                  生成测试数据
+                </Button>
+                <Button
+                  type="default"
+                  danger
+                  onClick={handleClearTestData}
+                  loading={loading}
+                >
+                  清空数据
+                </Button>
+                <Button
+                  type="primary"
                   icon={<FileExcelOutlined />}
                   onClick={handleExport}
                 >
@@ -574,39 +746,25 @@ const WorkOrder = () => {
 
           <Table
             columns={columns}
-            dataSource={currentPageData}
+            dataSource={filteredData}
             rowKey="id"
-            pagination={false}
+            pagination={{
+              current: pagination.current,
+              pageSize: pagination.pageSize,
+              total: pagination.total,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total, range) =>
+                `第 ${range[0]}-${range[1]} 条/共 ${total} 条`,
+              pageSizeOptions: ['2', '5', '10', '20'],
+              onChange: handlePageChange,
+              onShowSizeChange: handlePageSizeChange
+            }}
             loading={loading}
             scroll={{ x: 1600 }}
             size="middle"
             className="data-table"
           />
-
-          {/* 分页 */}
-          <div className="pagination-container" style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginTop: '16px'
-          }}>
-            <div className="pagination-info">
-              <span>共 {pagination.total} 条</span>
-            </div>
-            <Pagination
-              current={pagination.current}
-              pageSize={pagination.pageSize}
-              total={pagination.total}
-              showSizeChanger
-              showQuickJumper
-              showTotal={(total, range) =>
-                `第 ${range[0]}-${range[1]} 条/共 ${total} 条`
-              }
-              onChange={handleTableChange}
-              pageSizeOptions={['10', '20', '50', '100']}
-              defaultPageSize={10}
-            />
-          </div>
         </Card>
 
         {/* 详情模态框 */}
@@ -682,9 +840,9 @@ const WorkOrder = () => {
                 </Col>
               </Row>
             </div>
-        )}
-      </Modal>
-    </div>
+          )}
+        </Modal>
+      </div>
     </OrderLayout>
   );
-};export default WorkOrder;
+}; export default WorkOrder;

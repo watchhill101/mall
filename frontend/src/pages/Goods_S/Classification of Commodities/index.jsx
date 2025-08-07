@@ -1,3 +1,4 @@
+// 修复导入问题
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Table,
@@ -43,7 +44,14 @@ const ClassificationOfCommodities = () => {
   const [isEdit, setIsEdit] = useState(false);
   const [currentId, setCurrentId] = useState('');
   const [categoryOptions, setCategoryOptions] = useState([]);
-  const [searchParams, setSearchParams] = useState({ name: '' });
+  // 扩展搜索参数
+  const [searchParams, setSearchParams] = useState({
+    name: '',
+    categoryLevel: '', // 分类级别
+    status: '', // 状态
+    businessType: '', // 业务类型
+    parentCategory: '', // 父级分类
+  });
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -58,52 +66,52 @@ const ClassificationOfCommodities = () => {
   const [productCategories, setproductCategories] = useState([]);
   const getlist = async () => {
     const { data, success } = await ProductApi.Product.getproductCategories();
-    console.log(success, data, 'response');
     setproductCategories(data);
   };
   useEffect(() => {
     getlist();
   }, []);
 
-  // 模拟API调用 - 获取分类列表
+  // 获取分类列表（使用真实API）
   const fetchCategoryList = async () => {
     setLoading(true);
     try {
-      // 实际项目中替换为真实API调用
-      // const response = await getCategoryList({
-      //   page: pagination.current,
-      //   pageSize: pagination.pageSize,
-      //   ...searchParams
-      // });
-
-      // 使用模拟数据
-      let filteredData = categoryData;
-      if (searchParams.name) {
-        filteredData = filteredData.filter((item) =>
-          item.name.includes(searchParams.name)
-        );
-      }
-
-      setList(filteredData);
-      setPagination({ ...pagination, total: filteredData.length });
-
-      // 计算统计数据
-      const level1Count = filteredData.filter(
-        (item) => item.level === 1
-      ).length;
-      const level2Count = filteredData.filter(
-        (item) => item.level === 2
-      ).length;
-      const enabledCount = filteredData.filter(
-        (item) => item.status === 1
-      ).length;
-
-      setStatistics({
-        total: filteredData.length,
-        level1: level1Count,
-        level2: level2Count,
-        enabled: enabledCount,
+      // 使用真实API调用，传递所有搜索参数
+      const response = await ProductApi.Product.searchProductCategories({
+        page: pagination.current,
+        pageSize: pagination.pageSize,
+        ...searchParams,
       });
+
+      if (response.success) {
+        const filteredData = response.data || [];
+        setList(filteredData);
+        setproductCategories(filteredData); // 同步更新 productCategories 状态
+        setPagination({
+          ...pagination,
+          total: response.total || filteredData.length,
+        });
+
+        // 计算统计数据
+        const level1Count = filteredData.filter(
+          (item) => item.categoryLevel === 1
+        ).length;
+        const level2Count = filteredData.filter(
+          (item) => item.categoryLevel === 2
+        ).length;
+        const enabledCount = filteredData.filter(
+          (item) => item.status === 'active'
+        ).length;
+
+        setStatistics({
+          total: filteredData.length,
+          level1: level1Count,
+          level2: level2Count,
+          enabled: enabledCount,
+        });
+      } else {
+        message.error('获取分类列表失败');
+      }
     } catch (error) {
       message.error('获取分类列表失败');
       console.error('Failed to fetch category list:', error);
@@ -143,17 +151,60 @@ const ClassificationOfCommodities = () => {
   // 编辑分类
   const handleEdit = (record) => {
     setIsEdit(true);
-    setCurrentId(record.id);
+    setCurrentId(record.categoryId);
     form.setFieldsValue({
-      name: record.name,
-      parentId: record.parentId || '0',
-      status: record.status,
+      name: record.categoryName,
+      parentId: record.parentCategory?.categoryId || '0',
+      status: record.status === 'active' ? 1 : 0,
+      // 如有其他字段也需要设置
     });
     setVisible(true);
   };
 
+  // 提交表单
+  const handleSubmit = async () => {
+    try {
+      const values = await form.validateFields();
+      const data = {
+        categoryId: isEdit ? currentId : undefined,
+        categoryName: values.name,
+        parentCategory: values.parentId === '0' ? null : values.parentId,
+        status: values.status === 1 ? 'active' : 'inactive',
+        // 如有其他字段也需要添加
+      };
+
+      setLoading(true);
+      if (isEdit) {
+        // 编辑分类
+        const response = await ProductApi.Product.updateProductCategory(data);
+        if (response.success) {
+          message.success('编辑成功');
+          fetchCategoryList(); // 重新获取列表
+          setVisible(false);
+        } else {
+          message.error(response.message || '编辑失败');
+        }
+      } else {
+        // 新增分类
+        const response = await ProductApi.Product.addProductCategory(data);
+        if (response.success) {
+          message.success('新增成功');
+          fetchCategoryList(); // 重新获取列表
+          setVisible(false);
+        } else {
+          message.error(response.message || '新增失败');
+        }
+      }
+    } catch (error) {
+      console.error('Form submission failed:', error);
+      message.error('操作失败，请重试');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // 删除分类
-  const handleDelete = (id) => {
+  const handleDelete = (categoryId) => {
     Modal.confirm({
       title: '确认删除',
       content: '确定要删除该分类吗？删除后不可恢复。',
@@ -162,65 +213,25 @@ const ClassificationOfCommodities = () => {
       cancelText: '取消',
       onOk: async () => {
         try {
-          // 实际项目中替换为真实API调用
-          // await deleteCategory(id);
-
-          // 模拟删除
-          setList(list.filter((item) => item.id !== id));
-          message.success('删除成功');
-          fetchCategoryList(); // 重新获取列表
+          setLoading(true);
+          // 调用真实删除API
+          const response = await ProductApi.Product.deleteProductCategory(
+            categoryId
+          );
+          if (response.success) {
+            message.success('删除成功');
+            fetchCategoryList(); // 重新获取列表
+          } else {
+            message.error(response.message || '删除失败');
+          }
         } catch (error) {
           message.error('删除失败');
           console.error('Failed to delete category:', error);
+        } finally {
+          setLoading(false);
         }
       },
     });
-  };
-
-  // 提交表单
-  const handleSubmit = async () => {
-    try {
-      const values = await form.validateFields();
-      const data = {
-        name: values.name,
-        parentId: values.parentId === '0' ? null : values.parentId,
-        status: values.status,
-      };
-
-      if (isEdit) {
-        // 编辑分类
-        // 实际项目中替换为真实API调用
-        // await updateCategory(currentId, data);
-
-        // 模拟更新
-        const updatedList = list.map((item) =>
-          item.id === currentId ? { ...item, ...data } : item
-        );
-        setList(updatedList);
-        message.success('编辑成功');
-      } else {
-        // 新增分类
-        // 实际项目中替换为真实API调用
-        // await addCategory(data);
-
-        // 模拟新增
-        const newCategory = {
-          id: Date.now().toString(),
-          ...data,
-          level: data.parentId ? 2 : 1,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        setList([...list, newCategory]);
-        message.success('新增成功');
-      }
-
-      setVisible(false);
-      fetchCategoryList(); // 重新获取列表
-    } catch (error) {
-      // 表单验证失败或API调用失败
-      console.error('Form submission failed:', error);
-    }
   };
 
   // 搜索分类
@@ -231,10 +242,26 @@ const ClassificationOfCommodities = () => {
 
   // 重置搜索
   const handleReset = () => {
-    setSearchParams({ name: '' });
+    setSearchParams({
+      name: '',
+      categoryLevel: '',
+      status: '',
+      businessType: '',
+      parentCategory: '',
+    });
     setPagination({ ...pagination, current: 1 });
     fetchCategoryList();
   };
+
+  // 监听搜索参数变化
+  useEffect(() => {
+    // 当搜索参数变化时，重新获取列表
+    const timer = setTimeout(() => {
+      fetchCategoryList();
+    }, 500); // 防抖处理
+
+    return () => clearTimeout(timer);
+  }, [searchParams, pagination.current, pagination.pageSize]);
 
   // 分页变化
   const handlePaginationChange = (current, pageSize) => {
@@ -436,44 +463,100 @@ const ClassificationOfCommodities = () => {
             </Col>
           </Row>
 
-          {/* 搜索区域 */}
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              marginBottom: 16,
-            }}
-          >
-            <div style={{ display: 'flex', gap: 10 }}>
-              <Input
-                placeholder="分类名称"
-                value={searchParams.name}
-                onChange={(e) =>
-                  setSearchParams({ ...searchParams, name: e.target.value })
-                }
-                style={{ width: 200 }}
-                allowClear
-              />
-              <Button
-                type="primary"
-                icon={<SearchOutlined />}
-                onClick={handleSearch}
-              >
-                搜索
-              </Button>
-              <Button onClick={handleReset}>重置</Button>
-            </div>
+          {/* 搜索区域 - 优化UI */}
+          <Card bordered={true} style={{ marginBottom: 16, padding: 16 }}>
+            <Row gutter={[16, 16]}>
+              <Col xs={24} sm={12} md={8} lg={6}>
+                <Input
+                  placeholder="分类名称"
+                  value={searchParams.name}
+                  onChange={(e) =>
+                    setSearchParams({ ...searchParams, name: e.target.value })
+                  }
+                  allowClear
+                />
+              </Col>
+              <Col xs={24} sm={12} md={8} lg={6}>
+                <Select
+                  placeholder="分类级别"
+                  value={searchParams.categoryLevel}
+                  onChange={(value) =>
+                    setSearchParams({ ...searchParams, categoryLevel: value })
+                  }
+                  allowClear
+                >
+                  <Option value="1">一级分类</Option>
+                  <Option value="2">二级分类</Option>
+                </Select>
+              </Col>
+              <Col xs={24} sm={12} md={8} lg={6}>
+                <Select
+                  placeholder="状态"
+                  value={searchParams.status}
+                  onChange={(value) =>
+                    setSearchParams({ ...searchParams, status: value })
+                  }
+                  allowClear
+                >
+                  <Option value="active">启用</Option>
+                  <Option value="inactive">禁用</Option>
+                </Select>
+              </Col>
+              <Col xs={24} sm={12} md={8} lg={6}>
+                <Select
+                  placeholder="业务类型"
+                  value={searchParams.businessType}
+                  onChange={(value) =>
+                    setSearchParams({ ...searchParams, businessType: value })
+                  }
+                  allowClear
+                >
+                  <Option value="retail">零售</Option>
+                  <Option value="wholesale">批发</Option>
+                  <Option value="manufacturer">生产</Option>
+                  <Option value="distribution">分销</Option>
+                </Select>
+              </Col>
+              <Col xs={24} sm={12} md={8} lg={6}>
+                <Select
+                  placeholder="父级分类"
+                  value={searchParams.parentCategory}
+                  onChange={(value) =>
+                    setSearchParams({ ...searchParams, parentCategory: value })
+                  }
+                  allowClear
+                >
+                  {categoryOptions.map((option) => (
+                    <Option key={option.value} value={option.value}>
+                      {option.label}
+                    </Option>
+                  ))}
+                </Select>
+              </Col>
+              <Col xs={24} sm={12} md={16} lg={18}></Col>
+              <Col xs={24} sm={12} md={8} lg={6}>
+                <Space size="middle">
+                  <Button
+                    type="primary"
+                    icon={<SearchOutlined />}
+                    onClick={handleSearch}
+                    style={{ width: '40%' }}
+                  >
+                    搜索
+                  </Button>
+                  <Button onClick={handleReset} style={{ width: '40%' }}>
+                    重置
+                  </Button>
+                </Space>
+              </Col>
+            </Row>
+          </Card>
 
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-              新增分类
-            </Button>
-          </div>
-
-          {/* 分类表格 */}
+          {/* 分类表格 - 修复rowKey并完整闭合标签 */}
           <Table
             columns={columns}
             dataSource={productCategories}
-            rowKey="id"
+            rowKey="categoryId"
             loading={loading}
             pagination={{
               ...pagination,

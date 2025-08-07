@@ -47,12 +47,12 @@ const ListOfCommodities = () => {
   const [recycleForm] = Form.useForm(); // 添加这行代码声明表单引用
 
   const getGoodsList = async () => {
-    const { success, data } = await ProductApi.Product.getList();
-    if (success) {
-      // 过滤掉已删除的商品
-      // const filteredData = data.filter((item) => item.status !== 'deleted');
-      setlist(data);
-    }
+    console.log('开始获取商品列表');
+    const { success, data, message } = await ProductApi.Product.getList();
+    console.log('API返回结果:', { success, data, message });
+    // 过滤掉已删除的商品
+    const filteredData = data.filter((item) => item.status !== 'deleted');
+    setlist(filteredData);
   };
   useEffect(() => {
     // 初始加载商品列表
@@ -107,12 +107,17 @@ const ListOfCommodities = () => {
           record?.productInfo?.images[0]?.replace(/[`\s]/g, '') || '';
         return (
           <div style={{ display: 'flex', alignItems: 'center' }}>
-            {/* {JSON.stringify(record)} */}
-
+            {/* {imageUrl && ( */}
             <>
-              <img src={imageUrl} alt="" style={{ width: 60, height: 60 }} />
+              {/* {JSON.stringify(record.productInfo.images[0])} */}
+              <img
+                src={record.productInfo.images[0]}
+                alt=""
+                style={{ width: 60, height: 60 }}
+              />
               <span>{record.productName}</span>
             </>
+            {/* )} */}
           </div>
         );
       },

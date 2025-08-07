@@ -22,7 +22,6 @@ const merchantSchema = new mongoose.Schema(
     }, //负责人ID
     
     role: { type: mongoose.Schema.Types.ObjectId, ref: "role", required: true }, //商家角色
-    
     serviceCharge: {
       type: Number, //服务费率
       required: true,

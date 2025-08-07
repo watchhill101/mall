@@ -36,12 +36,12 @@ const StockDetails = lazy(() => import('@/pages/Goods_S/inventory/DetailsOfStock
 // 订单相关页面
 const OrdersList = lazy(() => import('@/pages/order_S/ordersList'))
 const AfterSales = lazy(() => import('@/pages/order_S/afterSales'))
-const TallySheet = lazy(() => import('@/pages/order_S/tallySheet'))
-const SortingList = lazy(() => import('@/pages/order_S/sortingList'))
 // 系统设置相关页面
 const Lbt = lazy(() => import('@/pages/Home_X/lbt')) // 轮播图组件
 const Users = lazy(() => import('@/pages/Users'))
 const UserRoot = lazy(() => import('@/pages/UserRoot')) // 用户权限组件
+const TallySheet = lazy(() => import('@/pages/order_S/tallyOrders'))
+const SortingList = lazy(() => import('@/pages/order_S/sortingOrders'))
 const PaymentRecord = lazy(() => import('@/pages/order_S/paymentRecord'))
 const AllocationOrder = lazy(() => import('@/pages/order_S/allocationOrder'))
 const WorkOrder = lazy(() => import('@/pages/order_S/workOrder'))

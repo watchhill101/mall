@@ -1,4 +1,4 @@
-import request from '@/utils/request'
+import request from '../../utils/request'
 
 const apiMap = {
     // 商品数据
@@ -11,12 +11,15 @@ const apiMap = {
         addProductAudit: addProductAudit,
         restoreProductFromRecycleBin: restoreProductFromRecycleBin,
         updateAuditStatus: updateAuditStatus,
-        updateProductInfo: updateProductInfo,  // 确保此条目存在
+        updateProductInfo: updateProductInfo,
         createProduct: createProduct,
         deleteProductFromRecycleBin: deleteProductFromRecycleBin,
         searchProducts: searchProducts,
         getproductCategories: getproductCategories,
         addProductCategory: addProductCategory,
+        updateProductCategory: updateProductCategory,
+        deleteProductCategory: deleteProductCategory,
+        searchProductCategories: searchProductCategories // 添加搜索分类方法
     }
 }
 
@@ -129,13 +132,40 @@ function getproductCategories() {
         url: '/qiao/productCategories',
         method: 'GET'
     });
-
 }
+
 // 添加商品分类
 function addProductCategory(category) {
     return request({
-        url: '/qiao/productCategories',
+        url: '/qiao/addproductCategories',
         method: 'POST',
         data: category
+    });
+}
+
+// 编辑商品分类
+function updateProductCategory(categoryData) {
+    const { categoryId, ...data } = categoryData;
+    return request({
+        url: `/qiao/updateProductCategory/${categoryId}`,
+        method: 'PUT',
+        data
+    });
+}
+
+// 删除商品分类
+function deleteProductCategory(categoryId) {
+    return request({
+        url: `/qiao/deleteProductCategory/${categoryId}`,
+        method: 'DELETE'
+    });
+}
+
+// 搜索商品分类
+function searchProductCategories(params) {
+    return request({
+        url: '/qiao/productCategories',
+        method: 'GET',
+        params
     });
 }

@@ -7,6 +7,9 @@ const instance = Axios.create({
   baseURL: AUTH_CONFIG.API_BASE_URL,
   timeout: AUTH_CONFIG.REQUEST_TIMEOUT
 })
+console.log(process.env.NODE_ENV,'获取环境变量')
+// 不需要token的接口白名单
+// const whiteList = ['/auth/login', '/auth/refresh', '/captcha/generate', '/captcha/verify', '/captcha/refresh', '/qiao/products']
 
 console.log(process.env.NODE_ENV, '获取环境变量')
 // 添加请求拦截器

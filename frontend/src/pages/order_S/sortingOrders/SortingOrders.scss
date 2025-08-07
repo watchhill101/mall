@@ -1,0 +1,170 @@
+.sorting-orders {
+  .ant-card-head-title {
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  .stats-card {
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .ant-card-body {
+      padding: 20px;
+    }
+
+    .stats-content {
+      text-align: center;
+
+      .stats-value {
+        font-size: 28px;
+        font-weight: 700;
+        line-height: 1;
+        margin-bottom: 8px;
+      }
+
+      .stats-label {
+        font-size: 14px;
+        color: #666;
+        font-weight: 500;
+      }
+    }
+  }
+
+  .action-buttons {
+    .ant-btn {
+      border-radius: 6px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      }
+
+      &.ant-btn-primary {
+        background: linear-gradient(45deg, #1890ff, #36cfc9);
+        border: none;
+
+        &:hover {
+          background: linear-gradient(45deg, #40a9ff, #5cdbd3);
+        }
+      }
+
+      &.ant-btn-danger {
+        background: linear-gradient(45deg, #ff4d4f, #ff7875);
+        border: none;
+
+        &:hover {
+          background: linear-gradient(45deg, #ff7875, #ffa39e);
+        }
+      }
+    }
+  }
+
+  .ant-table {
+    .ant-table-thead>tr>th {
+      background: linear-gradient(90deg, #fafafa, #f0f2f5);
+      font-weight: 600;
+    }
+
+    .ant-table-tbody>tr:hover>td {
+      background-color: #e6f7ff !important;
+    }
+  }
+
+  .detail-modal {
+    .ant-descriptions-item-label {
+      font-weight: 600;
+      color: #434343;
+    }
+
+    .ant-descriptions-item-content {
+      color: #666;
+    }
+  }
+
+  .form-modal {
+    .ant-form-item-label>label {
+      font-weight: 600;
+    }
+
+    .ant-input,
+    .ant-select,
+    .ant-picker,
+    .ant-input-number {
+      border-radius: 6px;
+    }
+  }
+
+  .progress-indicator {
+    .ant-progress-success-bg {
+      background: linear-gradient(90deg, #52c41a, #73d13d);
+    }
+
+    .ant-progress-bg {
+      background: linear-gradient(90deg, #1890ff, #36cfc9);
+    }
+  }
+
+  .fade-in-up {
+    animation: fadeInUp 0.3s ease-out;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  // 响应式设计
+  @media (max-width: 768px) {
+    .action-buttons {
+      .ant-space {
+        flex-wrap: wrap;
+      }
+    }
+
+    .ant-table {
+      .ant-table-content {
+        overflow-x: auto;
+      }
+    }
+
+    .detail-modal {
+      .ant-modal {
+        margin: 16px;
+        max-width: calc(100vw - 32px);
+      }
+    }
+  }
+
+  // 打印样式
+  @media print {
+
+    .action-buttons,
+    .ant-pagination {
+      display: none !important;
+    }
+
+    .ant-table {
+
+      .ant-table-thead>tr>th,
+      .ant-table-tbody>tr>td {
+        border: 1px solid #000 !important;
+        padding: 8px !important;
+      }
+    }
+  }
+}
