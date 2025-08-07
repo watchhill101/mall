@@ -38,6 +38,8 @@ import {
   createSortingOrder
 } from '../../../api/sortingOrders';
 import OrderLayout from '../Order_layout/Order_layout';
+import ProductSelector from '../../../components/ProductSelector/ProductSelector';
+import { generateSortingOrderId } from '../../../utils/orderUtils';
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
@@ -409,6 +411,10 @@ const SortingOrders = () => {
   const handleCreate = () => {
     setCreateVisible(true);
     createForm.resetFields();
+    // 自动生成分拣单号
+    createForm.setFieldsValue({
+      sortingOrderId: generateSortingOrderId()
+    });
   };
 
   // 提交新建分拣单
@@ -416,6 +422,15 @@ const SortingOrders = () => {
     try {
       const values = await createForm.validateFields();
       setCreateLoading(true);
+      
+      // 处理商品数据，移除临时的key字段
+      const processedProducts = (values.products || []).map(product => {
+        const { key, ...productData } = product;
+        return {
+          ...productData,
+          product: null, // 暂时设为null，实际项目中应该是商品ObjectId
+        };
+      });
       
       const createData = {
         ...values,
@@ -425,9 +440,18 @@ const SortingOrders = () => {
           assignee: values.assignee
         },
         pickingRoute: {
-          routePlan: values.routePlan
+          routePlan: values.routePlan,
+          estimatedTime: Math.ceil(processedProducts.length * 5) // 简单估算：每个商品5分钟
         },
-        products: values.products || []
+        products: processedProducts,
+        // 计算汇总信息
+        summary: {
+          totalItems: processedProducts.length,
+          totalRequiredQuantity: processedProducts.reduce((sum, p) => sum + (p.requiredQuantity || 0), 0),
+          totalPickedQuantity: processedProducts.reduce((sum, p) => sum + (p.pickedQuantity || 0), 0),
+          completionRate: 0,
+          accuracy: 0
+        }
       };
       
       const response = await createSortingOrder(createData);
@@ -1111,19 +1135,23 @@ const SortingOrders = () => {
           </Form.Item>
 
           <Form.Item
+            name="products"
             label="商品清单"
             tooltip="分拣单需要关联具体的商品信息"
+            rules={[{ 
+              validator: (_, value) => {
+                if (!value || value.length === 0) {
+                  return Promise.reject(new Error('请至少添加一个商品'));
+                }
+                return Promise.resolve();
+              }
+            }]}
           >
-            <div style={{ 
-              padding: '20px',
-              background: '#f5f5f5',
-              borderRadius: '6px',
-              textAlign: 'center',
-              color: '#666'
-            }}>
-              <p>商品清单功能开发中...</p>
-              <p>目前可以创建基础分拣单，商品信息可在创建后添加</p>
-            </div>
+            <ProductSelector 
+              type="sorting" 
+              value={createForm.getFieldValue('products')}
+              onChange={(products) => createForm.setFieldsValue({ products })}
+            />
           </Form.Item>
         </Form>
       </Modal>

@@ -38,6 +38,8 @@ import {
   createTallyOrder
 } from '../../../api/tallyOrders';
 import OrderLayout from '../Order_layout/Order_layout';
+import ProductSelector from '../../../components/ProductSelector/ProductSelector';
+import { generateTallyOrderId } from '../../../utils/orderUtils';
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
@@ -132,6 +134,10 @@ const TallyOrders = () => {
   const handleCreate = () => {
     setCreateVisible(true);
     createForm.resetFields();
+    // 自动生成理货单号
+    createForm.setFieldsValue({
+      tallyOrderId: generateTallyOrderId()
+    });
   };
 
   // 提交新建理货单
@@ -140,6 +146,15 @@ const TallyOrders = () => {
       const values = await createForm.validateFields();
       setCreateLoading(true);
       
+      // 处理商品数据，移除临时的key字段
+      const processedProducts = (values.products || []).map(product => {
+        const { key, ...productData } = product;
+        return {
+          ...productData,
+          product: null, // 暂时设为null，实际项目中应该是商品ObjectId
+        };
+      });
+      
       const createData = {
         ...values,
         operationInfo: {
@@ -147,7 +162,16 @@ const TallyOrders = () => {
           planEndTime: values.planEndTime,
           assignee: values.assignee
         },
-        products: values.products || []
+        products: processedProducts,
+        // 计算汇总信息
+        summary: {
+          totalPlannedItems: processedProducts.length,
+          totalActualItems: processedProducts.filter(p => p.actualQuantity > 0).length,
+          totalPlannedQuantity: processedProducts.reduce((sum, p) => sum + (p.plannedQuantity || 0), 0),
+          totalActualQuantity: processedProducts.reduce((sum, p) => sum + (p.actualQuantity || 0), 0),
+          differenceQuantity: processedProducts.reduce((sum, p) => sum + (p.actualQuantity || 0), 0) - 
+                              processedProducts.reduce((sum, p) => sum + (p.plannedQuantity || 0), 0)
+        }
       };
       
       const response = await createTallyOrder(createData);
@@ -951,19 +975,23 @@ const TallyOrders = () => {
           </Form.Item>
 
           <Form.Item
+            name="products"
             label="商品清单"
             tooltip="理货单需要关联具体的商品信息"
+            rules={[{ 
+              validator: (_, value) => {
+                if (!value || value.length === 0) {
+                  return Promise.reject(new Error('请至少添加一个商品'));
+                }
+                return Promise.resolve();
+              }
+            }]}
           >
-            <div style={{ 
-              padding: '20px',
-              background: '#f5f5f5',
-              borderRadius: '6px',
-              textAlign: 'center',
-              color: '#666'
-            }}>
-              <p>商品清单功能开发中...</p>
-              <p>目前可以创建基础理货单，商品信息可在创建后添加</p>
-            </div>
+            <ProductSelector 
+              type="tally" 
+              value={createForm.getFieldValue('products')}
+              onChange={(products) => createForm.setFieldsValue({ products })}
+            />
           </Form.Item>
         </Form>
       </Modal>
