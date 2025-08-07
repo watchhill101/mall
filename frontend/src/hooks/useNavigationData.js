@@ -146,7 +146,7 @@ export const useNavigationData = () => {
 /**
  * 将导航数据转换为Antd Menu需要的格式
  */
-export const convertToMenuItems = (navigationData, getItem, Link) => {
+export const convertToMenuItems = (navigationData, getItem, Link, SvgIcon) => {
   // 图标组件映射
   const iconMap = {
     'HomeOutlined': <HomeOutlined />,
@@ -165,7 +165,7 @@ export const convertToMenuItems = (navigationData, getItem, Link) => {
         getItem(
           <Link to={child.url}>{child.name}</Link>,
           child.url,
-          <AppstoreOutlined style={{ fontSize: '14px' }} />
+          null // 移除子菜单图标
         )
       );
 

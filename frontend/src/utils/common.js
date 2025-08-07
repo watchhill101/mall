@@ -119,7 +119,7 @@ export const getTreeMenu = (menuData) => {
             getItem(
               <Link to={item.menuPath}>{item.title}</Link>,
               item.menuPath,
-              IconMap[item.icon] || <SvgIcon name={item.icon ?? 'component'} width="14" height="14" color="#ccc" />
+              null // 移除子菜单图标
             )
           )
         }

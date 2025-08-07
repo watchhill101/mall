@@ -8,7 +8,6 @@ const secondaryNavigationSchema = new mongoose.Schema({
   firstLevelNavigationID: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "FirstLevelNavigation",
-    icon: { type: String, required: true }, // 图标
     required: true,
   }, // 一级导航ID
 });
