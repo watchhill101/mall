@@ -13,16 +13,16 @@ router.get('/products', async (req, res) => {
   try {
     const { page = 1, limit = 10, status } = req.query;
     const query = status ? { status } : {};
-    
+
     const products = await Product.find(query)
       .populate('productCategory', 'categoryName')
       .populate('merchant', 'name')
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
-    
+
     const total = await Product.countDocuments(query);
-    
+
     res.json({
       code: 200,
       message: '获取商品列表成功',
@@ -48,16 +48,15 @@ router.get('/merchants', async (req, res) => {
   try {
     const { page = 1, limit = 10, status } = req.query;
     const query = status ? { status } : {};
-    
+
     const merchants = await Merchant.find(query)
-      .populate('personInCharge', 'name phone')
-      .populate('role', 'name')
+      .populate('personInCharge', 'name phone email')
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
-    
+
     const total = await Merchant.countDocuments(query);
-    
+
     res.json({
       code: 200,
       message: '获取商家列表成功',
@@ -83,16 +82,16 @@ router.get('/orders', async (req, res) => {
   try {
     const { page = 1, limit = 10, status } = req.query;
     const query = status ? { orderStatus: status } : {};
-    
+
     const orders = await Order.find(query)
       .populate('merchant', 'name')
       .populate('products.product', 'productName')
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
-    
+
     const total = await Order.countDocuments(query);
-    
+
     res.json({
       code: 200,
       message: '获取订单列表成功',
@@ -118,16 +117,16 @@ router.get('/after-sales', async (req, res) => {
   try {
     const { page = 1, limit = 10, status } = req.query;
     const query = status ? { status } : {};
-    
+
     const afterSales = await AfterSales.find(query)
       .populate('order', 'orderId')
       .populate('merchant', 'name')
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
-    
+
     const total = await AfterSales.countDocuments(query);
-    
+
     res.json({
       code: 200,
       message: '获取售后列表成功',
@@ -154,7 +153,7 @@ router.get('/categories', async (req, res) => {
     const categories = await ProductCategory.find({})
       .populate('createBy', 'name')
       .sort({ sortOrder: 1 });
-    
+
     res.json({
       code: 200,
       message: '获取商品分类成功',
@@ -191,7 +190,7 @@ router.get('/statistics', async (req, res) => {
       Merchant.countDocuments({ status: 'active' }),
       Order.countDocuments({ orderStatus: 'pending' })
     ]);
-    
+
     res.json({
       code: 200,
       message: '获取统计数据成功',

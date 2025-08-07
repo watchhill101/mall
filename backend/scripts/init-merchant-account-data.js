@@ -143,7 +143,6 @@ async function initMerchantAccountData() {
     for (const account of createdAccounts) {
       const populatedAccount = await MerchantAccount.findById(account._id)
         .populate('merchant', 'name')
-        .populate('role', 'name')
         .populate('personInCharge', 'name')
         .select('-password');
 

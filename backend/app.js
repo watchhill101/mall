@@ -22,6 +22,8 @@ var navigationRouter = require("./routes/navigation");
 var businessRouter = require("./routes/business");
 var userManagementRouter = require("./routes/userManagement");
 var permissionsRouter = require("./routes/permissions");
+var roleRouter = require("./routes/role");
+var personRouter = require("./routes/person");
 
 // 导入数据库模型（确保数据库连接和模型初始化）
 require("./moudle/index");
@@ -73,6 +75,9 @@ app.use("/", indexRouter);
 app.use("/auth", authRouter);  // 登录、注册等认证相关
 app.use("/captcha", captchaRouter);  // 验证码
 app.use("/qiao", ProductsRouter)
+app.use("/api/role", roleRouter);
+app.use("/api/person", personRouter);
+// app.use("/system", ); // 注释掉未完成的路由
 
 
 // 需要token验证的路由

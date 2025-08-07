@@ -44,10 +44,6 @@ const MerchantAccount = () => {
   const [modalForm] = Form.useForm()
   const [loading, setLoading] = useState(false)
   const [accountData, setAccountData] = useState([])
-  const [searchText, setSearchText] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
-  const [contactPhoneFilter, setContactPhoneFilter] = useState('')
-  const [merchantFilter, setMerchantFilter] = useState('')
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 2,
@@ -66,20 +62,33 @@ const MerchantAccount = () => {
   const [personOptions, setPersonOptions] = useState([])
   const [forceUpdate, setForceUpdate] = useState(0) // 用于确保状态更新后正确渲染
 
-  // 加载商户账号数据
-  const loadAccountData = useCallback(async () => {
+  // 加载商户账号数据 - 优化后的版本
+  const loadAccountData = useCallback(async (params = {}) => {
     try {
       setLoading(true);
-      const params = {
-        page: pagination.current,
-        pageSize: pagination.pageSize,
-        merchantId: searchText,
-        contactPhone: contactPhoneFilter,
-        merchant: merchantFilter,
-        status: statusFilter
+
+      // 构建查询参数
+      const queryParams = {
+        page: params.page || pagination.current,
+        pageSize: params.pageSize || pagination.pageSize
       };
 
-      const response = await merchantAccountAPI.getMerchantAccountList(params);
+      // 添加搜索条件（只添加非空值）
+      if (params.merchantId && params.merchantId.trim()) {
+        queryParams.merchantId = params.merchantId.trim(); // 登录账号搜索
+      }
+      if (params.contactPhone && params.contactPhone.trim()) {
+        queryParams.contactPhone = params.contactPhone.trim();
+      }
+      if (params.merchant && params.merchant.trim()) {
+        queryParams.merchant = params.merchant.trim(); // 商户名称搜索
+      }
+      if (params.status) {
+        queryParams.status = params.status;
+      }
+
+      console.log('🔍 发送账号列表查询请求:', queryParams);
+      const response = await merchantAccountAPI.getMerchantAccountList(queryParams);
 
       if (response.code === 200) {
         const accounts = response.data.list.map(item => ({
@@ -97,12 +106,15 @@ const MerchantAccount = () => {
         setAccountData(accounts);
         setPagination(prev => ({
           ...prev,
+          current: queryParams.page,
+          pageSize: queryParams.pageSize,
           total: response.data.pagination.total
         }));
         setForceUpdate(prev => prev + 1); // 强制重新渲染
+        console.log('✅ 获取商户账号列表成功，共', accounts.length, '条记录');
       }
     } catch (error) {
-      console.error('获取商户账号列表失败:', error);
+      console.error('❌ 获取商户账号列表失败:', error);
 
       let errorMessage = '获取商户账号列表失败';
       if (error.response) {
@@ -119,74 +131,150 @@ const MerchantAccount = () => {
       }
 
       message.error(errorMessage);
+      setAccountData([]);
     } finally {
       setLoading(false);
     }
-  }, [pagination.current, pagination.pageSize, searchText, contactPhoneFilter, merchantFilter, statusFilter]);
+  }, []); // 移除依赖项，通过参数传递
 
   // 加载选项数据
   const loadOptions = useCallback(async () => {
     try {
-      // 加载商户选项
-      const merchantResponse = await merchantAPI.getMerchantList({ pageSize: 100 });
+      console.log('🔄 开始加载选项数据...');
+
+      // 并行加载商户、负责人选项
+      const [merchantResponse, personResponse] = await Promise.all([
+        merchantAPI.getMerchantList({ pageSize: 100 }),
+        fetch('/api/person/list').then(res => res.json())
+      ]);
+
+      // 设置商户选项
       if (merchantResponse.code === 200) {
-        setMerchantOptions(merchantResponse.data.list.map(item => ({
+        const merchants = merchantResponse.data.list.map(item => ({
           value: item._id,
           label: item.name
-        })));
+        }));
+        setMerchantOptions(merchants);
+        console.log('✅ 商户选项加载成功:', merchants.length, '个');
       }
+
+      // 设置角色选项（使用预定义角色）
+      setRoleOptions([
+        { value: '超级管理员', label: '超级管理员' },
+        { value: '部门经理', label: '部门经理' },
+        { value: '操作员', label: '操作员' },
+        { value: '财务专员', label: '财务专员' }
+      ]);
+      console.log('✅ 角色选项设置成功');
+
+      // 设置负责人选项
+      if (personResponse.code === 200) {
+        const persons = personResponse.data.map(item => ({
+          value: item._id,
+          label: `${item.name} (${item.position})`
+        }));
+        setPersonOptions(persons);
+        console.log('✅ 负责人选项加载成功:', persons.length, '个');
+      }
+
     } catch (error) {
-      console.error('加载选项数据失败:', error);
+      console.error('❌ 加载选项数据失败:', error);
+
+      // 设置一些默认的测试数据以便调试
+      console.log('🔧 设置测试数据...');
+      setRoleOptions([
+        { value: '超级管理员', label: '超级管理员' },
+        { value: '部门经理', label: '部门经理' },
+        { value: '操作员', label: '操作员' },
+        { value: '财务专员', label: '财务专员' }
+      ]);
+
+      setPersonOptions([
+        { value: '507f1f77bcf86cd799439011', label: '张三 (超级管理员)' },
+        { value: '507f1f77bcf86cd799439015', label: '李四 (部门经理)' },
+        { value: '507f1f77bcf86cd799439016', label: '王五 (操作员)' }
+      ]);
+
+      message.warning('部分选项数据加载失败，已设置默认数据');
     }
   }, []);
 
+  // 存储当前搜索参数的状态
+  const [currentSearchParams, setCurrentSearchParams] = useState({});
+
   // 初始化加载数据
   useEffect(() => {
-    loadAccountData();
+    loadAccountData({ page: 1, pageSize: 10 });
   }, [loadAccountData]);
 
   useEffect(() => {
     loadOptions();
   }, [loadOptions]);
 
-  // 搜索和筛选变化时重新加载数据（使用防抖）
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (pagination.current === 1) {
-        loadAccountData();
-      } else {
-        setPagination(prev => ({ ...prev, current: 1 }));
-      }
-    }, 500);
+  // 搜索处理 - 优化后的版本
+  const handleSearch = async (values) => {
+    try {
+      console.log('🔍 执行搜索，条件:', values);
 
-    return () => clearTimeout(timer);
-  }, [searchText, contactPhoneFilter, merchantFilter, statusFilter]);
+      // 过滤空值参数
+      const filteredValues = Object.keys(values).reduce((acc, key) => {
+        if (values[key] !== undefined && values[key] !== null && values[key] !== '') {
+          acc[key] = values[key];
+        }
+        return acc;
+      }, {});
 
-  // 搜索处理
-  const handleSearch = (values) => {
-    console.log('搜索条件:', values);
-    setSearchText(values.merchantId || '');
-    setContactPhoneFilter(values.contactPhone || '');
-    setMerchantFilter(values.merchant || '');
-    setStatusFilter(values.status || '');
+      console.log('🔍 过滤后的搜索条件:', filteredValues);
+
+      // 保存搜索参数
+      setCurrentSearchParams(filteredValues);
+
+      // 重置到第一页并执行搜索
+      const searchParams = {
+        page: 1,
+        pageSize: pagination.pageSize,
+        ...filteredValues
+      };
+
+      await loadAccountData(searchParams);
+      message.success('搜索完成');
+    } catch (error) {
+      message.error('搜索失败: ' + error.message);
+    }
   };
 
-  // 重置处理
-  const handleReset = () => {
-    form.resetFields();
-    setSearchText('');
-    setContactPhoneFilter('');
-    setMerchantFilter('');
-    setStatusFilter('');
+  // 重置处理 - 优化后的版本
+  const handleReset = async () => {
+    try {
+      form.resetFields();
+      setCurrentSearchParams({});
+
+      // 重置分页并加载所有数据
+      const resetParams = {
+        page: 1,
+        pageSize: pagination.pageSize
+      };
+
+      await loadAccountData(resetParams);
+      message.info('已重置搜索条件');
+    } catch (error) {
+      message.error('重置失败: ' + error.message);
+    }
   };
 
-  // 分页处理
+  // 分页处理 - 优化后的版本
   const handlePaginationChange = (page, pageSize) => {
-    setPagination(prev => ({
-      ...prev,
-      current: page,
-      pageSize: pageSize || prev.pageSize
-    }));
+    const newPageSize = pageSize || pagination.pageSize;
+
+    // 构建分页参数，包含当前搜索条件
+    const paginationParams = {
+      page: page,
+      pageSize: newPageSize,
+      ...currentSearchParams // 保持当前搜索条件
+    };
+
+    // 更新分页状态并重新加载数据
+    loadAccountData(paginationParams);
   };
 
   // 新增账号
@@ -206,7 +294,7 @@ const MerchantAccount = () => {
       userNickname: record.userNickname,
       contactPhone: record.contactPhone,
       merchant: record.merchantId,
-      role: record.role?._id,
+      role: record.role?.name || record.role, // 使用角色名称
       personInCharge: record.personInCharge?._id
     });
     setModalVisible(true);
@@ -224,7 +312,13 @@ const MerchantAccount = () => {
         try {
           await merchantAccountAPI.updateMerchantAccountStatus(record.id, newStatus);
           message.success(`${actionText}成功`);
-          loadAccountData(); // 重新加载数据
+          // 重新加载数据，保持当前搜索条件和分页
+          const refreshParams = {
+            page: pagination.current,
+            pageSize: pagination.pageSize,
+            ...currentSearchParams
+          };
+          loadAccountData(refreshParams);
         } catch (error) {
           console.error(`${actionText}账号失败:`, error);
 
@@ -250,7 +344,13 @@ const MerchantAccount = () => {
         try {
           await merchantAccountAPI.deleteMerchantAccount(record.id);
           message.success('删除成功');
-          loadAccountData(); // 重新加载数据
+          // 重新加载数据，保持当前搜索条件和分页
+          const refreshParams = {
+            page: pagination.current,
+            pageSize: pagination.pageSize,
+            ...currentSearchParams
+          };
+          loadAccountData(refreshParams);
         } catch (error) {
           console.error('删除账号失败:', error);
 
@@ -294,6 +394,7 @@ const MerchantAccount = () => {
   const handleModalOk = async (values) => {
     try {
       setConfirmLoading(true);
+      console.log('💾 提交表单数据:', values);
 
       if (modalType === 'add') {
         // 添加密码字段（默认密码）
@@ -302,21 +403,52 @@ const MerchantAccount = () => {
           password: '123456' // 默认密码
         };
 
-        await merchantAccountAPI.createMerchantAccount(accountData);
+        console.log('📝 创建账号数据:', accountData);
+        const response = await merchantAccountAPI.createMerchantAccount(accountData);
+        console.log('✅ 创建账号成功:', response);
         message.success('添加成功');
       } else {
+        console.log('📝 更新账号数据:', values);
         await merchantAccountAPI.updateMerchantAccount(selectedRecord.id, values);
         message.success('修改成功');
       }
 
       setModalVisible(false);
-      loadAccountData(); // 重新加载数据
+      // 重新加载数据，保持当前搜索条件和分页
+      const refreshParams = {
+        page: pagination.current,
+        pageSize: pagination.pageSize,
+        ...currentSearchParams
+      };
+      loadAccountData(refreshParams);
     } catch (error) {
-      console.error('操作失败:', error);
+      console.error('❌ 操作失败:', error);
 
       let errorMessage = modalType === 'add' ? '添加账号失败' : '修改账号失败';
-      if (error.response && error.response.data && error.response.data.message) {
-        errorMessage = error.response.data.message;
+
+      if (error.response && error.response.data) {
+        const { data } = error.response;
+        errorMessage = data.message || errorMessage;
+
+        // 处理具体的错误类型
+        if (data.data) {
+          if (data.data.conflictField) {
+            const fieldNames = {
+              'loginAccount': '登录账号',
+              'contactPhone': '联系电话'
+            };
+            const fieldName = fieldNames[data.data.conflictField] || data.data.conflictField;
+            errorMessage = `${fieldName}已存在：${data.data.value}`;
+          } else if (data.data.missing && data.data.missing.length > 0) {
+            errorMessage = `请填写必填字段：${data.data.missing.join(', ')}`;
+          } else if (data.data.validationErrors) {
+            errorMessage = data.data.validationErrors.map(err => err.message).join('; ');
+          }
+        }
+
+        console.log('📋 详细错误信息:', data);
+      } else if (error.message) {
+        errorMessage = error.message;
       }
 
       message.error(errorMessage);
@@ -333,9 +465,16 @@ const MerchantAccount = () => {
     modalForm.resetFields();
   };
 
-  // 刷新数据
+  // 刷新数据 - 优化后的版本
   const handleRefresh = () => {
-    loadAccountData();
+    // 使用当前搜索条件和分页状态刷新数据
+    const refreshParams = {
+      page: pagination.current,
+      pageSize: pagination.pageSize,
+      ...currentSearchParams
+    };
+    loadAccountData(refreshParams);
+    message.info('数据已刷新');
   };
 
   // 表格列定义
@@ -506,6 +645,35 @@ const MerchantAccount = () => {
             </Row>
           </Form>
         </Card>
+
+        {/* 搜索结果提示 */}
+        {Object.keys(currentSearchParams).length > 0 && (
+          <div style={{
+            marginBottom: '16px',
+            padding: '8px 16px',
+            background: '#f0f0f0',
+            borderRadius: '4px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <span style={{ color: '#666' }}>
+              筛选结果：共找到 {pagination.total} 条记录
+              {currentSearchParams.merchantId && <span>（登录账号："{currentSearchParams.merchantId}"）</span>}
+              {currentSearchParams.contactPhone && <span>（联系电话："{currentSearchParams.contactPhone}"）</span>}
+              {currentSearchParams.merchant && <span>（商户名称："{currentSearchParams.merchant}"）</span>}
+              {currentSearchParams.status && <span>（状态：{ACCOUNT_STATUS_LABELS[currentSearchParams.status]}）</span>}
+            </span>
+            <Button
+              size="small"
+              type="link"
+              onClick={handleReset}
+              style={{ color: '#1890ff' }}
+            >
+              清除筛选
+            </Button>
+          </div>
+        )}
 
         {/* 数据表格 */}
         <Card className="table-card">

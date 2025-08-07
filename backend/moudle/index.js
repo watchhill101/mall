@@ -19,7 +19,6 @@ mongoose
 
 // 导入所有模型 - 方式一：分别导入
 const User = require("./user/user");
-const Role = require("./role/role");
 
 // 导入模块化的子模块
 const Navigation = require("./navigation");
@@ -31,7 +30,6 @@ const Person = require("./person");
 module.exports = {
   // 单独模型
   User,
-  Role,
 
   // 解构导出各模块的所有模型
   ...Navigation, // FirstLevelNavigation, SecondaryNavigation

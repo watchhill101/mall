@@ -69,7 +69,6 @@ router.get('/list', async (req, res) => {
     const [merchants, total] = await Promise.all([
       Merchant.find(query)
         .populate('personInCharge', 'name phone email')
-        .populate('role', 'name')
         .skip(skip)
         .limit(parseInt(pageSize))
         .sort({ createdAt: -1 })
@@ -124,7 +123,6 @@ router.get('/detail/:id', jwtAuth, async (req, res) => {
 
     const merchant = await Merchant.findById(id)
       .populate('personInCharge', 'name phone email')
-      .populate('role', 'name permissions')
       .populate('approvedBy', 'name');
 
     if (!merchant) {
@@ -208,8 +206,7 @@ router.post('/create', jwtAuth, async (req, res) => {
 
     // 返回创建的商户信息（包含关联数据）
     const createdMerchant = await Merchant.findById(merchant._id)
-      .populate('personInCharge', 'name phone email')
-      .populate('role', 'name permissions');
+      .populate('personInCharge', 'name phone email');
 
     res.status(201).json({
       code: 201,
@@ -274,8 +271,7 @@ router.put('/update/:id', jwtAuth, async (req, res) => {
       id,
       { ...updateData, updatedAt: new Date() },
       { new: true, runValidators: true }
-    ).populate('personInCharge', 'name phone email')
-      .populate('role', 'name permissions');
+    ).populate('personInCharge', 'name phone email');
 
     if (!updatedMerchant) {
       return res.status(404).json({
@@ -432,7 +428,6 @@ router.patch('/status/:id', jwtAuth, async (req, res) => {
       updateData,
       { new: true }
     ).populate('personInCharge', 'name phone email')
-      .populate('role', 'name permissions')
       .populate('approvedBy', 'name');
 
     if (!updatedMerchant) {
