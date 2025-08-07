@@ -77,7 +77,7 @@ const ClassificationOfCommodities = () => {
     setLoading(true);
     try {
       // 使用真实API调用，传递所有搜索参数
-      const response = await ProductApi.Product.getproductCategories({
+      const response = await ProductApi.Product.searchProductCategories({
         page: pagination.current,
         pageSize: pagination.pageSize,
         ...searchParams,
@@ -252,6 +252,16 @@ const ClassificationOfCommodities = () => {
     setPagination({ ...pagination, current: 1 });
     fetchCategoryList();
   };
+
+  // 监听搜索参数变化
+  useEffect(() => {
+    // 当搜索参数变化时，重新获取列表
+    const timer = setTimeout(() => {
+      fetchCategoryList();
+    }, 500); // 防抖处理
+
+    return () => clearTimeout(timer);
+  }, [searchParams, pagination.current, pagination.pageSize]);
 
   // 分页变化
   const handlePaginationChange = (current, pageSize) => {
