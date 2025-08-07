@@ -1,25 +1,58 @@
 const express = require("express");
 const router = express.Router();
+const Role = require("../moudle/role/role");
 
 // 导入模型
 const User = require("../moudle/user/user");
 
-// 用户管理相关接口
+// 权限检查中间件
+const checkPermission = (requiredRoles) => {
+  return async (req, res, next) => {
+    try {
+      const currentUserId = req.auth.id || req.auth.userId;
+      const currentUser = await User.findById(currentUserId)
+        .populate('role')
+        .select('-password');
+      
+      if (!currentUser) {
+        return res.status(401).json({
+          code: 401,
+          message: "用户不存在",
+        });
+      }
 
-// 获取用户列表（分页查询）
-router.get("/users", async (req, res) => {
-  try {
-    // 检查当前用户权限（只有管理员可以查看用户列表）
-    const currentUserId = req.auth.id || req.auth.userId;
-    const currentUser = await User.findById(currentUserId).select('-password');
-    
-    if (!currentUser || currentUser.role !== 'admin') {
-      return res.status(403).json({
-        code: 403,
-        message: "权限不足，只有管理员可以查看用户列表",
+      // 获取用户的角色名称（现在是单个角色）
+      const userRole = currentUser.role ? currentUser.role.name : null;
+      
+      // 检查是否有所需权限
+      const hasPermission = requiredRoles.includes(userRole);
+      
+      if (!hasPermission) {
+        return res.status(403).json({
+          code: 403,
+          message: "权限不足",
+        });
+      }
+
+      req.currentUser = currentUser;
+      req.userRole = userRole;
+      next();
+    } catch (error) {
+      console.error("权限检查失败:", error);
+      res.status(500).json({
+        code: 500,
+        message: "权限检查失败",
+        error: error.message,
       });
     }
+  };
+};
 
+// 用户管理相关接口
+
+// 获取用户列表（分页查询）- 登录用户即可查看
+router.get("/users", async (req, res) => {
+  try {
     const {
       page = 1,
       pageSize = 10,
@@ -44,14 +77,19 @@ router.get("/users", async (req, res) => {
     }
 
     if (role) {
-      query.role = role;
+      // 如果按角色筛选，需要先查找角色ID
+      const roleDoc = await Role.findOne({ name: role });
+      if (roleDoc) {
+        query.role = roleDoc._id;
+      }
     }
 
     // 计算跳过的数量
     const skip = (parseInt(page) - 1) * parseInt(pageSize);
 
-    // 查询用户列表
+    // 查询用户列表，填充角色信息
     const users = await User.find(query)
+      .populate('role', 'name')
       .select('-password') // 不返回密码字段
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -80,21 +118,13 @@ router.get("/users", async (req, res) => {
   }
 });
 
-// 获取用户详情
+// 获取用户详情 - 登录用户即可查看
 router.get("/users/:id", async (req, res) => {
   try {
-    // 检查当前用户权限（只有管理员可以查看用户详情）
-    const currentUserId = req.auth.id || req.auth.userId;
-    const currentUser = await User.findById(currentUserId).select('-password');
-    
-    if (!currentUser || currentUser.role !== 'admin') {
-      return res.status(403).json({
-        code: 403,
-        message: "权限不足，只有管理员可以查看用户详情",
-      });
-    }
-
-    const user = await User.findById(req.params.id).select('-password');
+    const user = await User.findById(req.params.id)
+      .populate('role', 'name')
+      .select('-password');
+      
     if (!user) {
       return res.status(404).json({
         code: 404,
@@ -117,26 +147,26 @@ router.get("/users/:id", async (req, res) => {
   }
 });
 
-// 创建新用户
-router.post("/users", async (req, res) => {
+// 创建新用户 - 管理员或超级管理员可创建
+router.post("/users", checkPermission(['admin', 'super_admin']), async (req, res) => {
   try {
-    // 检查当前用户权限（只有管理员可以创建用户）
-    const currentUserId = req.auth.id || req.auth.userId;
-    const currentUser = await User.findById(currentUserId).select('-password');
-    
-    if (!currentUser || currentUser.role !== 'admin') {
-      return res.status(403).json({
-        code: 403,
-        message: "权限不足，只有管理员可以创建用户",
-      });
-    }
-
-    const { username, password, email, phone, role = 'user' } = req.body;
+    const { username, password, email, phone, roleNames = [] } = req.body;
     
     if (!username || !password || !email) {
       return res.status(400).json({
         code: 400,
         message: "用户名、密码和邮箱是必填项",
+      });
+    }
+
+    // 检查是否要设置为管理员或超级管理员
+    const privilegedRoles = ['admin', 'super_admin'];
+    const hasPrivilegedRole = roleNames.some(roleName => privilegedRoles.includes(roleName));
+    
+    if (hasPrivilegedRole && !req.userRoles.includes('super_admin')) {
+      return res.status(403).json({
+        code: 403,
+        message: "权限不足，只有超级管理员才能设置用户为管理员或超级管理员",
       });
     }
 
@@ -152,26 +182,44 @@ router.post("/users", async (req, res) => {
       });
     }
 
+    // 查找角色ID
+    let roleIds = [];
+    if (roleNames.length > 0) {
+      const roles = await Role.find({ name: { $in: roleNames } });
+      roleIds = roles.map(role => role._id);
+      
+      // 检查是否所有角色都找到了
+      if (roles.length !== roleNames.length) {
+        const foundRoleNames = roles.map(role => role.name);
+        const notFoundRoles = roleNames.filter(name => !foundRoleNames.includes(name));
+        return res.status(400).json({
+          code: 400,
+          message: `角色不存在: ${notFoundRoles.join(', ')}`,
+        });
+      }
+    }
+
     const newUser = new User({ 
       username, 
       password, 
       email, 
       phone,
-      role,
+      role: roleIds,
       status: 'active',
       createdAt: new Date()
     });
     
     await newUser.save();
 
-    // 返回时不包含密码
-    const userResponse = newUser.toObject();
-    delete userResponse.password;
+    // 填充角色信息并返回
+    const savedUser = await User.findById(newUser._id)
+      .populate('role', 'name')
+      .select('-password');
 
     res.json({
       code: 201,
       message: "用户创建成功",
-      data: userResponse,
+      data: savedUser,
     });
   } catch (error) {
     console.error("创建用户失败:", error);
@@ -183,22 +231,11 @@ router.post("/users", async (req, res) => {
   }
 });
 
-// 更新用户信息
-router.put("/users/:id", async (req, res) => {
+// 更新用户信息 - 管理员或超级管理员可更新
+router.put("/users/:id", checkPermission(['admin', 'super_admin']), async (req, res) => {
   try {
-    // 检查当前用户权限（只有管理员可以更新用户信息）
-    const currentUserId = req.auth.id || req.auth.userId;
-    const currentUser = await User.findById(currentUserId).select('-password');
-    
-    if (!currentUser || currentUser.role !== 'admin') {
-      return res.status(403).json({
-        code: 403,
-        message: "权限不足，只有管理员可以更新用户信息",
-      });
-    }
-
     const userId = req.params.id;
-    const { username, email, phone, role, status } = req.body;
+    const { username, email, phone, status } = req.body;
     
     // 构建更新数据
     const updateData = {
@@ -208,7 +245,6 @@ router.put("/users/:id", async (req, res) => {
     if (username) updateData.username = username;
     if (email) updateData.email = email;
     if (phone) updateData.phone = phone;
-    if (role) updateData.role = role;
     if (status) updateData.status = status;
 
     // 如果更新用户名或邮箱，检查是否冲突
@@ -235,7 +271,7 @@ router.put("/users/:id", async (req, res) => {
       userId,
       updateData,
       { new: true }
-    ).select('-password');
+    ).populate('role', 'name').select('-password');
 
     if (!updatedUser) {
       return res.status(404).json({
@@ -259,38 +295,55 @@ router.put("/users/:id", async (req, res) => {
   }
 });
 
-// 修改用户权限
-router.put("/users/:id/permissions", async (req, res) => {
+// 修改用户权限（角色）- 管理员或超级管理员可修改
+router.put("/users/:id/permissions", checkPermission(['admin', 'super_admin']), async (req, res) => {
   try {
-    // 检查当前用户权限（只有管理员可以修改权限）
-    const currentUserId = req.auth.id || req.auth.userId;
-    const currentUser = await User.findById(currentUserId).select('-password');
-    
-    if (!currentUser || currentUser.role !== 'admin') {
-      return res.status(403).json({
-        code: 403,
-        message: "权限不足，只有管理员可以修改用户权限",
+    const userId = req.params.id;
+    const { roleNames } = req.body;
+
+    if (!roleNames || !Array.isArray(roleNames)) {
+      return res.status(400).json({
+        code: 400,
+        message: "角色数据格式不正确，应为角色名称数组",
       });
     }
 
-    const userId = req.params.id;
-    const { permissions } = req.body;
-
-    if (!permissions || !Array.isArray(permissions)) {
-      return res.status(400).json({
-        code: 400,
-        message: "权限数据格式不正确",
+    // 检查是否要设置为管理员或超级管理员
+    const privilegedRoles = ['admin', 'super_admin'];
+    const hasPrivilegedRole = roleNames.some(roleName => privilegedRoles.includes(roleName));
+    
+    if (hasPrivilegedRole && !req.userRoles.includes('super_admin')) {
+      return res.status(403).json({
+        code: 403,
+        message: "权限不足，只有超级管理员才能设置用户为管理员或超级管理员",
       });
+    }
+
+    // 查找角色ID
+    let roleIds = [];
+    if (roleNames.length > 0) {
+      const roles = await Role.find({ name: { $in: roleNames } });
+      roleIds = roles.map(role => role._id);
+      
+      // 检查是否所有角色都找到了
+      if (roles.length !== roleNames.length) {
+        const foundRoleNames = roles.map(role => role.name);
+        const notFoundRoles = roleNames.filter(name => !foundRoleNames.includes(name));
+        return res.status(400).json({
+          code: 400,
+          message: `角色不存在: ${notFoundRoles.join(', ')}`,
+        });
+      }
     }
 
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       { 
-        FirstLevelNavigationID: permissions,
+        role: roleIds,
         updatedAt: new Date()
       },
       { new: true }
-    ).select('-password');
+    ).populate('role', 'name').select('-password');
 
     if (!updatedUser) {
       return res.status(404).json({
@@ -314,20 +367,9 @@ router.put("/users/:id/permissions", async (req, res) => {
   }
 });
 
-// 重置用户密码
-router.put("/users/:id/reset-password", async (req, res) => {
+// 重置用户密码 - 只有超级管理员可以重置
+router.put("/users/:id/reset-password", checkPermission(['super_admin']), async (req, res) => {
   try {
-    // 检查当前用户权限（只有管理员可以重置用户密码）
-    const currentUserId = req.auth.id || req.auth.userId;
-    const currentUser = await User.findById(currentUserId).select('-password');
-    
-    if (!currentUser || currentUser.role !== 'admin') {
-      return res.status(403).json({
-        code: 403,
-        message: "权限不足，只有管理员可以重置用户密码",
-      });
-    }
-
     const userId = req.params.id;
     const { newPassword } = req.body;
 
@@ -338,6 +380,13 @@ router.put("/users/:id/reset-password", async (req, res) => {
       });
     }
 
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        code: 400,
+        message: "密码长度不能少于6位",
+      });
+    }
+
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       { 
@@ -345,7 +394,7 @@ router.put("/users/:id/reset-password", async (req, res) => {
         updatedAt: new Date()
       },
       { new: true }
-    ).select('-password');
+    ).populate('role', 'name').select('-password');
 
     if (!updatedUser) {
       return res.status(404).json({
@@ -369,22 +418,29 @@ router.put("/users/:id/reset-password", async (req, res) => {
   }
 });
 
-// 删除用户
-router.delete("/users/:id", async (req, res) => {
+// 删除用户 - 只有超级管理员可以删除
+router.delete("/users/:id", checkPermission(['super_admin']), async (req, res) => {
   try {
-    // 检查当前用户权限（只有管理员可以删除用户）
-    const currentUserId = req.auth.id || req.auth.userId;
-    const currentUser = await User.findById(currentUserId).select('-password');
+    const userId = req.params.id;
     
-    if (!currentUser || currentUser.role !== 'admin') {
-      return res.status(403).json({
-        code: 403,
-        message: "权限不足，只有管理员可以删除用户",
+    // 防止删除自己
+    const currentUserId = req.auth.id || req.auth.userId;
+    if (userId === currentUserId) {
+      return res.status(400).json({
+        code: 400,
+        message: "不能删除自己的账户",
       });
     }
 
-    const userId = req.params.id;
-    const deletedUser = await User.findByIdAndDelete(userId);
+    // 使用软删除，将状态设置为deleted
+    const deletedUser = await User.findByIdAndUpdate(
+      userId,
+      { 
+        status: 'deleted',
+        updatedAt: new Date()
+      },
+      { new: true }
+    ).populate('role', 'name').select('-password');
     
     if (!deletedUser) {
       return res.status(404).json({
@@ -408,21 +464,11 @@ router.delete("/users/:id", async (req, res) => {
   }
 });
 
-// 批量删除用户
-router.delete("/users/batch-delete", async (req, res) => {
+// 批量删除用户 - 只有超级管理员可以批量删除
+router.delete("/users/batch-delete", checkPermission(['super_admin']), async (req, res) => {
   try {
-    // 检查当前用户权限（只有管理员可以批量删除用户）
-    const currentUserId = req.auth.id || req.auth.userId;
-    const currentUser = await User.findById(currentUserId).select('-password');
-    
-    if (!currentUser || currentUser.role !== 'admin') {
-      return res.status(403).json({
-        code: 403,
-        message: "权限不足，只有管理员可以批量删除用户",
-      });
-    }
-
     const { ids } = req.body;
+    const currentUserId = req.auth.id || req.auth.userId;
     
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
       return res.status(400).json({
@@ -431,12 +477,27 @@ router.delete("/users/batch-delete", async (req, res) => {
       });
     }
 
-    const result = await User.deleteMany({ _id: { $in: ids } });
+    // 防止删除自己
+    if (ids.includes(currentUserId)) {
+      return res.status(400).json({
+        code: 400,
+        message: "不能删除自己的账户",
+      });
+    }
+
+    // 使用软删除，将状态设置为deleted
+    const result = await User.updateMany(
+      { _id: { $in: ids } },
+      { 
+        status: 'deleted',
+        updatedAt: new Date()
+      }
+    );
     
     res.json({
       code: 200,
-      message: `成功删除 ${result.deletedCount} 个用户`,
-      data: { deletedCount: result.deletedCount },
+      message: `成功删除 ${result.modifiedCount} 个用户`,
+      data: { deletedCount: result.modifiedCount },
     });
   } catch (error) {
     console.error("批量删除用户失败:", error);
@@ -448,21 +509,10 @@ router.delete("/users/batch-delete", async (req, res) => {
   }
 });
 
-// 获取用户统计信息
-router.get("/stats", async (req, res) => {
+// 获取用户统计信息 - 管理员或超级管理员可查看
+router.get("/stats", checkPermission(['admin', 'super_admin']), async (req, res) => {
   try {
-    // 检查当前用户权限（只有管理员可以查看统计信息）
-    const currentUserId = req.auth.id || req.auth.userId;
-    const currentUser = await User.findById(currentUserId).select('-password');
-    
-    if (!currentUser || currentUser.role !== 'admin') {
-      return res.status(403).json({
-        code: 403,
-        message: "权限不足，只有管理员可以查看统计信息",
-      });
-    }
-
-    const totalUsers = await User.countDocuments();
+    const totalUsers = await User.countDocuments({ status: { $ne: 'deleted' } });
     const activeUsers = await User.countDocuments({ status: 'active' });
     
     // 获取本月新注册用户
@@ -471,11 +521,25 @@ router.get("/stats", async (req, res) => {
     startOfMonth.setHours(0, 0, 0, 0);
     
     const newUsers = await User.countDocuments({
-      createdAt: { $gte: startOfMonth }
+      createdAt: { $gte: startOfMonth },
+      status: { $ne: 'deleted' }
     });
     
-    // 假设VIP用户为角色为admin的用户
-    const vipUsers = await User.countDocuments({ role: 'admin' });
+    // 获取VIP用户数量（假设isVip为true的用户）
+    const vipUsers = await User.countDocuments({ 
+      isVip: true,
+      status: { $ne: 'deleted' }
+    });
+
+    // 获取各角色用户统计
+    const roleStats = await User.aggregate([
+      { $match: { status: { $ne: 'deleted' } } },
+      { $unwind: '$role' },
+      { $lookup: { from: 'role', localField: 'role', foreignField: '_id', as: 'roleInfo' } },
+      { $unwind: '$roleInfo' },
+      { $group: { _id: '$roleInfo.name', count: { $sum: 1 } } },
+      { $sort: { count: -1 } }
+    ]);
 
     res.json({
       code: 200,
@@ -484,7 +548,8 @@ router.get("/stats", async (req, res) => {
         totalUsers,
         activeUsers,
         newUsers,
-        vipUsers
+        vipUsers,
+        roleStats
       },
     });
   } catch (error) {
@@ -492,6 +557,26 @@ router.get("/stats", async (req, res) => {
     res.status(500).json({
       code: 500,
       message: "获取统计信息失败",
+      error: error.message,
+    });
+  }
+});
+
+// 获取所有角色列表 - 登录用户即可查看
+router.get("/roles", async (req, res) => {
+  try {
+    const roles = await Role.find({}).select('name');
+    
+    res.json({
+      code: 200,
+      message: "获取角色列表成功",
+      data: roles,
+    });
+  } catch (error) {
+    console.error("获取角色列表失败:", error);
+    res.status(500).json({
+      code: 500,
+      message: "获取角色列表失败",
       error: error.message,
     });
   }

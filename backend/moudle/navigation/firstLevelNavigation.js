@@ -8,12 +8,6 @@ const firstLevelNavigationSchema = new mongoose.Schema({
   url: { type: String, required: true }, // 路径
   subTitle: { type: String, required: true }, // 二级标题
   subText: { type: String, required: true }, // 二级文本
-  SecondaryNavigationID: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "SecondaryNavigation",
-    },
-  ], // 二级导航ID数组
 });
 const FirstLevelNavigation = mongoose.model(
   "firstLevelNavigation",

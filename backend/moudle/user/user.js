@@ -9,32 +9,25 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true }, // 密码
   email: { type: String, required: true, unique: true }, // 邮箱
   phone: { type: String }, // 手机号
-  
+
   // 角色和状态
-  role: { 
-    type: String, 
-    enum: ['admin', 'user', 'merchant', 'operator'],
-    default: 'user'
-  }, // 用户角色
-  status: {
-    type: String,
-    enum: ['active', 'inactive', 'suspended', 'deleted'],
-    default: 'active'
-  }, // 用户状态
-  
-  // 权限
-  FirstLevelNavigationID: [
+  role: 
     {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "FirstLevelNavigation",
+      ref: "role",
     },
-  ], // 一级导航权限
-  
+   // 用户角色
+  status: {
+    type: String,
+    enum: ["active", "inactive", "suspended", "deleted"],
+    default: "active",
+  }, // 用户状态
+
   // 时间戳
   createdAt: { type: Date, default: Date.now }, // 创建时间
   updatedAt: { type: Date, default: Date.now }, // 更新时间
   lastLoginAt: { type: Date }, // 最后登录时间
-  
+
   // 其他信息
   avatar: { type: String }, // 头像URL
   nickname: { type: String }, // 昵称

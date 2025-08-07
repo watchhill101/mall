@@ -58,15 +58,6 @@ app.use((req, res, next) => {
   }
   next();
 });
-// 添加测试路由（需要token验证）
-app.get("/test", jwtAuth, verifyTokenType, (req, res) => {
-  res.json({
-    code: 200,
-    message: "后端服务正常运行",
-    timestamp: new Date().toISOString(),
-    user: req.auth // 返回当前用户信息以验证token
-  });
-});
 
 // 不需要token验证的路由（公开路由）
 app.use("/", indexRouter);
