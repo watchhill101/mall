@@ -19,18 +19,13 @@ import {
   SearchOutlined,
   ReloadOutlined,
   EyeOutlined,
-  EditOutlined,
-  CheckOutlined,
-  CloseOutlined,
-  ExportOutlined,
-  BarChartOutlined
+  ExportOutlined
 } from '@ant-design/icons';
 import { 
   getOrdersList, 
-  updateOrderStatus, 
-  updatePaymentStatus, 
   batchOperateOrders, 
-  getOrderStatistics 
+  getOrderStatistics,
+  exportOrdersData
 } from '../../../api/orders';
 import OrderLayout from '../Order_layout/Order_layout';
 
@@ -50,8 +45,6 @@ const OrdersList = () => {
   const [currentOrder, setCurrentOrder] = useState(null);
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [statistics, setStatistics] = useState(null);
-  const [statusUpdateVisible, setStatusUpdateVisible] = useState(false);
-  const [batchOperationVisible, setBatchOperationVisible] = useState(false);
 
   // 状态选项
   const statusOptions = [
@@ -195,43 +188,17 @@ const OrdersList = () => {
     {
       title: '操作',
       key: 'action',
-      width: 200,
+      width: 100,
       fixed: 'right',
       render: (text, record) => (
-        <Space size="small">
-          <Button
-            type="link"
-            size="small"
-            icon={<EyeOutlined />}
-            onClick={() => handleViewDetail(record)}
-          >
-            详情
-          </Button>
-          <Select
-            size="small"
-            value={record.orderStatus}
-            style={{ width: 80 }}
-            onChange={(value) => handleUpdateOrderStatus(record._id, value)}
-          >
-            {statusOptions.map(option => (
-              <Option key={option.value} value={option.value}>
-                {option.label}
-              </Option>
-            ))}
-          </Select>
-          <Select
-            size="small"
-            value={record.payment?.paymentStatus}
-            style={{ width: 80 }}
-            onChange={(value) => handleUpdatePaymentStatus(record._id, value)}
-          >
-            {paymentStatusOptions.map(option => (
-              <Option key={option.value} value={option.value}>
-                {option.label}
-              </Option>
-            ))}
-          </Select>
-        </Space>
+        <Button
+          type="link"
+          size="small"
+          icon={<EyeOutlined />}
+          onClick={() => handleViewDetail(record)}
+        >
+          详情
+        </Button>
       ),
     },
   ];
@@ -268,38 +235,6 @@ const OrdersList = () => {
       setDetailVisible(true);
     } catch (error) {
       message.error('获取详情失败');
-    }
-  };
-
-  // 更新订单状态
-  const handleUpdateOrderStatus = async (orderId, newStatus) => {
-    try {
-      const response = await updateOrderStatus(orderId, { status: newStatus });
-      if (response.code === 200) {
-        message.success('状态更新成功');
-        fetchData();
-      } else {
-        message.error(response.message || '状态更新失败');
-      }
-    } catch (error) {
-      console.error('更新订单状态失败:', error);
-      message.error('状态更新失败');
-    }
-  };
-
-  // 更新支付状态
-  const handleUpdatePaymentStatus = async (orderId, newStatus) => {
-    try {
-      const response = await updatePaymentStatus(orderId, { status: newStatus });
-      if (response.code === 200) {
-        message.success('支付状态更新成功');
-        fetchData();
-      } else {
-        message.error(response.message || '支付状态更新失败');
-      }
-    } catch (error) {
-      console.error('更新支付状态失败:', error);
-      message.error('支付状态更新失败');
     }
   };
 
@@ -344,8 +279,85 @@ const OrdersList = () => {
   // 重置
   const handleReset = () => {
     setSearchParams({});
-    setPagination({ ...pagination, current: 1 });
-    fetchData();
+  };
+
+  // 导出Excel
+  const handleExport = async () => {
+    try {
+      setLoading(true);
+      message.loading('正在导出数据，请稍候...', 0);
+      
+      // 构建导出参数，使用当前页面的完整搜索条件
+      const exportParams = {
+        // 基本搜索条件
+        orderId: searchParams.orderId || '',
+        orderStatus: searchParams.orderStatus || '',
+        customerName: searchParams.customerName || '',
+        customerPhone: searchParams.customerPhone || '',
+        startDate: searchParams.startDate || '',
+        endDate: searchParams.endDate || '',
+        
+        // 其他可能的筛选条件
+        paymentMethod: searchParams.paymentMethod || '',
+        paymentStatus: searchParams.paymentStatus || '',
+        orderType: searchParams.orderType || '',
+        productName: searchParams.productName || '',
+        minAmount: searchParams.minAmount || '',
+        maxAmount: searchParams.maxAmount || '',
+        
+        // 导出标识，用于后端识别这是导出请求
+        isExport: true,
+        // 只导出非空数据
+        excludeEmpty: true
+      };
+
+      console.log('导出参数:', exportParams);
+
+      // 调用导出API
+      const response = await exportOrdersData(exportParams);
+      
+      // 检查是否有数据
+      if (response.status === 400 && response.data?.code === 'NO_DATA') {
+        message.destroy();
+        message.warning('当前筛选条件下没有可导出的数据');
+        return;
+      }
+      
+      // 创建下载链接
+      const blob = new Blob([response.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      });
+      
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // 生成文件名
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      const filterInfo = [];
+      if (searchParams.orderId) filterInfo.push(`订单号_${searchParams.orderId}`);
+      if (searchParams.orderStatus) filterInfo.push(`状态_${searchParams.orderStatus}`);
+      if (searchParams.customerName) filterInfo.push(`客户_${searchParams.customerName}`);
+      
+      const filterSuffix = filterInfo.length > 0 ? `_${filterInfo.join('_')}` : '';
+      link.download = `订单数据${filterSuffix}_${timestamp}.xlsx`;
+      
+      // 触发下载
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      message.destroy();
+      message.success('导出成功！');
+      
+    } catch (error) {
+      console.error('导出失败:', error);
+      message.destroy();
+      message.error('导出失败，请重试');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // 表格分页变化
@@ -368,21 +380,22 @@ const OrdersList = () => {
             <Col span={6}>
               <Input
                 placeholder="请输入订单编号"
-                value={searchParams.orderNumber}
-                onChange={(e) => setSearchParams({ ...searchParams, orderNumber: e.target.value })}
+                value={searchParams.orderId}
+                onChange={(e) => setSearchParams({ ...searchParams, orderId: e.target.value })}
                 allowClear
             />
           </Col>
             <Col span={6}>
             <Select
-              placeholder="请选择所属店铺"
-              value={searchParams.shopLocation}
-              onChange={(value) => setSearchParams({ ...searchParams, shopLocation: value })}
+              placeholder="请选择订单状态"
+              value={searchParams.orderStatus}
+              onChange={(value) => setSearchParams({ ...searchParams, orderStatus: value })}
               allowClear
               style={{ width: '100%' }}
             >
-              <Option value="店铺1">店铺1</Option>
-              <Option value="店铺2">店铺2</Option>
+              {statusOptions.map(option => (
+                <Option key={option.value} value={option.value}>{option.label}</Option>
+              ))}
             </Select>
           </Col>
           <Col span={6}>
@@ -398,9 +411,9 @@ const OrdersList = () => {
           </Col>
           <Col span={6}>
             <Input
-              placeholder="请输入联系电话"
-              value={searchParams.customerPhone}
-              onChange={(e) => setSearchParams({ ...searchParams, customerPhone: e.target.value })}
+              placeholder="请输入客户姓名"
+              value={searchParams.customerName}
+              onChange={(e) => setSearchParams({ ...searchParams, customerName: e.target.value })}
               allowClear
             />
           </Col>
@@ -408,15 +421,24 @@ const OrdersList = () => {
 
         <Row gutter={[16, 16]} style={{ marginBottom: '16px' }}>
           <Col span={6}>
+            <Input
+              placeholder="请输入联系电话"
+              value={searchParams.customerPhone}
+              onChange={(e) => setSearchParams({ ...searchParams, customerPhone: e.target.value })}
+              allowClear
+            />
+          </Col>
+          <Col span={6}>
             <Select
-              placeholder="请选择交易类型"
-              value={searchParams.transactionType}
-              onChange={(value) => setSearchParams({ ...searchParams, transactionType: value })}
+              placeholder="请选择订单类型"
+              value={searchParams.orderType}
+              onChange={(value) => setSearchParams({ ...searchParams, orderType: value })}
               allowClear
               style={{ width: '100%' }}
             >
-              <Option value="销售">销售</Option>
-              <Option value="退货">退货</Option>
+              <Option value="retail">零售订单</Option>
+              <Option value="wholesale">批发订单</Option>
+              <Option value="return">退货订单</Option>
             </Select>
           </Col>
           <Col span={6}>
@@ -432,7 +454,49 @@ const OrdersList = () => {
               ))}
             </Select>
           </Col>
-          <Col span={12}>
+          <Col span={6}>
+            <Select
+              placeholder="请选择支付状态"
+              value={searchParams.paymentStatus}
+              onChange={(value) => setSearchParams({ ...searchParams, paymentStatus: value })}
+              allowClear
+              style={{ width: '100%' }}
+            >
+              {paymentStatusOptions.map(option => (
+                <Option key={option.value} value={option.value}>{option.label}</Option>
+              ))}
+            </Select>
+          </Col>
+        </Row>
+
+        <Row gutter={[16, 16]} style={{ marginBottom: '16px' }}>
+          <Col span={6}>
+            <Input
+              placeholder="请输入商品名称"
+              value={searchParams.productName}
+              onChange={(e) => setSearchParams({ ...searchParams, productName: e.target.value })}
+              allowClear
+            />
+          </Col>
+          <Col span={6}>
+            <Input
+              placeholder="最低金额"
+              type="number"
+              value={searchParams.minAmount}
+              onChange={(e) => setSearchParams({ ...searchParams, minAmount: e.target.value })}
+              allowClear
+            />
+          </Col>
+          <Col span={6}>
+            <Input
+              placeholder="最高金额"
+              type="number"
+              value={searchParams.maxAmount}
+              onChange={(e) => setSearchParams({ ...searchParams, maxAmount: e.target.value })}
+              allowClear
+            />
+          </Col>
+          <Col span={6}>
             <Space>
               <Button
                 type="primary"
@@ -459,14 +523,10 @@ const OrdersList = () => {
                 type="primary" 
                 icon={<ExportOutlined />}
                 style={{ background: '#52c41a' }}
+                onClick={handleExport}
+                loading={loading}
               >
                 导出
-              </Button>
-              <Button 
-                icon={<BarChartOutlined />}
-                onClick={fetchStatistics}
-              >
-                刷新统计
               </Button>
               {selectedRowKeys.length > 0 && (
                 <>
@@ -539,6 +599,13 @@ const OrdersList = () => {
           columns={columns}
           dataSource={data}
           loading={loading}
+          rowSelection={{
+            selectedRowKeys,
+            onChange: setSelectedRowKeys,
+            getCheckboxProps: (record) => ({
+              disabled: record.orderStatus === 'completed' || record.orderStatus === 'cancelled',
+            }),
+          }}
           pagination={{
             ...pagination,
             total,
@@ -548,14 +615,7 @@ const OrdersList = () => {
           }}
           onChange={handleTableChange}
           rowKey={(record) => record._id || record.id || record.orderId}
-          scroll={{ x: 1400 }}
-          rowSelection={{
-            selectedRowKeys,
-            onChange: setSelectedRowKeys,
-            getCheckboxProps: (record) => ({
-              disabled: record.orderStatus === 'completed' || record.orderStatus === 'cancelled',
-            }),
-          }}
+          scroll={{ x: 1200 }}
         />
       </Card>
 
@@ -593,7 +653,7 @@ const OrdersList = () => {
               {currentOrder.delivery?.deliveryMethod === 'home_delivery' ? '送货上门' : currentOrder.delivery?.deliveryMethod}
             </Descriptions.Item>
             <Descriptions.Item label="配送地址" span={2}>
-              {currentOrder.delivery?.address}
+              {currentOrder.customer?.customerAddress}
             </Descriptions.Item>
           </Descriptions>
         )}
