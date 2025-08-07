@@ -1,4 +1,11 @@
-import React, { useState, useRef, useMemo, useCallback, lazy, useEffect } from "react";
+import React, {
+  useState,
+  useRef,
+  useMemo,
+  useCallback,
+  lazy,
+  useEffect,
+} from "react";
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -66,24 +73,25 @@ const LayoutApp = () => {
   // 获取用户token状态
   const token = useSelector((state) => state.user.token);
   const userinfo = useSelector((state) => state.user.userinfo);
-  
+
   // 处理头像URL
   const avatarUrl = useMemo(() => {
     if (!userinfo.avatar) return null;
-    
+
     // 如果已经是完整URL，直接返回
-    if (userinfo.avatar.startsWith('http')) {
+    if (userinfo.avatar.startsWith("http")) {
       return userinfo.avatar;
     }
-    
+
     // 如果是相对路径，拼接服务器地址
-    const baseUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:3001';
+    const baseUrl =
+      process.env.REACT_APP_API_BASE_URL || "http://localhost:3001";
     return `${baseUrl}/${userinfo.avatar}`;
   }, [userinfo.avatar]);
-  
+
   // 添加组件挂载状态跟踪
   const [isMounted, setIsMounted] = useState(false);
-  
+
   useEffect(() => {
     setIsMounted(true);
     return () => setIsMounted(false);
@@ -93,56 +101,56 @@ const LayoutApp = () => {
   useEffect(() => {
     // 组件未完全挂载时不执行检查
     if (!isMounted) return;
-    
+
     const checkTokenStatus = () => {
       const localToken = getToken();
       const localRefreshToken = getRefreshToken();
-      
+
       // 如果Redux中有token但localStorage中没有，说明token被外部删除
       if (token && !localToken) {
-        console.log('🚨 Layout检测到token被删除，执行登出');
-        message.warning('登录状态已失效，请重新登录');
+        console.log("🚨 Layout检测到token被删除，执行登出");
+        message.warning("登录状态已失效，请重新登录");
         dispatch(logout());
-        navigate('/login', { replace: true });
+        navigate("/login", { replace: true });
         return;
       }
-      
+
       // 如果既没有token也没有refresh token，跳转到登录页
       if (!token && !localToken && !localRefreshToken) {
-        console.log('🚪 Layout检测到无有效token，跳转登录页');
-        navigate('/login', { replace: true });
+        console.log("🚪 Layout检测到无有效token，跳转登录页");
+        navigate("/login", { replace: true });
         return;
       }
     };
 
     // 立即检查一次
     checkTokenStatus();
-    
+
     // 设置定期检查（每5分钟检查一次，减少频率）
     const interval = setInterval(checkTokenStatus, 5 * 60 * 1000);
-    
+
     return () => clearInterval(interval);
   }, [token, dispatch, navigate, isMounted]);
 
   // 监听localStorage变化（跨标签页同步）
   useEffect(() => {
     const handleStorageChange = (e) => {
-      if (e.key === 'ACCESS-TOKEN' || e.key === 'REFRESH-TOKEN') {
-        console.log('🔄 Layout检测到localStorage变化:', e.key, !!e.newValue);
-        
+      if (e.key === "ACCESS-TOKEN" || e.key === "REFRESH-TOKEN") {
+        console.log("🔄 Layout检测到localStorage变化:", e.key, !!e.newValue);
+
         // 如果token被删除且当前用户已登录
         if (!e.newValue && token) {
-          console.log('🚪 Layout检测到token被删除，执行登出');
-          message.warning('登录状态已失效，请重新登录');
+          console.log("🚪 Layout检测到token被删除，执行登出");
+          message.warning("登录状态已失效，请重新登录");
           dispatch(logout());
-          navigate('/login', { replace: true });
+          navigate("/login", { replace: true });
         }
       }
     };
 
-    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener("storage", handleStorageChange);
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener("storage", handleStorageChange);
     };
   }, [token, dispatch, navigate]);
 
@@ -206,7 +214,7 @@ const LayoutApp = () => {
       Link,
       SvgIcon
     );
-    
+
     // 合并导航菜单和权限路由菜单
     return navigationMenuItems.concat(getTreeMenu(permissionRoutes));
   }, [navigationData, permissionRoutes]);
@@ -232,15 +240,17 @@ const LayoutApp = () => {
     // 如果是有效路径，则进行跳转
     if (isNavigationPath || isPermissionRoute) {
       // 检查是否是一级导航（有子菜单的）
-      const parentNav = navigationData.find(nav => nav.url === key && nav.children && nav.children.length > 0);
-      
+      const parentNav = navigationData.find(
+        (nav) => nav.url === key && nav.children && nav.children.length > 0
+      );
+
       if (parentNav) {
         // 如果是一级导航且有子菜单，确保菜单展开
         if (!subMenuKeys.includes(key)) {
           setSubMenuKeys([...subMenuKeys, key]);
         }
       }
-      
+
       navigate(key);
     }
   };
@@ -328,7 +338,6 @@ const LayoutApp = () => {
   //   import("@/pages/Merchant/DeviceManagement")  // 临时注释，组件不存在
   // );
 
-
   // 导入商品相关组件
   const ListOfCommodities = lazy(() =>
     import("@/pages/Goods_S/ListOfCommodities")
@@ -408,9 +417,12 @@ const LayoutApp = () => {
 
             case "/shops/device-management":
               // element = <DeviceManagement />;  // 临时注释，组件不存在
-              element = <div style={{padding: '20px', textAlign: 'center'}}>设备管理功能开发中...</div>;
+              element = (
+                <div style={{ padding: "20px", textAlign: "center" }}>
+                  设备管理功能开发中...
+                </div>
+              );
               break;
-
 
             // 商品相关路由
             case "/goods/product-list":
@@ -485,7 +497,7 @@ const LayoutApp = () => {
       .concat(navigationRoutes)
       .concat(getMenus(permissionRoutes));
   }, [navigationData, permissionRoutes]);
-  
+
   /** 下拉菜单 */
   // 下拉菜单项数组
   const dropdownMenuItems = [
@@ -525,35 +537,34 @@ const LayoutApp = () => {
   // 退出登录
   const handleLogout = async () => {
     try {
-      console.log('🚪 用户主动退出登录');
-      
+      console.log("🚪 用户主动退出登录");
+
       // 显示退出提示
-      message.loading('正在退出...', 1);
-      
+      message.loading("正在退出...", 1);
+
       // 执行Redux logout action（会清理localStorage）
       dispatch(logout());
-      
+
       // 延迟跳转，确保状态清理完成
       setTimeout(() => {
         navigate("/login", { replace: true });
-        message.success('已安全退出');
+        message.success("已安全退出");
       }, 100);
-      
     } catch (error) {
-      console.error('❌ 退出登录失败:', error);
+      console.error("❌ 退出登录失败:", error);
       // 即使出错也要强制清理状态
       dispatch(logout());
       navigate("/login", { replace: true });
-      message.error('退出过程中发生错误，但已安全退出');
+      message.error("退出过程中发生错误，但已安全退出");
     }
   };
 
   // 检查用户是否已登录，如果没有token则不渲染Layout
   const hasValidToken = token && getToken();
-  
+
   // 如果没有有效token，返回null或加载状态
   if (!hasValidToken) {
-    console.log('🔒 Layout: 无有效token，不渲染Layout组件');
+    console.log("🔒 Layout: 无有效token，不渲染Layout组件");
     return null;
   }
   // debugger
