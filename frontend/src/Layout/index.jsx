@@ -234,12 +234,13 @@ const LayoutApp = () => {
       navigationData,
       getItem,
       Link,
-      SvgIcon
+      SvgIcon,
+      t
     );
 
     // 合并导航菜单和权限路由菜单
     return navigationMenuItems.concat(getTreeMenu(permissionRoutes));
-  }, [navigationData, permissionRoutes]);
+  }, [navigationData, permissionRoutes, t]);
   // 设置菜单展开收缩
   const handleMenuOpen = (openKeys) => {
     setSubMenuKeys(openKeys);
@@ -283,13 +284,13 @@ const LayoutApp = () => {
   /** 面包屑 */
   const breadcrumbNameMap = useMemo(() => {
     // 使用导航数据生成面包屑名称映射
-    const navigationBreadcrumbMap = generateBreadcrumbNameMap(navigationData);
+    const navigationBreadcrumbMap = generateBreadcrumbNameMap(navigationData, t);
 
     // 合并导航面包屑和权限路由面包屑
     const permissionBreadcrumbMap = getBreadcrumbNameMap(permissionRoutes);
 
     return { ...navigationBreadcrumbMap, ...permissionBreadcrumbMap };
-  }, [navigationData, permissionRoutes]);
+  }, [navigationData, permissionRoutes, t]);
   const breadcrumbItems = useMemo(() => {
     const items = [];
 
@@ -297,7 +298,7 @@ const LayoutApp = () => {
     if (pathname !== "/" && pathname !== "/home") {
       items.push({
         key: "/home",
-        title: <Link to="/home">首页</Link>,
+        title: <Link to="/home">{t('menu.home')}</Link>,
       });
     }
 
@@ -539,135 +540,135 @@ const LayoutApp = () => {
     },
   ];
 
-  // 检查用户是否已登录，如果没有token则不渲染Layout
-  const hasValidToken = token && getToken();
+// 检查用户是否已登录，如果没有token则不渲染Layout
+const hasValidToken = token && getToken();
 
-  // 如果没有有效token，返回null或加载状态
-  if (!hasValidToken) {
-    console.log("🔒 Layout: 无有效token，不渲染Layout组件");
-    return null;
-  }
-  // debugger
+// 如果没有有效token，返回null或加载状态
+if (!hasValidToken) {
+  console.log("🔒 Layout: 无有效token，不渲染Layout组件");
+  return null;
+}
+// debugger
 
-  console.log(menuItems, "获取菜单");
-  return (
-    <Layout className="layout">
-      <Sider trigger={null} collapsible collapsed={collapsed} theme={themeVari}>
-        <div
-          className="layout-logo-vertical"
-          style={{ color: themeVari === "dark" ? "#fff" : "#000" }}
-        >
-          <span className="layout-logo">
-            <DashboardFilled />
-          </span>
-          {!collapsed && <span>后台管理系统</span>}
+console.log(menuItems, "获取菜单");
+return (
+  <Layout className="layout">
+    <Sider trigger={null} collapsible collapsed={collapsed} theme={themeVari}>
+      <div
+        className="layout-logo-vertical"
+        style={{ color: themeVari === "dark" ? "#fff" : "#000" }}
+      >
+        <span className="layout-logo">
+          <DashboardFilled />
+        </span>
+        {!collapsed && <span>{t('common.backendManagementSystem')}</span>}
+      </div>
+      <Switch
+        className="sider-switch"
+        checkedChildren="☀"
+        unCheckedChildren="🌙"
+        onChange={changeTheme}
+        style={{
+          transform: collapsed ? "translateX(15px)" : "translateX(75px)",
+        }}
+      />
+      <Menu
+        theme={themeVari}
+        mode="inline"
+        selectedKeys={[currentSelectedKey]}
+        openKeys={subMenuKeys}
+        onOpenChange={handleMenuOpen}
+        items={menuItems}
+        onClick={handleMenuClick}
+      />
+    </Sider>
+    <Layout>
+      <Header
+        style={{
+          padding: 0,
+          background: colorBgContainer,
+          display: "flex",
+        }}
+      >
+        <Button
+          type="text"
+          icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+          onClick={() => setCollapsed(!collapsed)}
+          style={{
+            fontSize: "16px",
+            width: 64,
+            height: 64,
+          }}
+        />
+        <div className="header-breadcrumb">
+          <Breadcrumb items={breadcrumbItems} />
         </div>
-        <Switch
-          className="sider-switch"
-          checkedChildren="☀"
-          unCheckedChildren="🌙"
-          onChange={changeTheme}
-          style={{
-            transform: collapsed ? "translateX(15px)" : "translateX(75px)",
-          }}
-        />
-        <Menu
-          theme={themeVari}
-          mode="inline"
-          selectedKeys={[currentSelectedKey]}
-          openKeys={subMenuKeys}
-          onOpenChange={handleMenuOpen}
-          items={menuItems}
-          onClick={handleMenuClick}
-        />
-      </Sider>
-      <Layout>
-        <Header
-          style={{
-            padding: 0,
-            background: colorBgContainer,
-            display: "flex",
-          }}
-        >
-          <Button
-            type="text"
-            icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-            onClick={() => setCollapsed(!collapsed)}
-            style={{
-              fontSize: "16px",
-              width: 64,
-              height: 64,
-            }}
+        <div className="header-right">
+          <Dropdown
+            menu={{ items: dropdownMenuItems }}
+            placement="bottomRight"
+          >
+            <Space>
+              <img
+                src={
+                  avatarUrl ||
+                  require("@/assets/images/avatar/default_avatar.jpg")
+                }
+                className="user-icon"
+                alt="avatar"
+              />
+              <DownOutlined />
+            </Space>
+          </Dropdown>
+        </div>
+      </Header>
+      <Content
+        style={{
+          // padding: 24,
+          minHeight: 280,
+          // background: colorBgContainer
+        }}
+      >
+        {/* 导航数据状态提示 */}
+        {navError && !isFromBackend && (
+          <Alert
+            message="导航数据提示"
+            description="无法连接到后端服务，正在使用本地导航配置"
+            type="warning"
+            showIcon
+            closable
+            style={{ margin: "8px 16px" }}
           />
-          <div className="header-breadcrumb">
-            <Breadcrumb items={breadcrumbItems} />
-          </div>
-          <div className="header-right">
-            <Dropdown
-              menu={{ items: dropdownMenuItems }}
-              placement="bottomRight"
-            >
-              <Space>
-                <img
-                  src={
-                    avatarUrl ||
-                    require("@/assets/images/avatar/default_avatar.jpg")
-                  }
-                  className="user-icon"
-                  alt="avatar"
-                />
-                <DownOutlined />
-              </Space>
-            </Dropdown>
-          </div>
-        </Header>
-        <Content
-          style={{
-            // padding: 24,
-            minHeight: 280,
-            // background: colorBgContainer
-          }}
-        >
-          {/* 导航数据状态提示 */}
-          {navError && !isFromBackend && (
-            <Alert
-              message="导航数据提示"
-              description="无法连接到后端服务，正在使用本地导航配置"
-              type="warning"
-              showIcon
-              closable
-              style={{ margin: "8px 16px" }}
-            />
-          )}
-          {isFromBackend && (
-            <Alert
-              message="✅ 已连接到后端导航服务"
-              type="success"
-              showIcon
-              closable
-              style={{ margin: "8px 16px", display: "none" }} // 默认隐藏成功提示
-            />
-          )}
+        )}
+        {isFromBackend && (
+          <Alert
+            message="✅ 已连接到后端导航服务"
+            type="success"
+            showIcon
+            closable
+            style={{ margin: "8px 16px", display: "none" }} // 默认隐藏成功提示
+          />
+        )}
 
-          <ComponentErrorBoundary>
-            <TabsView
-              pathname={pathname}
-              formatRoutes={formatRoutes}
-              selectTab={selectTab}
-            />
-          </ComponentErrorBoundary>
-        </Content>
-      </Layout>
-      <CustomModal title="个人中心" ref={userCenterRef}>
-        <UserCenterForm toggleCenterStatus={toggleCenterStatus} />
-      </CustomModal>
-      <CustomModal title="重置密码" ref={resetPwdRef}>
-        <ResetPwdForm toggleResetStatus={toggleResetStatus} />
-      </CustomModal>
-
-      {/* AI助手 - 除登录页外所有页面都显示 */}
-      {pathname !== '/login' && <AiAssistantWithLive2D />}
+        <ComponentErrorBoundary>
+          <TabsView
+            pathname={pathname}
+            formatRoutes={formatRoutes}
+            selectTab={selectTab}
+          />
+        </ComponentErrorBoundary>
+      </Content>
     </Layout>
-  );
+    <CustomModal title={t('common.personalCenter')} ref={userCenterRef}>
+      <UserCenterForm toggleCenterStatus={toggleCenterStatus} />
+    </CustomModal>
+    <CustomModal title={t('resetPassword.oldPassword')} ref={resetPwdRef}>
+      <ResetPwdForm toggleResetStatus={toggleResetStatus} />
+    </CustomModal>
+
+    {/* AI助手 - 除登录页外所有页面都显示 */}
+    {pathname !== '/login' && <AiAssistantWithLive2D />}
+  </Layout>
+);
 };
 export default LayoutApp;
