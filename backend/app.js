@@ -19,6 +19,8 @@ var captchaRouter = require("./routes/captcha");
 var merchantApplicationRouter = require("./routes/merchantApplication");
 var navigationRouter = require("./routes/navigation");
 var businessRouter = require("./routes/business");
+var roleRouter = require("./routes/role");
+var personRouter = require("./routes/person");
 
 // 导入数据库模型（确保数据库连接和模型初始化）
 require("./moudle/index");
@@ -79,6 +81,8 @@ app.use("/captcha", captchaRouter);
 app.use("/merchant-application", merchantApplicationRouter);
 app.use("/api", navigationRouter);
 app.use("/goods", businessRouter);
+app.use("/api/role", roleRouter);
+app.use("/api/person", personRouter);
 // app.use("/system", ); // 注释掉未完成的路由
 
 // 需要认证的路由 - 使用express-jwt

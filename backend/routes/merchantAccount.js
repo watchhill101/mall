@@ -45,13 +45,8 @@ router.get('/list', async (req, res) => {
     const query = {};
 
     if (merchantId) {
-      // 如果提供了merchantId，直接查询
-      if (mongoose.Types.ObjectId.isValid(merchantId)) {
-        query.merchant = merchantId;
-      } else {
-        // 如果不是有效的ObjectId，可能是查询字符串
-        query.merchantId = { $regex: merchantId, $options: 'i' };
-      }
+      // merchantId 参数用于搜索登录账号
+      query.loginAccount = { $regex: merchantId, $options: 'i' };
     }
 
     if (contactPhone) {
@@ -165,6 +160,7 @@ router.get('/detail/:id', async (req, res) => {
 
 // 创建商户账号
 router.post('/create', async (req, res) => {
+  console.log('📝 创建商户账号请求:', req.body);
   try {
     const { loginAccount, userNickname, contactPhone, password, role, merchant, personInCharge } = req.body;
 
@@ -173,6 +169,52 @@ router.post('/create', async (req, res) => {
       return res.status(400).json({
         code: 400,
         message: '请填写所有必填字段',
+        data: {
+          required: ['loginAccount', 'userNickname', 'contactPhone', 'password', 'role', 'merchant', 'personInCharge'],
+          missing: Object.keys({ loginAccount, userNickname, contactPhone, password, role, merchant, personInCharge })
+            .filter(key => !req.body[key])
+        }
+      });
+    }
+
+    // 验证数据格式
+    if (loginAccount.length < 3) {
+      return res.status(400).json({
+        code: 400,
+        message: '登录账号至少需要3个字符',
+        data: null
+      });
+    }
+
+    if (!/^1[3-9]\d{9}$/.test(contactPhone)) {
+      return res.status(400).json({
+        code: 400,
+        message: '请输入正确的手机号码',
+        data: null
+      });
+    }
+
+    // 验证ObjectId格式
+    if (!mongoose.Types.ObjectId.isValid(role)) {
+      return res.status(400).json({
+        code: 400,
+        message: '无效的角色ID',
+        data: null
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(merchant)) {
+      return res.status(400).json({
+        code: 400,
+        message: '无效的商户ID',
+        data: null
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(personInCharge)) {
+      return res.status(400).json({
+        code: 400,
+        message: '无效的负责人ID',
         data: null
       });
     }
@@ -183,7 +225,67 @@ router.post('/create', async (req, res) => {
       return res.status(400).json({
         code: 400,
         message: '登录账号已存在',
-        data: null
+        data: { conflictField: 'loginAccount', value: loginAccount }
+      });
+    }
+
+    // 检查联系电话是否已存在
+    const existingPhone = await MerchantAccount.findOne({ contactPhone });
+    if (existingPhone) {
+      return res.status(400).json({
+        code: 400,
+        message: '联系电话已被使用',
+        data: { conflictField: 'contactPhone', value: contactPhone }
+      });
+    }
+
+    // 验证关联数据是否存在
+    try {
+      const Merchant = require('../moudle/merchant/merchant');
+      const Role = require('../moudle/role/role');
+      const PersonInCharge = require('../moudle/person/personInCharge');
+
+      const [merchantExists, roleExists, personExists] = await Promise.all([
+        Merchant.findById(merchant).select('_id name'),
+        Role.findById(role).select('_id name'),
+        PersonInCharge.findById(personInCharge).select('_id name')
+      ]);
+
+      if (!merchantExists) {
+        return res.status(400).json({
+          code: 400,
+          message: '指定的商户不存在',
+          data: { field: 'merchant', value: merchant }
+        });
+      }
+
+      if (!roleExists) {
+        return res.status(400).json({
+          code: 400,
+          message: '指定的角色不存在',
+          data: { field: 'role', value: role }
+        });
+      }
+
+      if (!personExists) {
+        return res.status(400).json({
+          code: 400,
+          message: '指定的负责人不存在',
+          data: { field: 'personInCharge', value: personInCharge }
+        });
+      }
+
+      console.log('✅ 关联数据验证通过:', {
+        merchant: merchantExists.name,
+        role: roleExists.name,
+        person: personExists.name
+      });
+    } catch (modelError) {
+      console.error('❌ 验证关联数据时出错:', modelError);
+      return res.status(500).json({
+        code: 500,
+        message: '验证关联数据失败',
+        data: { error: modelError.message }
       });
     }
 
@@ -192,9 +294,9 @@ router.post('/create', async (req, res) => {
 
     // 创建新账号
     const newAccount = new MerchantAccount({
-      loginAccount,
-      userNickname,
-      contactPhone,
+      loginAccount: loginAccount.trim(),
+      userNickname: userNickname.trim(),
+      contactPhone: contactPhone.trim(),
       password: hashedPassword,
       role,
       merchant,
@@ -203,6 +305,7 @@ router.post('/create', async (req, res) => {
     });
 
     const savedAccount = await newAccount.save();
+    console.log('✅ 商户账号创建成功:', savedAccount._id);
 
     // 返回创建的账号（不包含密码）
     const populatedAccount = await MerchantAccount.findById(savedAccount._id)
@@ -218,19 +321,50 @@ router.post('/create', async (req, res) => {
       data: populatedAccount
     });
   } catch (error) {
-    console.error('创建商户账号失败:', error);
+    console.error('❌ 创建商户账号失败:', error);
+    console.error('错误详情:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
 
     if (error.code === 11000) {
+      // 处理重复键错误
+      const duplicateField = Object.keys(error.keyPattern)[0];
+      const duplicateValue = error.keyValue[duplicateField];
+
       res.status(400).json({
         code: 400,
-        message: '登录账号已存在',
-        data: null
+        message: `${duplicateField === 'loginAccount' ? '登录账号' : '联系电话'}已存在`,
+        data: {
+          conflictField: duplicateField,
+          value: duplicateValue,
+          error: 'DUPLICATE_KEY'
+        }
+      });
+    } else if (error.name === 'ValidationError') {
+      // 处理数据验证错误
+      const validationErrors = Object.keys(error.errors).map(key => ({
+        field: key,
+        message: error.errors[key].message
+      }));
+
+      res.status(400).json({
+        code: 400,
+        message: '数据验证失败',
+        data: {
+          validationErrors,
+          error: 'VALIDATION_ERROR'
+        }
       });
     } else {
       res.status(500).json({
         code: 500,
-        message: '创建商户账号失败',
-        data: null
+        message: '创建商户账号失败: ' + error.message,
+        data: {
+          error: error.name,
+          details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        }
       });
     }
   }
