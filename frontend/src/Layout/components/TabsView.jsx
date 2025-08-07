@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState, useCallback, Suspense } from 'react';
 import { Tabs, ConfigProvider, Menu, Dropdown, message } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import {
   addTab,
   removeTab,
@@ -11,10 +12,26 @@ import { useNavigate } from 'react-router-dom';
 import Loading from '@/components/Loadings';
 
 const TabsView = React.memo(({ pathname, formatRoutes, selectTab }) => {
+  const { t } = useTranslation();
   // 获取全局tabs
   const tabs = useSelector((state) => state.tabs.tabs);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  // 获取国际化标题
+  const getInternationalizedTitle = useCallback((menuPath) => {
+    // 路径到翻译键的映射
+    const pathToKeyMap = {
+      '/home': 'menu.home',
+      '/shops': 'menu.shops',
+      '/goods': 'menu.goods',
+      '/orders': 'menu.orders',
+      '/system': 'menu.system'
+    };
+    
+    const translationKey = pathToKeyMap[menuPath];
+    return translationKey ? t(translationKey) : menuPath;
+  }, [t]);
 
   // 当前选中tab
   const [activeKey, setActiveKey] = useState();
@@ -37,7 +54,7 @@ const TabsView = React.memo(({ pathname, formatRoutes, selectTab }) => {
       const homeRoute = formatRoutes.find((item) => item.menuPath === '/home');
       if (homeRoute) {
         dispatch(addTab({
-          label: '首页',
+          label: t('menu.home'),
           key: '/home',
           children: (
             <Suspense fallback={<Loading />}>
@@ -94,9 +111,10 @@ const TabsView = React.memo(({ pathname, formatRoutes, selectTab }) => {
         : currentMenu;
 
       if (currentMenu && parentMenu) {
+        const internationalizedTitle = getInternationalizedTitle(tabKey);
         dispatch(
           addTab({
-            label: parentMenu.title, // 使用父级菜单的标题
+            label: internationalizedTitle, // 使用国际化标题
             key: tabKey, // 使用父级路径作为key
             children: (
               <Suspense fallback={<Loading />}>
@@ -108,8 +126,25 @@ const TabsView = React.memo(({ pathname, formatRoutes, selectTab }) => {
         );
       }
     },
-    [formatRoutes, dispatch]
+    [formatRoutes, dispatch, getInternationalizedTitle]
   );
+
+  // 当语言切换时更新所有页签的标题
+  useEffect(() => {
+    const updatedTabs = tabs.map(tab => ({
+      ...tab,
+      label: getInternationalizedTitle(tab.key)
+    }));
+    
+    // 只有当标题确实发生变化时才更新
+    const hasChanged = tabs.some((tab, index) => 
+      tab.label !== updatedTabs[index].label
+    );
+    
+    if (hasChanged) {
+      dispatch(setTabs(updatedTabs));
+    }
+  }, [t, tabs, getInternationalizedTitle, dispatch]);
 
   const closeTab = useCallback((targetKey) => {
     // 不允许关闭首页标签

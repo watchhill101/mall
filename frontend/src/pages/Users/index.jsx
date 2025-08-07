@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Card,
   Table,
@@ -43,6 +44,7 @@ const { Option } = Select;
 const { Search } = Input;
 
 const Users = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState([]);
   const [total, setTotal] = useState(0);
@@ -205,7 +207,7 @@ const Users = () => {
   // 表格列定义
   const columns = [
     {
-      title: '用户名',
+      title: t('userManagement.username'),
       dataIndex: 'username',
       key: 'username',
       render: (text, record) => (
@@ -216,22 +218,22 @@ const Users = () => {
       )
     },
     {
-      title: '邮箱',
+      title: t('userManagement.email'),
       dataIndex: 'email',
       key: 'email'
     },
     {
-      title: '手机号',
+      title: t('userManagement.phone'),
       dataIndex: 'phone',
       key: 'phone',
       render: (phone) => (
-        <Tooltip title={phone || '暂无手机号'}>
+        <Tooltip title={phone || t('merchants.noPhone')}>
           <span>{maskPhone(phone)}</span>
         </Tooltip>
       )
     },
     {
-      title: '角色',
+      title: t('userManagement.role'),
       dataIndex: 'role',
       key: 'role',
       render: (role) => (
@@ -241,7 +243,7 @@ const Users = () => {
       )
     },
     {
-      title: '状态',
+      title: t('userManagement.status'),
       dataIndex: 'status',
       key: 'status',
       render: (status) => (
@@ -307,7 +309,7 @@ const Users = () => {
     <div style={{ padding: '24px' }}>
       <Title level={2} style={{ marginBottom: '24px' }}>
         <TeamOutlined style={{ marginRight: '8px' }} />
-        用户管理
+        {t('userManagement.title')}
       </Title>
 
       {/* 统计卡片 */}

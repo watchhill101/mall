@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>面包屑刷新功能测试</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #e8e8e8;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        .test-button {
+            background: #1890ff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .test-button:hover { 
+            background: #40a9ff; 
+            color: white;
+            text-decoration: none;
+        }
+        .refresh-route {
+            background: #52c41a;
+        }
+        .normal-route {
+            background: #1890ff;
+        }
+        .instructions {
+            background: #e6f7ff;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #91d5ff;
+            margin-bottom: 20px;
+        }
+        .feature-highlight {
+            background: #fff2e8;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #ffbb96;
+            margin-bottom: 20px;
+        }
+        .code-block {
+            background: #f6f8fa;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔄 面包屑刷新功能测试</h1>
+    
+    <div class="feature-highlight">
+        <h3>✨ 新功能说明</h3>
+        <p>现在当你点击面包屑导航中的以下路由时，页面会自动刷新：</p>
+        <ul>
+            <li><strong>/orders</strong> - 订单页面</li>
+            <li><strong>/goods</strong> - 商品页面</li>
+            <li><strong>/shops</strong> - 商家页面</li>
+        </ul>
+        <p>其他路由仍然使用正常的SPA路由跳转（不刷新页面）。</p>
+    </div>
+
+    <div class="instructions">
+        <h3>📋 测试步骤</h3>
+        <ol>
+            <li>确保前端服务运行在 <code>http://localhost:3000</code></li>
+            <li>确保已登录系统</li>
+            <li>先访问一个子页面（如订单列表）</li>
+            <li>观察面包屑导航</li>
+            <li>点击面包屑中的"订单"、"商品"或"商家"链接</li>
+            <li>观察页面是否刷新（地址栏会闪烁，页面会重新加载）</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h3>🧪 测试场景</h3>
+        <p>按照以下顺序测试面包屑刷新功能：</p>
+        
+        <h4>场景1：订单页面面包屑测试</h4>
+        <ol>
+            <li><a href="http://localhost:3000/orders/orders-list" class="test-button" target="_blank">1. 先访问订单列表</a></li>
+            <li>在订单列表页面，点击面包屑中的"订单"链接</li>
+            <li>观察页面是否刷新并跳转到订单主页</li>
+        </ol>
+
+        <h4>场景2：商品页面面包屑测试</h4>
+        <ol>
+            <li><a href="http://localhost:3000/goods/product-list" class="test-button" target="_blank">1. 先访问商品列表</a></li>
+            <li>在商品列表页面，点击面包屑中的"商品"链接</li>
+            <li>观察页面是否刷新并跳转到商品主页</li>
+        </ol>
+
+        <h4>场景3：商家页面面包屑测试</h4>
+        <ol>
+            <li><a href="http://localhost:3000/shops/merchants" class="test-button" target="_blank">1. 先访问商家管理</a></li>
+            <li>在商家管理页面，点击面包屑中的"商家"链接</li>
+            <li>观察页面是否刷新并跳转到商家主页</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h3>🔍 预期行为对比</h3>
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr style="background: #f0f0f0;">
+                <th style="padding: 10px; border: 1px solid #ddd;">路由类型</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">面包屑点击行为</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">页面刷新</th>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;"><span class="test-button refresh-route">/orders</span></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">window.location.href 跳转</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">✅ 是</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;"><span class="test-button refresh-route">/goods</span></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">window.location.href 跳转</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">✅ 是</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;"><span class="test-button refresh-route">/shops</span></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">window.location.href 跳转</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">✅ 是</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;"><span class="test-button normal-route">/home</span></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">React Router navigate</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">❌ 否</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;"><span class="test-button normal-route">其他路由</span></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">React Router navigate</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">❌ 否</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="test-section">
+        <h3>💻 实现代码</h3>
+        <p>面包屑刷新功能的核心实现：</p>
+        <div class="code-block">
+const BreadcrumbLink = useCallback(({ to, children }) => {
+  const refreshRoutes = ['/orders', '/goods', '/shops'];
+  
+  const handleClick = (e) => {
+    e.preventDefault();
+    
+    if (refreshRoutes.includes(to)) {
+      console.log(`🔄 面包屑点击 ${to}，执行强制刷新`);
+      // 使用 window.location.href 进行跳转，这会触发页面刷新
+      window.location.href = to;
+    } else {
+      // 普通路由使用 navigate
+      navigate(to);
+    }
+  };
+
+  return (
+    &lt;a href={to} onClick={handleClick}&gt;
+      {children}
+    &lt;/a&gt;
+  );
+}, [navigate]);
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>📊 测试检查清单</h3>
+        <div id="checklist">
+            <label><input type="checkbox"> 订单页面面包屑点击后页面刷新</label><br>
+            <label><input type="checkbox"> 商品页面面包屑点击后页面刷新</label><br>
+            <label><input type="checkbox"> 商家页面面包屑点击后页面刷新</label><br>
+            <label><input type="checkbox"> 首页面包屑点击后不刷新（正常SPA跳转）</label><br>
+            <label><input type="checkbox"> 其他路由面包屑点击后不刷新</label><br>
+            <label><input type="checkbox"> 控制台显示刷新日志信息</label><br>
+        </div>
+    </div>
+
+    <script>
+        // 添加一些交互功能
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🧪 面包屑刷新功能测试页面已加载');
+            console.log('📝 请按照测试步骤进行测试');
+        });
+    </script>
+</body>
+</html>

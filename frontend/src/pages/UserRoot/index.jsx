@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Card,
   Table,
@@ -48,6 +49,7 @@ const { Option } = Select;
 const { Search } = Input;
 
 const UserRoot = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState([]);
   const [total, setTotal] = useState(0);

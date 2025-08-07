@@ -13,6 +13,7 @@ import {
 
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const { Title } = Typography;
 const { Sider, Content } = Layout;
@@ -20,48 +21,49 @@ const { Sider, Content } = Layout;
 const MerchantLayout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
 
   // 二级导航菜单项
   const menuItems = [
     {
       key: '/shops/merchants',
       icon: <TeamOutlined />,
-      label: '商家管理',
+      label: t('menu.merchants'),
     },
     {
       key: '/shops/merchant-account',
       icon: <UserOutlined />,
-      label: '商家账号',
+      label: t('menu.merchant-account'),
     },
     {
       key: '/shops/withdraw-account',
       icon: <BankOutlined />,
-      label: '提现账号',
+      label: t('menu.withdraw-account'),
     },
     {
       key: '/shops/account-detail',
       icon: <FileTextOutlined />,
-      label: '账户明细',
+      label: t('menu.account-detail'),
     },
     {
       key: '/shops/merchant-withdraw',
       icon: <MoneyCollectOutlined />,
-      label: '商家提现',
+      label: t('menu.merchant-withdraw'),
     },
     {
       key: '/shops/settlement-order',
       icon: <CalculatorOutlined />,
-      label: '结算订单',
+      label: t('menu.settlement-order'),
     },
     {
       key: '/shops/settlement-bill',
       icon: <FileOutlined />,
-      label: '结账单',
+      label: t('menu.settlement-bill'),
     },
     {
       key: '/shops/merchant-application',
       icon: <AuditOutlined />,
-      label: '商家申请',
+      label: t('menu.merchant-application'),
     },
   ];
 
@@ -86,7 +88,7 @@ const MerchantLayout = ({ children }) => {
           <div style={{ padding: '16px', borderBottom: '1px solid #f0f0f0' }}>
             <Title level={4} style={{ margin: 0, color: '#1890ff' }}>
               <ShopOutlined style={{ marginRight: '8px' }} />
-              商家管理
+              {t('menu.merchants')}
             </Title>
           </div>
           <Menu

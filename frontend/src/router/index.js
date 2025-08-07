@@ -70,9 +70,7 @@ const constantRoutes = [
         hidden: false,
         icon: 'ShopOutlined',    // 使用存在的图标
         menuPath: '/shops',
-        redirect: '/shops/merchants', // 添加默认重定向
         children: [
-          { index: true, element: <Navigate to="/shops/merchants" replace /> },
           {
             path: 'merchants',
             title: '商家管理',
@@ -146,9 +144,7 @@ const constantRoutes = [
         hidden: false,
         icon: 'GoodsOutlined',    // 商品图标
         menuPath: '/goods',
-        redirect: '/goods/product-list', // 添加默认重定向
         children: [
-          { index: true, element: <Navigate to="/goods/product-list" replace /> },
           {
             path: 'product-list',
             title: '商品列表',
@@ -238,9 +234,7 @@ const constantRoutes = [
         hidden: false,
         icon: 'OrdersOutlined',    // 订单图标
         menuPath: '/orders',
-        redirect: '/orders/orders-list', // 添加默认重定向
         children: [
-          { index: true, element: <Navigate to="/orders/orders-list" replace /> },
           {
             path: 'orders-list',
             title: '订单',

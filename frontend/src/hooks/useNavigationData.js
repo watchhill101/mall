@@ -5,7 +5,8 @@ import {
   ShoppingOutlined, 
   FileTextOutlined, 
   UserOutlined, 
-  AppstoreOutlined 
+  AppstoreOutlined,
+  SettingOutlined 
 } from '@ant-design/icons';
 import navigationAPI from '@/api/navigation';
 
@@ -153,11 +154,45 @@ export const convertToMenuItems = (navigationData, getItem, Link, SvgIcon, t) =>
     'ShopOutlined': <ShopOutlined />, 
     'GoodsOutlined': <ShoppingOutlined />,
     'OrdersOutlined': <FileTextOutlined />,
+    'SettingOutlined': <SettingOutlined />,
     'UsersOutlined': <UserOutlined />
   };
 
   // URL路径到翻译键的映射
   const getTranslationKey = (url) => {
+    // 特殊路径映射
+    const specialMappings = {
+      '/shops/merchants': 'menu.merchants',
+      '/shops/merchant-account': 'menu.merchant-account',
+      '/shops/withdraw-account': 'menu.withdraw-account',
+      '/shops/account-detail': 'menu.account-detail',
+      '/shops/merchant-withdraw': 'menu.merchant-withdraw',
+      '/shops/settlement-order': 'menu.settlement-order',
+      '/shops/settlement-bill': 'menu.settlement-bill',
+      '/shops/merchant-application': 'menu.merchant-application',
+      '/goods/product-list': 'menu.product-list',
+      '/goods/audit-list': 'menu.audit-list',
+      '/goods/recycle-bin': 'menu.recycle-bin',
+      '/goods/product-category': 'menu.product-category',
+      '/goods/external-product': 'menu.external-product',
+      '/goods/inventory/current-stock': 'menu.current-stock',
+      '/goods/inventory/stock-in': 'menu.stock-in',
+      '/goods/inventory/stock-out': 'menu.stock-out',
+      '/goods/inventory/stocktake': 'menu.stocktake',
+      '/goods/inventory/stock-details': 'menu.stock-details',
+      '/orders/orders-list': 'menu.orders-list',
+      '/orders/afterSales': 'menu.afterSales',
+      '/orders/tallySheet': 'menu.tallySheet',
+      '/orders/SortingList': 'menu.sortingList',
+      '/system/users': 'menu.users',
+      '/system/carousel': 'menu.carousel',
+      '/system/user-permissions': 'menu.user-permissions'
+    };
+    
+    if (specialMappings[url]) {
+      return specialMappings[url];
+    }
+    
     const pathSegments = url.split('/').filter(Boolean);
     if (pathSegments.length === 1) {
       // 一级菜单
@@ -213,6 +248,43 @@ export const generateBreadcrumbNameMap = (navigationData, t) => {
   
   // URL路径到翻译键的映射
   const getTranslationKey = (url) => {
+    // 特殊路径映射
+    const specialMappings = {
+      '/shops/merchants': 'menu.merchants',
+      '/shops/merchant-account': 'menu.merchant-account',
+      '/shops/withdraw-account': 'menu.withdraw-account',
+      '/shops/account-detail': 'menu.account-detail',
+      '/shops/merchant-withdraw': 'menu.merchant-withdraw',
+      '/shops/settlement-order': 'menu.settlement-order',
+      '/shops/settlement-bill': 'menu.settlement-bill',
+      '/shops/merchant-application': 'menu.merchant-application',
+      '/goods/product-list': 'menu.product-list',
+      '/goods/audit-list': 'menu.audit-list',
+      '/goods/recycle-bin': 'menu.recycle-bin',
+      '/goods/product-category': 'menu.product-category',
+      '/goods/external-product': 'menu.external-product',
+      '/goods/inventory/current-stock': 'menu.current-stock',
+      '/goods/inventory/stock-in': 'menu.stock-in',
+      '/goods/inventory/stock-out': 'menu.stock-out',
+      '/goods/inventory/stocktake': 'menu.stocktake',
+      '/goods/inventory/stock-details': 'menu.stock-details',
+      '/orders/orders-list': 'menu.orders-list',
+      '/orders/afterSales': 'menu.afterSales',
+      '/orders/tallySheet': 'menu.tallySheet',
+      '/orders/SortingList': 'menu.sortingList',
+      '/system/users': 'menu.users',
+      '/system/carousel': 'menu.carousel',
+      '/system/user-permissions': 'menu.user-permissions',
+      '/shops': 'menu.shops',
+      '/goods': 'menu.goods',
+      '/orders': 'menu.orders',
+      '/system': 'menu.system'
+    };
+    
+    if (specialMappings[url]) {
+      return specialMappings[url];
+    }
+    
     const pathSegments = url.split('/').filter(Boolean);
     if (pathSegments.length === 1) {
       // 一级菜单

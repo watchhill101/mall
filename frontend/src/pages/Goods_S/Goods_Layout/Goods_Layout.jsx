@@ -12,6 +12,7 @@ import {
   FileTextOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const { Title } = Typography;
 const { Sider, Content } = Layout;
@@ -19,58 +20,59 @@ const { Sider, Content } = Layout;
 const GoodsLayout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
 
   // 二级导航菜单项
   const menuItems = [
     {
       key: '/goods/product-list',
       icon: <ShoppingCartOutlined />,
-      label: '商品列表',
+      label: t('menu.product-list'),
     },
     {
       key: '/goods/audit-list',
       icon: <AuditOutlined />,
-      label: '审核列表',
+      label: t('menu.audit-list'),
     },
     {
       key: '/goods/recycle-bin',
       icon: <DeleteOutlined />,
-      label: '回收站',
+      label: t('menu.recycle-bin'),
     },
     {
       key: '/goods/product-category',
       icon: <AppstoreOutlined />,
-      label: '商品分类',
+      label: t('menu.product-category'),
     },
     {
       key: '/goods/external-product',
       icon: <DatabaseOutlined />,
-      label: '外部商品库',
+      label: t('menu.external-product'),
     },
     {
       key: '/goods/inventory/current-stock',
       icon: <CheckSquareOutlined />,
-      label: '当前库存',
+      label: t('menu.current-stock'),
     },
     {
       key: '/goods/inventory/stock-in',
       icon: <ImportOutlined />,
-      label: '入库',
+      label: t('menu.stock-in'),
     },
     {
       key: '/goods/inventory/stock-out',
       icon: <ExportOutlined />,
-      label: '出库',
+      label: t('menu.stock-out'),
     },
     {
       key: '/goods/inventory/stocktake',
       icon: <CheckSquareOutlined />,
-      label: '盘点',
+      label: t('menu.stocktake'),
     },
     {
       key: '/goods/inventory/stock-details',
       icon: <FileTextOutlined />,
-      label: '出入库明细',
+      label: t('menu.stock-details'),
     },
   ];
 
@@ -97,7 +99,7 @@ const GoodsLayout = ({ children }) => {
           <div style={{ padding: '16px', borderBottom: '1px solid #f0f0f0' }}>
             <Title level={4} style={{ margin: 0, color: '#1890ff' }}>
               <ShoppingCartOutlined style={{ marginRight: '8px' }} />
-              商品管理
+              {t('menu.goods')}
             </Title>
           </div>
           <Menu

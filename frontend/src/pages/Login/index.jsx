@@ -1,8 +1,11 @@
 import React from "react";
+import { useTranslation } from 'react-i18next';
 import styles from "./Login.module.scss";
 import LoginMine from "@/components/Login/login";
 
 const Login = () => {
+  const { t } = useTranslation();
+
   return (
     <div className={styles.login}>
       {/* 动态背景元素 */}
@@ -15,8 +18,8 @@ const Login = () => {
       <div className={styles.loginContainer}>
         <div className={styles.loginCard}>
           <div className={styles.loginHeader}>
-            <h2 className={styles.loginTitle}>后台管理系统</h2>
-            <p className={styles.loginSubtitle}>欢迎回来，请登录您的账户</p>
+            <h2 className={styles.loginTitle}>{t('common.backendManagementSystem')}</h2>
+            <p className={styles.loginSubtitle}>{t('login.welcomeBack')}</p>
           </div>
           <div className={styles.loginContent}>
             <LoginMine />

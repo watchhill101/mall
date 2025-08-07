@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Table,
   Card,
@@ -33,6 +34,7 @@ const { RangePicker } = DatePicker;
 const { Option } = Select;
 
 const OrdersList = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState([]);
   const [total, setTotal] = useState(0);

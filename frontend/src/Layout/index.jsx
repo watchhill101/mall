@@ -182,6 +182,15 @@ const LayoutApp = () => {
     return localStorage.getItem('app-language') || 'zh';
   });
   
+  // 初始化时同步 i18n 语言设置
+  useEffect(() => {
+    const savedLanguage = localStorage.getItem('app-language') || 'zh';
+    if (i18n.language !== savedLanguage) {
+      i18n.changeLanguage(savedLanguage);
+    }
+    setCurrentLanguage(savedLanguage);
+  }, [i18n]);
+  
   // 切换语言
   const toggleLanguage = () => {
     const newLanguage = currentLanguage === 'zh' ? 'en' : 'zh';
@@ -193,7 +202,7 @@ const LayoutApp = () => {
   
   // 获取当前语言显示文本
   const getLanguageText = () => {
-    return t('common.language');
+    return currentLanguage === 'zh' ? '中文' : 'English';
   };
   
   /** 侧边栏菜单 */
@@ -289,6 +298,45 @@ const LayoutApp = () => {
 
     return { ...navigationBreadcrumbMap, ...permissionBreadcrumbMap };
   }, [navigationData, permissionRoutes, t]);
+  // 自定义面包屑链接组件，支持强制刷新
+  const BreadcrumbLink = useCallback(({ to, children }) => {
+    const refreshRoutes = ['/orders', '/goods', '/shops'];
+    const needsRefresh = refreshRoutes.includes(to);
+    
+    const handleClick = (e) => {
+      e.preventDefault();
+      
+      if (needsRefresh) {
+        console.log(`🔄 面包屑点击 ${to}，执行强制刷新`);
+        // 显示加载提示
+        message.loading('页面跳转中...', 0.5);
+        // 使用 window.location.href 进行跳转，这会触发页面刷新
+        window.location.href = to;
+      } else {
+        console.log(`🔗 面包屑点击 ${to}，正常路由跳转`);
+        // 普通路由使用 navigate
+        navigate(to);
+      }
+    };
+
+    return (
+      <a 
+        href={to}
+        onClick={handleClick}
+        style={{ 
+          color: '#1890ff', 
+          textDecoration: 'none',
+          // 为需要刷新的路由添加视觉提示
+          fontWeight: needsRefresh ? 'bold' : 'normal'
+        }}
+        title={needsRefresh ? '点击将刷新页面' : '点击跳转'}
+      >
+        {children}
+        {needsRefresh && <span style={{ fontSize: '10px', marginLeft: '2px' }}>🔄</span>}
+      </a>
+    );
+  }, [navigate, message]);
+
   const breadcrumbItems = useMemo(() => {
     const items = [];
 
@@ -296,7 +344,7 @@ const LayoutApp = () => {
     if (pathname !== "/" && pathname !== "/home") {
       items.push({
         key: "/home",
-        title: <Link to="/home">{t('menu.home')}</Link>,
+        title: <BreadcrumbLink to="/home">{t('menu.home')}</BreadcrumbLink>,
       });
     }
 
@@ -313,17 +361,17 @@ const LayoutApp = () => {
             title: title,
           });
         } else {
-          // 其余用link标签可点击跳转
+          // 其余用自定义面包屑链接组件
           items.push({
             key: url,
-            title: <Link to={url}>{title}</Link>,
+            title: <BreadcrumbLink to={url}>{title}</BreadcrumbLink>,
           });
         }
       }
     });
 
     return items;
-  }, [pathname, pathSnippets, breadcrumbNameMap, t]);
+  }, [pathname, pathSnippets, breadcrumbNameMap, t, BreadcrumbLink]);
   /** tabs栏 */
   // 选择选项卡以后，跳转对应路由
   const selectTab = useCallback(
@@ -736,10 +784,10 @@ const LayoutApp = () => {
           />
         </Content>
       </Layout>
-      <CustomModal title="个人中心" ref={userCenterRef}>
+      <CustomModal title={t('common.personalCenter')} ref={userCenterRef}>
         <UserCenterForm toggleCenterStatus={toggleCenterStatus} />
       </CustomModal>
-      <CustomModal title="重置密码" ref={resetPwdRef}>
+      <CustomModal title={t('system.resetPassword')} ref={resetPwdRef}>
         <ResetPwdForm toggleResetStatus={toggleResetStatus} />
       </CustomModal>
       

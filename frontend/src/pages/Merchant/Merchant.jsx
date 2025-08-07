@@ -24,6 +24,7 @@ import {
     EyeOutlined,
     SearchOutlined,
 } from "@ant-design/icons";
+import { useTranslation } from 'react-i18next';
 import MerchantLayout from "./MerchantLayout";
 import merchantAPI, {
     MERCHANT_STATUS,
@@ -39,6 +40,7 @@ const { Search } = Input;
 const { Option } = Select;
 
 const Merchant = () => {
+    const { t } = useTranslation();
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
@@ -167,50 +169,50 @@ const Merchant = () => {
     // 表格列配置
     const columns = [
         {
-            title: "商家ID",
+            title: t('merchants.merchantId'),
             dataIndex: "id",
             key: "id",
             width: 100,
         },
         {
-            title: "商家名称",
+            title: t('merchants.merchantName'),
             dataIndex: "name",
             key: "name",
             width: 150,
         },
         {
-            title: "商户类型",
+            title: t('merchants.merchantType'),
             dataIndex: "merchantType",
             key: "merchantType",
             width: 100,
-            render: (type) => MERCHANT_TYPE_LABELS[type] || '未知',
+            render: (type) => MERCHANT_TYPE_LABELS[type] || t('common.unknown'),
         },
         {
-            title: "联系人",
+            title: t('merchants.contact'),
             dataIndex: "contact",
             key: "contact",
             width: 100,
         },
         {
-            title: "联系电话",
+            title: t('merchants.phone'),
             dataIndex: "phone",
             key: "phone",
             width: 120,
             render: (phone) => (
-                <Tooltip title={phone || '暂无手机号'}>
+                <Tooltip title={phone || t('merchants.noPhone')}>
                     <span>{maskPhone(phone)}</span>
                 </Tooltip>
             ),
         },
         {
-            title: "服务费率",
+            title: t('merchants.serviceCharge'),
             dataIndex: "serviceCharge",
             key: "serviceCharge",
             width: 100,
             render: (charge) => `${(charge * 100).toFixed(1)}%`,
         },
         {
-            title: "状态",
+            title: t('common.status'),
             dataIndex: "status",
             key: "status",
             width: 100,
@@ -221,19 +223,19 @@ const Merchant = () => {
             ),
         },
         {
-            title: "创建时间",
+            title: t('common.createTime'),
             dataIndex: "createTime",
             key: "createTime",
             width: 120,
         },
         {
-            title: "地址",
+            title: t('merchants.address'),
             dataIndex: "address",
             key: "address",
             ellipsis: true,
         },
         {
-            title: "操作",
+            title: t('common.operation'),
             key: "action",
             width: 200,
             render: (_, record) => (
@@ -243,25 +245,25 @@ const Merchant = () => {
                         icon={<EyeOutlined />}
                         onClick={() => handleView(record)}
                     >
-                        查看
+                        {t('merchants.view')}
                     </Button>
                     <Button
                         type="link"
                         icon={<EditOutlined />}
                         onClick={() => handleEdit(record)}
                     >
-                        编辑
+                        {t('common.edit')}
                     </Button>
                     <Popconfirm
-                        title="确定要删除这个商户吗？"
-                        description={`商户：${record.name}，删除后将无法恢复！`}
+                        title={t('merchants.deleteConfirm')}
+                        description={`${t('merchants.merchant')}：${record.name}，${t('merchants.deleteWarning')}`}
                         onConfirm={() => handleDelete(record)}
-                        okText="确定删除"
-                        cancelText="取消"
+                        okText={t('merchants.confirmDelete')}
+                        cancelText={t('common.cancel')}
                         okType="danger"
                     >
                         <Button type="link" danger icon={<DeleteOutlined />}>
-                            删除
+                            {t('common.delete')}
                         </Button>
                     </Popconfirm>
                 </Space>
@@ -468,10 +470,10 @@ const Merchant = () => {
                 <Card>
                     <div style={{ marginBottom: "16px" }}>
                         <Title level={3} style={{ margin: 0 }}>
-                            商家管理
+                            {t('merchants.title')}
                         </Title>
                         <p style={{ color: "#666", margin: "8px 0 0 0" }}>
-                            管理平台所有商家信息
+                            {t('merchants.description')}
                         </p>
                     </div>
 
@@ -488,7 +490,7 @@ const Merchant = () => {
                     >
                         <Space>
                             <Search
-                                placeholder="搜索商家名称、联系人、电话"
+                                placeholder={t('merchants.searchPlaceholder')}
                                 allowClear
                                 style={{ width: 300 }}
                                 onSearch={handleSearch}
@@ -496,7 +498,7 @@ const Merchant = () => {
                                 enterButton={<SearchOutlined />}
                             />
                             <Select
-                                placeholder="状态筛选"
+                                placeholder={t('merchants.statusFilter')}
                                 style={{ width: 120 }}
                                 allowClear
                                 onChange={handleStatusFilter}
@@ -507,7 +509,7 @@ const Merchant = () => {
                                 ))}
                             </Select>
                             <Select
-                                placeholder="类型筛选"
+                                placeholder={t('merchants.typeFilter')}
                                 style={{ width: 120 }}
                                 allowClear
                                 onChange={handleTypeFilter}
@@ -522,7 +524,7 @@ const Merchant = () => {
                         <Space>
                             {selectedRowKeys.length > 0 && (
                                 <Button danger onClick={handleBatchDelete}>
-                                    批量删除 ({selectedRowKeys.length})
+                                    {t('merchants.batchDelete')} ({selectedRowKeys.length})
                                 </Button>
                             )}
                             <Button
@@ -530,7 +532,7 @@ const Merchant = () => {
                                 icon={<PlusOutlined />}
                                 onClick={handleAdd}
                             >
-                                添加商家
+                                {t('merchants.createMerchant')}
                             </Button>
                         </Space>
                     </div>
@@ -539,10 +541,10 @@ const Merchant = () => {
                     <div style={{ marginBottom: "16px", color: "#666" }}>
                         {(searchText || statusFilter || typeFilter) && (
                             <span>
-                                筛选结果：共找到 {pagination.total} 条记录
-                                {searchText && <span>（关键词："{searchText}"）</span>}
-                                {statusFilter && <span>（状态：{MERCHANT_STATUS_LABELS[statusFilter]}）</span>}
-                                {typeFilter && <span>（类型：{MERCHANT_TYPE_LABELS[typeFilter]}）</span>}
+                                {t('merchants.filterResults')}: {t('merchants.totalRecords', { total: pagination.total })}
+                                {searchText && <span>（{t('merchants.keyword')}："{searchText}"）</span>}
+                                {statusFilter && <span>（{t('merchants.status')}：{MERCHANT_STATUS_LABELS[statusFilter]}）</span>}
+                                {typeFilter && <span>（{t('merchants.type')}：{MERCHANT_TYPE_LABELS[typeFilter]}）</span>}
                             </span>
                         )}
                     </div>
@@ -560,7 +562,11 @@ const Merchant = () => {
                             showSizeChanger: true,
                             showQuickJumper: true,
                             showTotal: (total, range) =>
-                                `第 ${range[0]}-${range[1]} 条/总共 ${total} 条`,
+                                t('merchants.pagination.showTotal', { 
+                                    start: range[0], 
+                                    end: range[1], 
+                                    total: total 
+                                }),
                             pageSizeOptions: ["2", "5", "10", "20"],
                             onShowSizeChange: (current, size) => {
                                 setPagination((prev) => ({
@@ -573,20 +579,20 @@ const Merchant = () => {
                         onChange={handleTableChange}
                         scroll={{ x: 1300 }}
                         locale={{
-                            emptyText: loading ? '加载中...' : '暂无数据'
+                            emptyText: loading ? t('common.loading') : t('common.noData')
                         }}
                     />
                 </Card>
 
                 {/* 添加商家模态框 */}
                 <Modal
-                    title="添加商家"
+                    title={t('merchants.addMerchant')}
                     open={modalVisible}
                     onOk={handleModalOk}
                     onCancel={handleModalCancel}
                     width={900}
-                    okText="确定"
-                    cancelText="取消"
+                    okText={t('common.confirm')}
+                    cancelText={t('common.cancel')}
                     confirmLoading={loading}
                 >
                     <Form
@@ -601,23 +607,23 @@ const Merchant = () => {
                         <Row gutter={16}>
                             <Col span={12}>
                                 <Form.Item
-                                    label="商家名称"
+                                    label={t('merchants.merchantName')}
                                     name="name"
                                     rules={[
-                                        { required: true, message: "请输入商家名称" },
-                                        { max: 50, message: "商家名称不能超过50个字符" },
+                                        { required: true, message: t('merchants.inputMerchantName') },
+                                        { max: 50, message: t('merchants.merchantNameTooLong') },
                                     ]}
                                 >
-                                    <Input placeholder="请输入商家名称" />
+                                    <Input placeholder={t('merchants.inputMerchantName')} />
                                 </Form.Item>
                             </Col>
                             <Col span={12}>
                                 <Form.Item
-                                    label="商户类型"
+                                    label={t('merchants.merchantType')}
                                     name="merchantType"
-                                    rules={[{ required: true, message: "请选择商户类型" }]}
+                                    rules={[{ required: true, message: t('merchants.selectMerchantType') }]}
                                 >
-                                    <Select placeholder="请选择商户类型">
+                                    <Select placeholder={t('merchants.selectMerchantType')}>
                                         {Object.entries(MERCHANT_TYPE_LABELS).map(([value, label]) => (
                                             <Option key={value} value={value}>{label}</Option>
                                         ))}

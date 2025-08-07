@@ -12,6 +12,7 @@ import {
   DeploymentUnitOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const { Title } = Typography;
 const { Sider, Content } = Layout;
@@ -20,48 +21,49 @@ const OrderLayout = ({ children }) => {
   console.log(children);
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
 
   // 二级导航菜单项
   const menuItems = [
     {
       key: '/orders/orders-list',
       icon: <ShoppingCartOutlined />,
-      label: '订单管理',
+      label: t('menu.orders-list'),
     },
     {
       key: '/orders/afterSales',
       icon: <AuditOutlined />,
-      label: '售后管理',
+      label: t('menu.afterSales'),
     },
     {
       key: '/orders/tallySheet',
       icon: <ContainerOutlined />,
-      label: '理货单',
+      label: t('menu.tallySheet'),
     },
     {
       key: '/orders/SortingList',
       icon: <SolutionOutlined />,
-      label: '分拣单',
+      label: t('menu.sortingList'),
     },
     {
       key: '/orders/payment-record',
       icon: <MoneyCollectOutlined />,
-      label: '收款记录',
+      label: t('menu.payment-record'),
     },
     {
       key: '/orders/allocation-order',
       icon: <DeploymentUnitOutlined />,
-      label: '配货单',
+      label: t('menu.allocation-order'),
     },
     {
       key: '/orders/work-order',
       icon: <FileOutlined />,
-      label: '作业单',
+      label: t('menu.work-order'),
     },
     {
       key: '/orders/logistics-order',
       icon: <TruckOutlined />,
-      label: '物流单',
+      label: t('menu.logistics-order'),
     },
   ];
 
@@ -87,7 +89,7 @@ const OrderLayout = ({ children }) => {
           <div style={{ padding: '16px', borderBottom: '1px solid #f0f0f0' }}>
             <Title level={4} style={{ margin: 0, color: '#1890ff' }}>
               <ShopOutlined style={{ marginRight: '8px' }} />
-              订单管理
+              {t('menu.orders')}
             </Title>
           </div>
           <Menu

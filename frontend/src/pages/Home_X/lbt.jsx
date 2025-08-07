@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Button, Card, Tag, Progress, Carousel, Table, Image, Space, Modal, Form, Input, Select, Upload, message } from 'antd'
 import { ArrowLeftOutlined, EnvironmentOutlined, ClockCircleOutlined, CheckCircleOutlined, DashboardOutlined, EditOutlined, DeleteOutlined, EyeOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons'
 
 const LbtPage = () => {
+  const { t } = useTranslation()
   const location = useLocation()
   const navigate = useNavigate()
   const [currentSlide, setCurrentSlide] = useState(0)
