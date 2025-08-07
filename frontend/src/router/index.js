@@ -26,7 +26,7 @@ const ListOfCommodities = lazy(() => import('@/pages/Goods_S/ListOfCommodities')
 const AuditList = lazy(() => import('@/pages/Goods_S/AuditList/AuditList'))
 const RecycleBin = lazy(() => import('@/pages/Goods_S/Trash/Trash')) // 回收站
 const ProductCategory = lazy(() => import('@/pages/Goods_S/Classification of Commodities/index'))
-const ExternalProduct = lazy(() => import('@/pages/Goods_S/ListOfCommodities')) // 暂时使用商品列表组件
+const ExternalProduct = lazy(() => import('@/pages/Goods_S/ExternalProduct/ExternalProduct'))
 const ProductEditor = lazy(() => import('@/pages/Goods_S/ProductEditor/ProductEditor')) //商品编辑
 
 // 库存相关页面

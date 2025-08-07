@@ -11,13 +11,13 @@ const productSchema = new mongoose.Schema(
 
     productName: {
       type: String,
-      required: true
+      required: false
     }, // 商品名称
 
     productCategory: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "ProductCategory",
-      required: true
+      required: false
     }, // 商品分类
 
     businessType: {
