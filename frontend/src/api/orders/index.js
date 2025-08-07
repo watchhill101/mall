@@ -117,6 +117,41 @@ export const getPaymentRecordsList = (params) => {
   return api.get('/payment-records', { params });
 };
 
+// 获取收款记录详情
+export const getPaymentRecordDetail = (id) => {
+  return api.get(`/payment-records/${id}`);
+};
+
+// 创建收款记录
+export const createPaymentRecord = (data) => {
+  return api.post('/payment-records', data);
+};
+
+// 更新收款记录状态
+export const updatePaymentRecordStatus = (id, data) => {
+  return api.put(`/payment-records/${id}/status`, data);
+};
+
+// 处理退款
+export const processRefund = (id, data) => {
+  return api.put(`/payment-records/${id}/refund`, data);
+};
+
+// 批量操作收款记录
+export const batchOperatePaymentRecords = (data) => {
+  return api.post('/payment-records/batch', data);
+};
+
+// 生成测试数据
+export const generatePaymentTestData = (data) => {
+  return api.post('/payment-records/generate-test-data', data);
+};
+
+// 清空测试数据
+export const clearPaymentTestData = () => {
+  return api.delete('/payment-records/clear-test-data');
+};
+
 // ==================== 配货单相关API ====================
 
 // 获取配货单列表
@@ -127,6 +162,16 @@ export const getAllocationOrdersList = (params) => {
 // 获取配货单详情
 export const getAllocationOrderDetail = (id) => {
   return api.get(`/allocation-orders/${id}`);
+};
+
+// 生成配货单测试数据
+export const generateAllocationTestData = (data) => {
+  return api.post('/allocation-orders/generate-test-data', data);
+};
+
+// 清空配货单测试数据
+export const clearAllocationTestData = () => {
+  return api.delete('/allocation-orders/clear-test-data');
 };
 
 // ==================== 作业单相关API ====================
@@ -141,11 +186,36 @@ export const getWorkOrderDetail = (id) => {
   return api.get(`/work-orders/${id}`);
 };
 
+// 生成作业单测试数据
+export const generateWorkOrderTestData = (data) => {
+  return api.post('/work-orders/generate-test-data', data);
+};
+
+// 清空作业单测试数据
+export const clearWorkOrderTestData = () => {
+  return api.delete('/work-orders/clear-test-data');
+};
+
 // ==================== 物流单相关API ====================
 
 // 获取物流单列表
 export const getLogisticsOrdersList = (params) => {
   return api.get('/logistics-orders', { params });
+};
+
+// 获取物流单详情
+export const getLogisticsOrderDetail = (id) => {
+  return api.get(`/logistics-orders/${id}`);
+};
+
+// 生成物流单测试数据
+export const generateLogisticsTestData = (data) => {
+  return api.post('/logistics-orders/generate-test-data', data);
+};
+
+// 清空物流单测试数据
+export const clearLogisticsTestData = () => {
+  return api.delete('/logistics-orders/clear-test-data');
 };
 
 // ==================== 订单导出API ====================
