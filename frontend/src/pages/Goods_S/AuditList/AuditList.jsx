@@ -104,7 +104,7 @@ export default function AuditList() {
         auditStatus: values.auditStatus,
         auditComments: values.auditComments,
         auditTime: new Date(),
-        auditor: '6891c594711bbd8f373159c3', // mock 审核人 ID
+        auditor: '6891c594711bbd8f373159c3',
       });
 
       if (result.success) {
