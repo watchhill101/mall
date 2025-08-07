@@ -71,6 +71,21 @@ export const getAfterSalesList = (params) => {
   return api.get('/aftersales', { params });
 };
 
+// 获取售后详情
+export const getAfterSalesDetail = (id) => {
+  return api.get(`/aftersales/${id}`);
+};
+
+// 更新售后状态
+export const updateAfterSalesStatus = (id, data) => {
+  return api.put(`/aftersales/${id}/status`, data);
+};
+
+// 处理售后申请
+export const processAfterSales = (id, data) => {
+  return api.put(`/aftersales/${id}/process`, data);
+};
+
 // ==================== 理货单相关API ====================
 
 // 获取理货单列表
@@ -131,6 +146,19 @@ export const getWorkOrderDetail = (id) => {
 // 获取物流单列表
 export const getLogisticsOrdersList = (params) => {
   return api.get('/logistics-orders', { params });
+};
+
+// ==================== 订单导出API ====================
+
+// 导出订单数据为Excel
+export const exportOrdersData = (params) => {
+  return axios.post('/api/qiao/orders/export', params, {
+    responseType: 'blob', // 重要：设置响应类型为blob以处理二进制数据
+    timeout: 30000, // 导出可能需要更长时间
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
 };
 
 export default api;

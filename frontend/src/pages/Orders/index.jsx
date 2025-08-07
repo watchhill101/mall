@@ -131,4 +131,6 @@ const Orders = () => {
     </div>
     </OrderLayout>
   );
-};export default Orders;
+};
+
+export default Orders;

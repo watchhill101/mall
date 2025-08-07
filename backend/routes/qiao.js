@@ -1,8 +1,19 @@
 var express = require('express');
 var router = express.Router();
+var ExcelJS = require('exceljs');
 require('../moudle/index'); // 确保用户模型被加载
 var { Product, ProductAudit, ProductRecycleBin, ProductCategory } = require('../moudle/goods');
 var Merchant = require('../moudle/merchant/merchant');
+var { 
+  Order, 
+  AfterSales, 
+  TallyOrder, 
+  SortingOrder, 
+  PaymentRecord, 
+  AllocationOrder, 
+  WorkOrder, 
+  LogisticsOrder 
+} = require('../moudle/goodsOrder/index');
 // ==================== 订单管理相关接口 ====================
 
 // 获取订单列表
@@ -25,25 +36,37 @@ router.get('/orders', async function (req, res, next) {
     
     let query = {};
     
-    // 订单ID或订单号搜索
+    // 订单ID或订单号搜索（支持模糊搜索）
     if (orderId) query.orderId = new RegExp(orderId, 'i');
     if (orderNumber) query.orderId = new RegExp(orderNumber, 'i'); // orderNumber映射到orderId
     
-    // 订单状态筛选
+    // 订单状态筛选（精确匹配）
     if (orderStatus) query.orderStatus = orderStatus;
     
-    // 订单类型筛选
+    // 订单类型筛选（精确匹配）
     if (orderType) query.orderType = orderType;
     
-    // 支付方式筛选
+    // 支付方式筛选（精确匹配）
     if (paymentMethod) query['payment.paymentMethod'] = paymentMethod;
     
-    // 支付状态筛选
+    // 支付状态筛选（精确匹配）
     if (paymentStatus) query['payment.paymentStatus'] = paymentStatus;
     
-    // 客户信息筛选
+    // 客户信息筛选（模糊搜索）
     if (customerName) query['customer.customerName'] = new RegExp(customerName, 'i');
     if (customerPhone) query['customer.customerPhone'] = new RegExp(customerPhone, 'i');
+    
+    // 商品名称搜索（在products数组中的productName字段）
+    if (req.query.productName) {
+      query['products.productName'] = new RegExp(req.query.productName, 'i');
+    }
+    
+    // 金额范围筛选
+    if (req.query.minAmount || req.query.maxAmount) {
+      query['pricing.totalAmount'] = {};
+      if (req.query.minAmount) query['pricing.totalAmount'].$gte = parseFloat(req.query.minAmount);
+      if (req.query.maxAmount) query['pricing.totalAmount'].$lte = parseFloat(req.query.maxAmount);
+    }
     
     // 时间范围筛选
     if (startDate || endDate) {
@@ -377,12 +400,57 @@ router.post('/orders/batch', async function (req, res, next) {
 // 获取售后列表
 router.get('/aftersales', async function (req, res, next) {
   try {
-    const { page = 1, pageSize = 10, salesOrderNumber, orderNumber, status } = req.query;
+    const { 
+      page = 1, 
+      pageSize = 10, 
+      afterSalesId,
+      orderId,
+      status,
+      afterSalesType,
+      customerName,
+      customerPhone,
+      startDate,
+      endDate
+    } = req.query;
     
     let query = {};
-    if (salesOrderNumber) query.salesOrderNumber = new RegExp(salesOrderNumber, 'i');
-    if (orderNumber) query.orderNumber = new RegExp(orderNumber, 'i');
+    
+    // 售后单号搜索（模糊搜索）
+    if (afterSalesId) query.afterSalesId = new RegExp(afterSalesId, 'i');
+    
+    // 原订单号搜索（需要根据订单ID查询）
+    if (orderId) {
+      // 这里需要先根据orderId查找对应的订单，然后用其_id查询售后
+      const orders = await Order.find({ orderId: new RegExp(orderId, 'i') });
+      const orderObjectIds = orders.map(order => order._id);
+      if (orderObjectIds.length > 0) {
+        query.order = { $in: orderObjectIds };
+      } else {
+        // 如果找不到对应订单，返回空结果
+        return res.json({
+          code: 200,
+          data: { list: [], total: 0, page: parseInt(page), pageSize: parseInt(pageSize) },
+          message: '获取售后列表成功'
+        });
+      }
+    }
+    
+    // 状态筛选
     if (status) query.status = status;
+    
+    // 售后类型筛选
+    if (afterSalesType) query.afterSalesType = afterSalesType;
+    
+    // 客户信息筛选
+    if (customerName) query['customer.customerName'] = new RegExp(customerName, 'i');
+    if (customerPhone) query['customer.customerPhone'] = new RegExp(customerPhone, 'i');
+    
+    // 时间范围筛选
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) query.createdAt.$gte = new Date(startDate);
+      if (endDate) query.createdAt.$lte = new Date(endDate);
+    }
 
     const total = await AfterSales.countDocuments(query);
     const afterSales = await AfterSales.find(query)
@@ -401,7 +469,95 @@ router.get('/aftersales', async function (req, res, next) {
       message: '获取售后列表成功'
     });
   } catch (error) {
+    console.error('获取售后列表失败:', error);
     res.status(500).json({ code: 500, message: '获取售后列表失败', error: error.message });
+  }
+});
+
+// 获取售后详情
+router.get('/aftersales/:id', async function (req, res, next) {
+  try {
+    const afterSales = await AfterSales.findById(req.params.id);
+    if (!afterSales) {
+      return res.status(404).json({ code: 404, message: '售后记录不存在' });
+    }
+    res.json({ code: 200, data: afterSales, message: '获取售后详情成功' });
+  } catch (error) {
+    console.error('获取售后详情失败:', error);
+    res.status(500).json({ code: 500, message: '获取售后详情失败', error: error.message });
+  }
+});
+
+// 更新售后状态
+router.put('/aftersales/:id/status', async function (req, res, next) {
+  try {
+    const { status, note } = req.body;
+    
+    if (!status) {
+      return res.status(400).json({ code: 400, message: '状态不能为空' });
+    }
+    
+    const validStatuses = ['pending', 'processing', 'completed', 'rejected'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ code: 400, message: '无效的状态值' });
+    }
+    
+    const afterSales = await AfterSales.findByIdAndUpdate(
+      req.params.id,
+      { 
+        status,
+        'processingInfo.processingNote': note || '',
+        'processingInfo.processingTime': new Date(),
+        updatedAt: new Date()
+      },
+      { new: true }
+    );
+    
+    if (!afterSales) {
+      return res.status(404).json({ code: 404, message: '售后记录不存在' });
+    }
+    
+    res.json({ code: 200, data: afterSales, message: '售后状态更新成功' });
+  } catch (error) {
+    console.error('更新售后状态失败:', error);
+    res.status(500).json({ code: 500, message: '更新售后状态失败', error: error.message });
+  }
+});
+
+// 处理售后申请
+router.put('/aftersales/:id/process', async function (req, res, next) {
+  try {
+    const { solution, refundAmount, refundMethod, processingNote } = req.body;
+    
+    const updateData = {
+      'processingInfo.solution': solution,
+      'processingInfo.processingNote': processingNote,
+      'processingInfo.processingTime': new Date(),
+      updatedAt: new Date()
+    };
+    
+    // 如果有退款信息，更新退款相关字段
+    if (refundAmount !== undefined) {
+      updateData['refundInfo.refundAmount'] = refundAmount;
+      updateData['refundInfo.refundMethod'] = refundMethod || 'original';
+      updateData['refundInfo.refundTime'] = new Date();
+      updateData['refundInfo.refundStatus'] = 'completed';
+    }
+    
+    const afterSales = await AfterSales.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true }
+    );
+    
+    if (!afterSales) {
+      return res.status(404).json({ code: 404, message: '售后记录不存在' });
+    }
+    
+    res.json({ code: 200, data: afterSales, message: '售后处理成功' });
+  } catch (error) {
+    console.error('处理售后失败:', error);
+    res.status(500).json({ code: 500, message: '处理售后失败', error: error.message });
   }
 });
 
@@ -410,11 +566,19 @@ router.get('/aftersales', async function (req, res, next) {
 // 获取理货单列表
 router.get('/tally-orders', async function (req, res, next) {
   try {
-    const { page = 1, pageSize = 10, tallyOrderNumber, status } = req.query;
+    const { page = 1, pageSize = 10, tallyOrderId, status, tallyType, startDate, endDate } = req.query;
     
     let query = {};
-    if (tallyOrderNumber) query.tallyOrderNumber = new RegExp(tallyOrderNumber, 'i');
+    if (tallyOrderId) query.tallyOrderId = new RegExp(tallyOrderId, 'i');
     if (status) query.status = status;
+    if (tallyType) query.tallyType = tallyType;
+    
+    // 时间范围筛选
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) query.createdAt.$gte = new Date(startDate);
+      if (endDate) query.createdAt.$lte = new Date(endDate + ' 23:59:59');
+    }
 
     const total = await TallyOrder.countDocuments(query);
     const tallyOrders = await TallyOrder.find(query)
@@ -433,6 +597,7 @@ router.get('/tally-orders', async function (req, res, next) {
       message: '获取理货单列表成功'
     });
   } catch (error) {
+    console.error('获取理货单列表失败:', error);
     res.status(500).json({ code: 500, message: '获取理货单列表失败', error: error.message });
   }
 });
@@ -450,23 +615,112 @@ router.get('/tally-orders/:id', async function (req, res, next) {
   }
 });
 
+// 新建理货单
+router.post('/tally-orders', async function (req, res, next) {
+  try {
+    const {
+      tallyOrderId,
+      tallyType,
+      warehouse,
+      products,
+      operationInfo,
+      notes
+    } = req.body;
+
+    // 基本参数验证
+    if (!tallyOrderId || !tallyType || !products || products.length === 0) {
+      return res.status(400).json({ 
+        code: 400, 
+        message: '理货单号、理货类型和商品清单不能为空' 
+      });
+    }
+
+    // 检查理货单号是否已存在
+    const existingOrder = await TallyOrder.findOne({ tallyOrderId });
+    if (existingOrder) {
+      return res.status(400).json({ 
+        code: 400, 
+        message: '理货单号已存在' 
+      });
+    }
+
+    // 计算汇总信息
+    const totalPlannedItems = products.length;
+    const totalPlannedQuantity = products.reduce((sum, item) => sum + (item.plannedQuantity || 0), 0);
+
+    // 创建理货单
+    const tallyOrder = new TallyOrder({
+      tallyOrderId,
+      tallyType,
+      warehouse,
+      status: 'pending',
+      products: products.map(product => ({
+        ...product,
+        actualQuantity: 0,
+        condition: product.condition || 'good'
+      })),
+      operationInfo: {
+        ...operationInfo,
+        planStartTime: operationInfo?.planStartTime ? new Date(operationInfo.planStartTime) : null,
+        planEndTime: operationInfo?.planEndTime ? new Date(operationInfo.planEndTime) : null
+      },
+      summary: {
+        totalPlannedItems,
+        totalActualItems: 0,
+        totalPlannedQuantity,
+        totalActualQuantity: 0,
+        differenceQuantity: 0
+      },
+      qualityCheck: {
+        isQualityChecked: false
+      },
+      notes: notes || '',
+      createBy: req.user?.id || null,
+      lastUpdateBy: req.user?.id || null
+    });
+
+    await tallyOrder.save();
+
+    res.json({ 
+      code: 200, 
+      data: tallyOrder, 
+      message: '理货单创建成功' 
+    });
+  } catch (error) {
+    console.error('创建理货单失败:', error);
+    res.status(500).json({ 
+      code: 500, 
+      message: '创建理货单失败', 
+      error: error.message 
+    });
+  }
+});
+
 // ==================== 分拣单相关接口 ====================
 
 // 获取分拣单列表
 router.get('/sorting-orders', async function (req, res, next) {
   try {
-    const { page = 1, pageSize = 10, sortingOrderNumber, status, servicePoint } = req.query;
+    const { page = 1, pageSize = 10, sortingOrderId, status, priority, sortingType, startDate, endDate } = req.query;
     
     let query = {};
-    if (sortingOrderNumber) query.sortingOrderNumber = new RegExp(sortingOrderNumber, 'i');
+    if (sortingOrderId) query.sortingOrderId = new RegExp(sortingOrderId, 'i');
     if (status) query.status = status;
-    if (servicePoint) query.servicePoint = servicePoint;
+    if (priority) query.priority = parseInt(priority);
+    if (sortingType) query.sortingType = sortingType;
+    
+    // 时间范围筛选
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) query.createdAt.$gte = new Date(startDate);
+      if (endDate) query.createdAt.$lte = new Date(endDate + ' 23:59:59');
+    }
 
     const total = await SortingOrder.countDocuments(query);
     const sortingOrders = await SortingOrder.find(query)
       .skip((page - 1) * pageSize)
       .limit(parseInt(pageSize))
-      .sort({ createdAt: -1 });
+      .sort({ priority: -1, createdAt: -1 }); // 优先级高的排前面
 
     res.json({
       code: 200,
@@ -479,6 +733,7 @@ router.get('/sorting-orders', async function (req, res, next) {
       message: '获取分拣单列表成功'
     });
   } catch (error) {
+    console.error('获取分拣单列表失败:', error);
     res.status(500).json({ code: 500, message: '获取分拣单列表失败', error: error.message });
   }
 });
@@ -493,6 +748,441 @@ router.get('/sorting-orders/:id', async function (req, res, next) {
     res.json({ code: 200, data: sortingOrder, message: '获取分拣单详情成功' });
   } catch (error) {
     res.status(500).json({ code: 500, message: '获取分拣单详情失败', error: error.message });
+  }
+});
+
+// 新建分拣单
+router.post('/sorting-orders', async function (req, res, next) {
+  try {
+    const {
+      sortingOrderId,
+      sortingType,
+      priority,
+      warehouse,
+      sourceLocation,
+      targetLocation,
+      products,
+      operationInfo,
+      pickingRoute,
+      notes
+    } = req.body;
+
+    // 基本参数验证
+    if (!sortingOrderId || !sortingType || !products || products.length === 0) {
+      return res.status(400).json({ 
+        code: 400, 
+        message: '分拣单号、分拣类型和商品清单不能为空' 
+      });
+    }
+
+    // 检查分拣单号是否已存在
+    const existingOrder = await SortingOrder.findOne({ sortingOrderId });
+    if (existingOrder) {
+      return res.status(400).json({ 
+        code: 400, 
+        message: '分拣单号已存在' 
+      });
+    }
+
+    // 计算汇总信息
+    const totalItems = products.length;
+    const totalRequiredQuantity = products.reduce((sum, item) => sum + (item.requiredQuantity || 0), 0);
+
+    // 创建分拣单
+    const sortingOrder = new SortingOrder({
+      sortingOrderId,
+      sortingType,
+      priority: priority || 2, // 默认普通优先级
+      warehouse,
+      sourceLocation,
+      targetLocation,
+      status: 'pending',
+      products: products.map((product, index) => ({
+        ...product,
+        pickedQuantity: 0,
+        pickingOrder: product.pickingOrder || index + 1
+      })),
+      operationInfo: {
+        ...operationInfo,
+        planStartTime: operationInfo?.planStartTime ? new Date(operationInfo.planStartTime) : null,
+        planEndTime: operationInfo?.planEndTime ? new Date(operationInfo.planEndTime) : null
+      },
+      pickingRoute: {
+        ...pickingRoute,
+        actualTime: null
+      },
+      qualityCheck: {
+        isChecked: false,
+        errorItems: []
+      },
+      summary: {
+        totalItems,
+        totalRequiredQuantity,
+        totalPickedQuantity: 0,
+        completionRate: 0,
+        accuracy: 0
+      },
+      notes: notes || '',
+      createBy: req.user?.id || null,
+      lastUpdateBy: req.user?.id || null
+    });
+
+    await sortingOrder.save();
+
+    res.json({ 
+      code: 200, 
+      data: sortingOrder, 
+      message: '分拣单创建成功' 
+    });
+  } catch (error) {
+    console.error('创建分拣单失败:', error);
+    res.status(500).json({ 
+      code: 500, 
+      message: '创建分拣单失败', 
+      error: error.message 
+    });
+  }
+});
+
+// 更新理货单状态
+router.put('/tally-orders/:id/status', async function (req, res, next) {
+  try {
+    const { status } = req.body;
+    const tallyOrder = await TallyOrder.findByIdAndUpdate(
+      req.params.id,
+      { 
+        status,
+        ...(status === 'in_progress' && { 'operationInfo.actualStartTime': new Date() }),
+        ...(status === 'completed' && { 'operationInfo.actualEndTime': new Date() })
+      },
+      { new: true }
+    );
+    
+    if (!tallyOrder) {
+      return res.status(404).json({ code: 404, message: '理货单不存在' });
+    }
+    
+    res.json({ code: 200, data: tallyOrder, message: '理货单状态更新成功' });
+  } catch (error) {
+    res.status(500).json({ code: 500, message: '更新理货单状态失败', error: error.message });
+  }
+});
+
+// 完成理货
+router.put('/tally-orders/:id/complete', async function (req, res, next) {
+  try {
+    const { completionNotes } = req.body;
+    const tallyOrder = await TallyOrder.findByIdAndUpdate(
+      req.params.id,
+      { 
+        status: 'completed',
+        'operationInfo.actualEndTime': new Date(),
+        notes: completionNotes
+      },
+      { new: true }
+    );
+    
+    if (!tallyOrder) {
+      return res.status(404).json({ code: 404, message: '理货单不存在' });
+    }
+    
+    res.json({ code: 200, data: tallyOrder, message: '理货完成' });
+  } catch (error) {
+    res.status(500).json({ code: 500, message: '完成理货失败', error: error.message });
+  }
+});
+
+// 更新分拣单状态
+router.put('/sorting-orders/:id/status', async function (req, res, next) {
+  try {
+    const { status } = req.body;
+    const sortingOrder = await SortingOrder.findByIdAndUpdate(
+      req.params.id,
+      { 
+        status,
+        ...(status === 'in_progress' && { 'operationInfo.actualStartTime': new Date() }),
+        ...(status === 'completed' && { 'operationInfo.actualEndTime': new Date() })
+      },
+      { new: true }
+    );
+    
+    if (!sortingOrder) {
+      return res.status(404).json({ code: 404, message: '分拣单不存在' });
+    }
+    
+    res.json({ code: 200, data: sortingOrder, message: '分拣单状态更新成功' });
+  } catch (error) {
+    res.status(500).json({ code: 500, message: '更新分拣单状态失败', error: error.message });
+  }
+});
+
+// 开始拣货
+router.put('/sorting-orders/:id/start-picking', async function (req, res, next) {
+  try {
+    const sortingOrder = await SortingOrder.findByIdAndUpdate(
+      req.params.id,
+      { 
+        status: 'in_progress',
+        'operationInfo.actualStartTime': new Date()
+      },
+      { new: true }
+    );
+    
+    if (!sortingOrder) {
+      return res.status(404).json({ code: 404, message: '分拣单不存在' });
+    }
+    
+    res.json({ code: 200, data: sortingOrder, message: '开始拣货' });
+  } catch (error) {
+    res.status(500).json({ code: 500, message: '开始拣货失败', error: error.message });
+  }
+});
+
+// 完成分拣
+router.put('/sorting-orders/:id/complete', async function (req, res, next) {
+  try {
+    const { completionNotes } = req.body;
+    const sortingOrder = await SortingOrder.findByIdAndUpdate(
+      req.params.id,
+      { 
+        status: 'completed',
+        'operationInfo.actualEndTime': new Date(),
+        notes: completionNotes
+      },
+      { new: true }
+    );
+    
+    if (!sortingOrder) {
+      return res.status(404).json({ code: 404, message: '分拣单不存在' });
+    }
+    
+    res.json({ code: 200, data: sortingOrder, message: '分拣完成' });
+  } catch (error) {
+    res.status(500).json({ code: 500, message: '完成分拣失败', error: error.message });
+  }
+});
+
+// 更新拣货进度
+router.put('/sorting-orders/:id/picking-progress', async function (req, res, next) {
+  try {
+    const { productUpdates } = req.body;
+    
+    if (!productUpdates || !Array.isArray(productUpdates)) {
+      return res.status(400).json({ code: 400, message: '商品更新数据格式错误' });
+    }
+    
+    const sortingOrder = await SortingOrder.findById(req.params.id);
+    if (!sortingOrder) {
+      return res.status(404).json({ code: 404, message: '分拣单不存在' });
+    }
+    
+    // 更新商品拣货数量
+    productUpdates.forEach(update => {
+      const product = sortingOrder.products.find(p => p.productCode === update.productCode);
+      if (product) {
+        product.pickedQuantity = update.pickedQuantity;
+      }
+    });
+    
+    // 重新计算汇总信息
+    const totalPickedQuantity = sortingOrder.products.reduce((sum, product) => sum + product.pickedQuantity, 0);
+    const completionRate = Math.round((totalPickedQuantity / sortingOrder.summary.totalRequiredQuantity) * 100);
+    
+    sortingOrder.summary.totalPickedQuantity = totalPickedQuantity;
+    sortingOrder.summary.completionRate = completionRate;
+    
+    await sortingOrder.save();
+    
+    res.json({ code: 200, data: sortingOrder, message: '拣货进度更新成功' });
+  } catch (error) {
+    console.error('更新拣货进度失败:', error);
+    res.status(500).json({ code: 500, message: '更新拣货进度失败', error: error.message });
+  }
+});
+
+// 开始理货
+router.put('/tally-orders/:id/start', async function (req, res, next) {
+  try {
+    const tallyOrder = await TallyOrder.findByIdAndUpdate(
+      req.params.id,
+      { 
+        status: 'in_progress',
+        'operationInfo.actualStartTime': new Date()
+      },
+      { new: true }
+    );
+    
+    if (!tallyOrder) {
+      return res.status(404).json({ code: 404, message: '理货单不存在' });
+    }
+    
+    res.json({ code: 200, data: tallyOrder, message: '开始理货' });
+  } catch (error) {
+    res.status(500).json({ code: 500, message: '开始理货失败', error: error.message });
+  }
+});
+
+// 更新理货进度
+router.put('/tally-orders/:id/progress', async function (req, res, next) {
+  try {
+    const { productUpdates } = req.body;
+    
+    if (!productUpdates || !Array.isArray(productUpdates)) {
+      return res.status(400).json({ code: 400, message: '商品更新数据格式错误' });
+    }
+    
+    const tallyOrder = await TallyOrder.findById(req.params.id);
+    if (!tallyOrder) {
+      return res.status(404).json({ code: 404, message: '理货单不存在' });
+    }
+    
+    // 更新商品实际数量
+    productUpdates.forEach(update => {
+      const product = tallyOrder.products.find(p => p.productCode === update.productCode);
+      if (product) {
+        product.actualQuantity = update.actualQuantity;
+        if (update.condition) product.condition = update.condition;
+        if (update.notes) product.notes = update.notes;
+      }
+    });
+    
+    // 重新计算汇总信息
+    const totalActualQuantity = tallyOrder.products.reduce((sum, product) => sum + product.actualQuantity, 0);
+    const totalActualItems = tallyOrder.products.filter(product => product.actualQuantity > 0).length;
+    const differenceQuantity = totalActualQuantity - tallyOrder.summary.totalPlannedQuantity;
+    
+    tallyOrder.summary.totalActualQuantity = totalActualQuantity;
+    tallyOrder.summary.totalActualItems = totalActualItems;
+    tallyOrder.summary.differenceQuantity = differenceQuantity;
+    
+    await tallyOrder.save();
+    
+    res.json({ code: 200, data: tallyOrder, message: '理货进度更新成功' });
+  } catch (error) {
+    console.error('更新理货进度失败:', error);
+    res.status(500).json({ code: 500, message: '更新理货进度失败', error: error.message });
+  }
+});
+
+// 批量操作理货单
+router.post('/tally-orders/batch', async function (req, res, next) {
+  try {
+    const { orderIds, action, data } = req.body;
+    
+    if (!orderIds || !Array.isArray(orderIds) || orderIds.length === 0) {
+      return res.status(400).json({ code: 400, message: '理货单ID列表不能为空' });
+    }
+    
+    if (!action) {
+      return res.status(400).json({ code: 400, message: '操作类型不能为空' });
+    }
+    
+    let updateData = { updatedAt: new Date() };
+    let message = '';
+    
+    switch (action) {
+      case 'updateStatus':
+        if (!data.status) {
+          return res.status(400).json({ code: 400, message: '状态不能为空' });
+        }
+        updateData.status = data.status;
+        if (data.status === 'in_progress') {
+          updateData['operationInfo.actualStartTime'] = new Date();
+        } else if (data.status === 'completed') {
+          updateData['operationInfo.actualEndTime'] = new Date();
+        }
+        message = '批量更新理货单状态成功';
+        break;
+        
+      case 'delete':
+        await TallyOrder.deleteMany({ _id: { $in: orderIds } });
+        return res.json({ code: 200, message: '批量删除理货单成功' });
+        
+      default:
+        return res.status(400).json({ code: 400, message: '不支持的操作类型' });
+    }
+    
+    const result = await TallyOrder.updateMany(
+      { _id: { $in: orderIds } },
+      updateData
+    );
+    
+    res.json({ 
+      code: 200, 
+      data: { 
+        modifiedCount: result.modifiedCount,
+        matchedCount: result.matchedCount 
+      }, 
+      message 
+    });
+  } catch (error) {
+    console.error('批量操作理货单失败:', error);
+    res.status(500).json({ code: 500, message: '批量操作理货单失败', error: error.message });
+  }
+});
+
+// 批量操作分拣单
+router.post('/sorting-orders/batch', async function (req, res, next) {
+  try {
+    const { orderIds, action, data } = req.body;
+    
+    if (!orderIds || !Array.isArray(orderIds) || orderIds.length === 0) {
+      return res.status(400).json({ code: 400, message: '分拣单ID列表不能为空' });
+    }
+    
+    if (!action) {
+      return res.status(400).json({ code: 400, message: '操作类型不能为空' });
+    }
+    
+    let updateData = { updatedAt: new Date() };
+    let message = '';
+    
+    switch (action) {
+      case 'updateStatus':
+        if (!data.status) {
+          return res.status(400).json({ code: 400, message: '状态不能为空' });
+        }
+        updateData.status = data.status;
+        if (data.status === 'in_progress') {
+          updateData['operationInfo.actualStartTime'] = new Date();
+        } else if (data.status === 'completed') {
+          updateData['operationInfo.actualEndTime'] = new Date();
+        }
+        message = '批量更新分拣单状态成功';
+        break;
+        
+      case 'updatePriority':
+        if (!data.priority) {
+          return res.status(400).json({ code: 400, message: '优先级不能为空' });
+        }
+        updateData.priority = parseInt(data.priority);
+        message = '批量更新分拣单优先级成功';
+        break;
+        
+      case 'delete':
+        await SortingOrder.deleteMany({ _id: { $in: orderIds } });
+        return res.json({ code: 200, message: '批量删除分拣单成功' });
+        
+      default:
+        return res.status(400).json({ code: 400, message: '不支持的操作类型' });
+    }
+    
+    const result = await SortingOrder.updateMany(
+      { _id: { $in: orderIds } },
+      updateData
+    );
+    
+    res.json({ 
+      code: 200, 
+      data: { 
+        modifiedCount: result.modifiedCount,
+        matchedCount: result.matchedCount 
+      }, 
+      message 
+    });
+  } catch (error) {
+    console.error('批量操作分拣单失败:', error);
+    res.status(500).json({ code: 500, message: '批量操作分拣单失败', error: error.message });
   }
 });
 
@@ -928,6 +1618,333 @@ router.put('/updateProductInfo', async (req, res) => {
             error: error.message
         });
     }
+});
+
+// 导出订单数据为Excel
+router.post('/orders/export', async (req, res) => {
+  try {
+    const { 
+      orderId = '', 
+      orderStatus = '', 
+      customerName = '', 
+      customerPhone = '', 
+      startDate = '', 
+      endDate = '',
+      paymentMethod = '',
+      paymentStatus = '',
+      orderType = '',
+      productName = '',
+      minAmount = '',
+      maxAmount = '',
+      excludeEmpty = true
+    } = req.body;
+    
+    console.log('导出请求参数:', req.body);
+
+    // 构建查询条件，与列表查询完全一致
+    let query = {};
+    
+    // 订单ID搜索（模糊搜索）
+    if (orderId) {
+      query.orderId = new RegExp(orderId, 'i');
+    }
+    
+    // 订单状态筛选（精确匹配）
+    if (orderStatus) {
+      query.orderStatus = orderStatus;
+    }
+    
+    // 订单类型筛选（精确匹配）
+    if (orderType) {
+      query.orderType = orderType;
+    }
+    
+    // 支付方式筛选（精确匹配）
+    if (paymentMethod) {
+      query['payment.paymentMethod'] = paymentMethod;
+    }
+    
+    // 支付状态筛选（精确匹配）
+    if (paymentStatus) {
+      query['payment.paymentStatus'] = paymentStatus;
+    }
+    
+    // 客户信息筛选（模糊搜索）
+    if (customerName) {
+      query['customer.customerName'] = new RegExp(customerName, 'i');
+    }
+    
+    if (customerPhone) {
+      query['customer.customerPhone'] = new RegExp(customerPhone, 'i');
+    }
+    
+    // 商品名称搜索（在products数组中的productName字段）
+    if (productName) {
+      query['products.productName'] = new RegExp(productName, 'i');
+    }
+    
+    // 金额范围筛选
+    if (minAmount || maxAmount) {
+      query['pricing.totalAmount'] = {};
+      if (minAmount) query['pricing.totalAmount'].$gte = parseFloat(minAmount);
+      if (maxAmount) query['pricing.totalAmount'].$lte = parseFloat(maxAmount);
+    }
+    
+    // 时间范围筛选
+    if (startDate && endDate) {
+      query.createdAt = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate + ' 23:59:59')
+      };
+    }
+
+    // 如果需要排除空数据，添加基本数据完整性验证
+    if (excludeEmpty) {
+      query.$and = [
+        { orderId: { $exists: true, $ne: null, $ne: '' } },
+        { orderStatus: { $exists: true, $ne: null, $ne: '' } },
+        { createdAt: { $exists: true, $ne: null } }
+      ];
+    }
+
+    console.log('查询条件:', JSON.stringify(query, null, 2));
+
+    // 查询订单数据
+    const orders = await Order.find(query)
+      .sort({ createdAt: -1 });
+
+    console.log(`查询到 ${orders.length} 条订单数据`);
+
+    // 过滤数据，确保只包含有效的订单
+    const validOrders = orders.filter(order => {
+      // 基本字段验证
+      if (!order.orderId || !order.orderStatus || !order.createdAt) {
+        return false;
+      }
+      
+      // 如果启用排除空数据，进行更严格的验证
+      if (excludeEmpty) {
+        // 检查关键字段是否为空
+        const hasValidCustomer = order.customer && 
+          (order.customer.customerName || order.customer.customerPhone);
+        const hasValidPricing = order.pricing && 
+          (order.pricing.totalAmount !== undefined && order.pricing.totalAmount !== null);
+        
+        // 至少需要有客户信息或定价信息之一
+        return hasValidCustomer || hasValidPricing;
+      }
+      
+      return true;
+    });
+
+    console.log(`过滤后有效订单数据: ${validOrders.length} 条`);
+
+    if (validOrders.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: '没有符合条件的订单数据可导出',
+        code: 'NO_DATA'
+      });
+    }
+
+    // 创建Excel工作簿
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('订单数据');
+
+    // 设置列标题
+    const columns = [
+      { header: '订单编号', key: 'orderId', width: 20 },
+      { header: '客户姓名', key: 'customerName', width: 15 },
+      { header: '联系电话', key: 'customerPhone', width: 15 },
+      { header: '订单金额', key: 'totalAmount', width: 12 },
+      { header: '已支付金额', key: 'paidAmount', width: 12 },
+      { header: '订单状态', key: 'orderStatus', width: 12 },
+      { header: '支付状态', key: 'paymentStatus', width: 12 },
+      { header: '支付方式', key: 'paymentMethod', width: 12 },
+      { header: '订单类型', key: 'orderType', width: 12 },
+      { header: '下单时间', key: 'createdAt', width: 20 },
+      { header: '商品信息', key: 'products', width: 50 }
+    ];
+
+    worksheet.columns = columns;
+
+    // 设置标题行样式
+    const headerRow = worksheet.getRow(1);
+    headerRow.font = { bold: true, color: { argb: 'FFFFFF' } };
+    headerRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: '4472C4' }
+    };
+    headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    headerRow.height = 25;
+
+    // 状态映射
+    const orderStatusMap = {
+      'pending': '待处理',
+      'confirmed': '已确认',
+      'preparing': '备货中',
+      'shipped': '已发货',
+      'delivered': '已送达',
+      'completed': '已完成',
+      'cancelled': '已取消'
+    };
+
+    const paymentStatusMap = {
+      'unpaid': '未支付',
+      'paid': '已支付',
+      'partial': '部分支付',
+      'refunded': '已退款'
+    };
+
+    const orderTypeMap = {
+      'normal': '普通订单',
+      'presale': '预售订单',
+      'group': '团购订单',
+      'flash': '秒杀订单',
+      'exchange': '换货订单'
+    };
+
+    // 添加数据行
+    validOrders.forEach((order, index) => {
+      // 处理商品信息
+      let productsText = '无商品信息';
+      if (order.products && Array.isArray(order.products) && order.products.length > 0) {
+        productsText = order.products.map(product => {
+          const name = product.productName || '未知商品';
+          const quantity = product.quantity || 1;
+          const price = product.price || 0;
+          return `${name}(数量:${quantity}, 单价:¥${price.toFixed(2)})`;
+        }).join('; ');
+      }
+
+      // 安全获取数据，避免空值
+      const rowData = {
+        orderId: order.orderId || `订单${index + 1}`,
+        customerName: order.customer?.customerName || '未填写',
+        customerPhone: order.customer?.customerPhone || '未填写',
+        totalAmount: order.pricing?.totalAmount ? `¥${order.pricing.totalAmount.toFixed(2)}` : '¥0.00',
+        // 对于已支付状态的订单，已支付金额应为订单总金额
+        paidAmount: (() => {
+          if (order.payment?.paymentStatus === 'paid') {
+            // 已支付状态：已支付金额 = 订单总金额
+            return order.pricing?.totalAmount ? `¥${order.pricing.totalAmount.toFixed(2)}` : '¥0.00';
+          } else {
+            // 其他状态：使用实际已支付金额
+            return order.pricing?.paidAmount ? `¥${order.pricing.paidAmount.toFixed(2)}` : '¥0.00';
+          }
+        })(),
+        orderStatus: orderStatusMap[order.orderStatus] || order.orderStatus || '未知状态',
+        paymentStatus: paymentStatusMap[order.payment?.paymentStatus] || order.payment?.paymentStatus || '未知',
+        paymentMethod: order.payment?.paymentMethod || '未设置',
+        orderType: orderTypeMap[order.orderType] || order.orderType || '普通订单',
+        createdAt: order.createdAt ? order.createdAt.toLocaleString('zh-CN') : '时间未知',
+        products: productsText
+      };
+
+      const row = worksheet.addRow(rowData);
+
+      // 设置数据行样式
+      row.alignment = { vertical: 'middle', wrapText: true };
+      row.height = 35;
+      
+      // 为重要数据添加颜色标识
+      if (order.orderStatus === 'pending') {
+        row.getCell('orderStatus').fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FFF2CC' }
+        };
+      }
+      
+      if (order.payment?.paymentStatus === 'unpaid') {
+        row.getCell('paymentStatus').fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FFCCCB' }
+        };
+      }
+    });
+
+    // 设置边框
+    worksheet.eachRow((row, rowNumber) => {
+      row.eachCell((cell) => {
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
+        };
+      });
+    });
+
+    // 添加数据统计信息
+    const totalAmount = validOrders.reduce((sum, order) => 
+      sum + (order.pricing?.totalAmount || 0), 0);
+    
+    // 计算实际已支付金额：对于已支付状态的订单，已支付金额=订单总金额
+    const totalPaid = validOrders.reduce((sum, order) => {
+      if (order.payment?.paymentStatus === 'paid') {
+        // 已支付状态：已支付金额 = 订单总金额
+        return sum + (order.pricing?.totalAmount || 0);
+      } else {
+        // 其他状态：使用实际已支付金额
+        return sum + (order.pricing?.paidAmount || 0);
+      }
+    }, 0);
+
+    // 在末尾添加统计行
+    const summaryRow = worksheet.addRow({
+      orderId: '统计汇总',
+      customerName: `共${validOrders.length}个订单`,
+      customerPhone: '',
+      totalAmount: `¥${totalAmount.toFixed(2)}`,
+      paidAmount: `¥${totalPaid.toFixed(2)}`,
+      orderStatus: '',
+      paymentStatus: '',
+      paymentMethod: '',
+      orderType: '',
+      createdAt: new Date().toLocaleString('zh-CN'),
+      products: `未付金额: ¥${(totalAmount - totalPaid).toFixed(2)}`
+    });
+
+    // 设置统计行样式
+    summaryRow.font = { bold: true };
+    summaryRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'E6E6FA' }
+    };
+
+    // 生成文件名
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const filterInfo = [];
+    if (orderId) filterInfo.push('订单号筛选');
+    if (orderStatus) filterInfo.push('状态筛选');
+    if (customerName) filterInfo.push('客户筛选');
+    if (startDate && endDate) filterInfo.push('时间筛选');
+    
+    const filterSuffix = filterInfo.length > 0 ? `_${filterInfo.join('_')}` : '';
+    const filename = `订单数据${filterSuffix}_${timestamp}.xlsx`;
+
+    // 设置响应头
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`);
+
+    // 写入响应
+    await workbook.xlsx.write(res);
+    res.end();
+
+    console.log(`Excel文件已生成: ${filename}，包含 ${validOrders.length} 条有效记录`);
+
+  } catch (error) {
+    console.error('导出订单数据时发生错误:', error);
+    res.status(500).json({
+      success: false,
+      message: '导出失败',
+      error: error.message
+    });
+  }
 });
 
 module.exports = router;
