@@ -54,13 +54,15 @@ const ListOfCommodities = () => {
     const filteredData = data.filter((item) => item.status !== 'deleted');
     setlist(filteredData);
   };
+  // 删除getGoodsList函数
+  // 修改useEffect初始化加载
   useEffect(() => {
     // 初始加载商品列表
-    getGoodsList();
+    handleSearch();
 
     // 监听刷新事件
     const handleRefresh = () => {
-      getGoodsList();
+      handleSearch();
     };
 
     window.addEventListener('refreshProductList', handleRefresh);
@@ -82,7 +84,11 @@ const ListOfCommodities = () => {
     name: '',
     category: '',
     status: '',
-    inStock: '', // 新增库存商品状态
+    inStock: '',
+    brand: '',
+    minPrice: '',
+    maxPrice: '',
+    businessType: '',
   });
   const [modalVisible, setModalVisible] = useState(false);
   const [editingRecord, setEditingRecord] = useState(null);
@@ -537,9 +543,10 @@ const ListOfCommodities = () => {
                     fontWeight: 500,
                   }}
                 >
-                  商品分类:
+                  分类:
                 </span>
-                <Cascader
+                <Input placeholder="商品分类"></Input>
+                {/* <Cascader
                   options={categoryData}
                   onChange={(value) =>
                     setSearchParams((prev) => ({
@@ -550,7 +557,7 @@ const ListOfCommodities = () => {
                   placeholder="请选择分类"
                   allowClear
                   style={{ flex: 1 }}
-                />
+                /> */}
               </div>
             </Col>
             <Col xs={24} sm={24} md={12} lg={8} xl={6}>
@@ -656,7 +663,7 @@ const ListOfCommodities = () => {
             导出
           </Button>
         </div>
-        {JSON.stringify(list)}
+        {/* {JSON.stringify(list)} */}
         {/* 表格 */}
         <Table
           columns={columns}
