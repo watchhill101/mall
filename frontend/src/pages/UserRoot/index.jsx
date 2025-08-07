@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Card,
   Table,
@@ -7,8 +7,6 @@ import {
   Space,
   Input,
   Select,
-  Modal,
-  Form,
   message,
   Tag,
   Row,
@@ -16,19 +14,14 @@ import {
   Typography,
   Tooltip,
   Drawer,
-  Transfer,
-  Tree,
   Divider,
-  Avatar,
-  Badge
+  Avatar
 } from 'antd';
 import {
   SettingOutlined,
-  SearchOutlined,
   ReloadOutlined,
   UserOutlined,
   SafetyOutlined,
-  KeyOutlined,
   TeamOutlined,
   BranchesOutlined,
   ApartmentOutlined,
@@ -36,13 +29,12 @@ import {
   LockOutlined
 } from '@ant-design/icons';
 import userManagementAPI, {
-  USER_STATUS,
   USER_STATUS_LABELS,
   USER_STATUS_COLORS,
-  USER_ROLES,
   USER_ROLE_LABELS
 } from '@/api/userManagement';
 import { maskPhone } from '@/utils/maskUtils';
+import RoleTemplateModal from '@/components/RoleTemplateModal';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -59,70 +51,20 @@ const UserRoot = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
 
-  // 权限相关状态
+  // 角色相关状态
   const [isPermissionDrawerVisible, setIsPermissionDrawerVisible] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
-  const [permissionTree, setPermissionTree] = useState([]);
-  const [selectedPermissions, setSelectedPermissions] = useState([]);
+  const [selectedPermissions, setSelectedPermissions] = useState([]); // 复用这个状态存储选中的角色
 
-  const [form] = Form.useForm();
+  // 角色模板模态框状态
+  const [isRoleTemplateModalVisible, setIsRoleTemplateModalVisible] = useState(false);
 
-  // 权限树数据 - 模拟数据，实际应该从后端获取
-  const mockPermissionTree = [
-    {
-      title: '系统管理',
-      key: 'system',
-      children: [
-        { title: '用户管理', key: 'user_management' },
-        { title: '角色管理', key: 'role_management' },
-        { title: '权限管理', key: 'permission_management' },
-        { title: '系统设置', key: 'system_settings' }
-      ]
-    },
-    {
-      title: '商家管理',
-      key: 'merchant',
-      children: [
-        { title: '商家列表', key: 'merchant_list' },
-        { title: '商家审核', key: 'merchant_audit' },
-        { title: '商家账号', key: 'merchant_account' },
-        { title: '提现管理', key: 'withdraw_management' }
-      ]
-    },
-    {
-      title: '商品管理',
-      key: 'goods',
-      children: [
-        { title: '商品列表', key: 'goods_list' },
-        { title: '商品分类', key: 'goods_category' },
-        { title: '库存管理', key: 'inventory_management' },
-        { title: '商品审核', key: 'goods_audit' }
-      ]
-    },
-    {
-      title: '订单管理',
-      key: 'order',
-      children: [
-        { title: '订单列表', key: 'order_list' },
-        { title: '售后管理', key: 'after_sales' },
-        { title: '物流管理', key: 'logistics' },
-        { title: '结算管理', key: 'settlement' }
-      ]
-    },
-    {
-      title: '财务管理',
-      key: 'finance',
-      children: [
-        { title: '账户明细', key: 'account_detail' },
-        { title: '提现审核', key: 'withdraw_audit' },
-        { title: '对账管理', key: 'reconciliation' },
-        { title: '财务报表', key: 'financial_report' }
-      ]
-    }
-  ];
+  // const [form] = Form.useForm();
+
+
 
   // 获取用户列表
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
       const response = await userManagementAPI.getUserList({
@@ -132,7 +74,7 @@ const UserRoot = () => {
         status: statusFilter,
         role: roleFilter
       });
-      
+
       if (response && response.data) {
         setUsers(response.data.users || []);
         setTotal(response.data.total || 0);
@@ -143,11 +85,11 @@ const UserRoot = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, pageSize, searchText, statusFilter, roleFilter]);
 
   useEffect(() => {
     fetchUsers();
-  }, [currentPage, pageSize, searchText, statusFilter, roleFilter]);
+  }, [fetchUsers]);
 
   // 搜索处理
   const handleSearch = (value) => {
@@ -166,94 +108,130 @@ const UserRoot = () => {
     setCurrentPage(1);
   };
 
-  // 管理权限
-  const handleManagePermissions = (record) => {
+  // 管理角色
+  const handleManageRole = (record) => {
     setCurrentUser(record);
-    setSelectedPermissions(record.FirstLevelNavigationID || []);
+    // 设置当前用户的角色
+    const currentRoleName = typeof record.role === 'object' && record.role
+      ? record.role.name
+      : record.role || '';
+    setSelectedPermissions([currentRoleName]); // 复用这个状态存储选中的角色
     setIsPermissionDrawerVisible(true);
   };
 
-  // 保存权限
-  const handleSavePermissions = async () => {
+  // 保存角色
+  const handleSaveRole = async () => {
     try {
-      await userManagementAPI.updateUserPermissions(currentUser._id, selectedPermissions);
-      message.success('权限更新成功');
+      const selectedRole = selectedPermissions[0]; // 取第一个选中的角色
+      console.log('🔍 调试信息:', {
+        selectedPermissions,
+        selectedRole,
+        currentUser: currentUser,
+        userId: currentUser?._id
+      });
+
+      if (!selectedRole) {
+        message.error('请选择一个角色');
+        return;
+      }
+
+      if (!currentUser?._id) {
+        message.error('用户信息不完整');
+        return;
+      }
+
+      console.log('🔄 开始更新用户角色:', {
+        userId: currentUser._id,
+        roleName: selectedRole,
+        roleType: typeof selectedRole
+      });
+
+      const response = await userManagementAPI.updateUserRole(currentUser._id, selectedRole);
+      console.log('✅ 角色更新响应:', response);
+
+      message.success('角色更新成功');
       setIsPermissionDrawerVisible(false);
-      fetchUsers();
+
+      // 强制刷新用户列表
+      await fetchUsers();
+      console.log('🔄 用户列表已刷新');
+
     } catch (error) {
-      message.error('权限更新失败');
+      message.error('角色更新失败');
+      console.error('❌ 角色更新失败:', error);
+
+      // 显示更详细的错误信息
+      if (error.response) {
+        console.error('❌ 错误响应:', error.response.data);
+        console.error('❌ 错误状态:', error.response.status);
+      }
     }
   };
 
-  // 权限树选择处理
-  const handlePermissionCheck = (checkedKeys) => {
-    setSelectedPermissions(checkedKeys);
+  // 角色选择处理
+  const handleRoleChange = (value) => {
+    setSelectedPermissions([value]); // 单选角色
   };
 
-  // 快速设置权限
-  const handleQuickPermission = (permissionType) => {
-    let permissions = [];
-    switch (permissionType) {
-      case 'admin':
-        // 管理员拥有所有权限
-        permissions = getAllPermissionKeys();
+  // 快速设置角色
+  const handleQuickRole = (roleName) => {
+    setSelectedPermissions([roleName]);
+  };
+
+  // 打开角色模板管理
+  const handleOpenRoleTemplate = () => {
+    setIsRoleTemplateModalVisible(true);
+  };
+
+  // 角色模板管理成功回调
+  const handleRoleTemplateSuccess = () => {
+    message.success('角色模板配置已更新');
+    // 可以在这里刷新相关数据
+  };
+
+  // 可用角色列表 - 与数据库中的角色名称保持一致
+  const availableRoles = [
+    '超级管理员',
+    '普通管理员',
+    '商家管理员',
+    '普通商家',
+    '审计员',
+    '普通员工'
+  ];
+
+  // 角色状态显示
+  const renderRoleStatus = (role) => {
+    const roleName = typeof role === 'object' && role ? role.name : role;
+
+    let status = 'default';
+    let color = 'default';
+
+    switch (roleName) {
+      case '超级管理员':
+        status = 'success';
+        color = 'red';
         break;
-      case 'merchant':
-        // 商户权限
-        permissions = ['goods_list', 'goods_category', 'inventory_management', 'order_list', 'account_detail'];
+      case '管理员':
+        status = 'processing';
+        color = 'blue';
         break;
-      case 'operator':
-        // 操作员权限
-        permissions = ['order_list', 'after_sales', 'logistics'];
+      case '商户':
+        status = 'warning';
+        color = 'orange';
         break;
-      case 'readonly':
-        // 只读权限
-        permissions = ['goods_list', 'order_list'];
+      case '操作员':
+        status = 'default';
+        color = 'green';
         break;
       default:
-        permissions = [];
-    }
-    setSelectedPermissions(permissions);
-  };
-
-  // 获取所有权限键
-  const getAllPermissionKeys = () => {
-    const keys = [];
-    const traverse = (nodes) => {
-      nodes.forEach(node => {
-        if (node.children) {
-          traverse(node.children);
-        } else {
-          keys.push(node.key);
-        }
-      });
-    };
-    traverse(mockPermissionTree);
-    return keys;
-  };
-
-  // 权限状态显示
-  const renderPermissionStatus = (permissions) => {
-    const total = getAllPermissionKeys().length;
-    const current = permissions ? permissions.length : 0;
-    const percentage = total > 0 ? Math.round((current / total) * 100) : 0;
-    
-    let status = 'default';
-    let text = '无权限';
-    
-    if (percentage === 100) {
-      status = 'success';
-      text = '全部权限';
-    } else if (percentage >= 50) {
-      status = 'processing';
-      text = '部分权限';
-    } else if (percentage > 0) {
-      status = 'warning';
-      text = '少量权限';
+        status = 'default';
+        color = 'default';
     }
 
     return (
-      <Badge status={status} text={`${text} (${current}/${total})`} />
+      <Tag color={color}>
+        {roleName || '未设置角色'}
+      </Tag>
     );
   };
 
@@ -285,16 +263,20 @@ const UserRoot = () => {
       title: '角色',
       dataIndex: 'role',
       key: 'role',
-      render: (role) => (
-        <Tag color="blue" icon={<TeamOutlined />}>
-          {USER_ROLE_LABELS[role] || role}
-        </Tag>
-      )
+      render: (role) => {
+        // 处理角色数据：如果是对象则取name字段，否则直接使用
+        const roleName = typeof role === 'object' && role ? role.name : role;
+        return (
+          <Tag color="blue" icon={<TeamOutlined />}>
+            {USER_ROLE_LABELS[roleName] || roleName || '未设置'}
+          </Tag>
+        );
+      }
     },
     {
-      title: '权限状态',
-      key: 'permissions',
-      render: (_, record) => renderPermissionStatus(record.FirstLevelNavigationID)
+      title: '角色状态',
+      key: 'roleStatus',
+      render: (_, record) => renderRoleStatus(record.role)
     },
     {
       title: '最后登录',
@@ -309,38 +291,38 @@ const UserRoot = () => {
       render: (date) => date ? new Date(date).toLocaleDateString() : '-'
     },
     {
-      title: '权限操作',
+      title: '角色操作',
       key: 'action',
       render: (_, record) => (
         <Space size="small">
-          <Tooltip title="管理权限">
+          <Tooltip title="管理角色">
             <Button
               type="primary"
               size="small"
               icon={<SettingOutlined />}
-              onClick={() => handleManagePermissions(record)}
+              onClick={() => handleManageRole(record)}
             >
-              权限设置
+              角色设置
             </Button>
           </Tooltip>
-          
-          <Tooltip title="快速权限">
+
+          <Tooltip title="快速角色设置">
             <Button.Group size="small">
-              <Tooltip title="设为管理员权限">
-                <Button 
-                  icon={<SafetyOutlined />} 
+              <Tooltip title="设为普通管理员">
+                <Button
+                  icon={<SafetyOutlined />}
                   onClick={() => {
                     setCurrentUser(record);
-                    handleQuickPermission('admin');
+                    handleQuickRole('普通管理员');
                   }}
                 />
               </Tooltip>
-              <Tooltip title="清空所有权限">
-                <Button 
-                  icon={<LockOutlined />} 
+              <Tooltip title="设为普通员工">
+                <Button
+                  icon={<UserOutlined />}
                   onClick={() => {
                     setCurrentUser(record);
-                    handleQuickPermission('none');
+                    handleQuickRole('普通员工');
                   }}
                 />
               </Tooltip>
@@ -369,7 +351,7 @@ const UserRoot = () => {
     <div style={{ padding: '24px' }}>
       <Title level={2} style={{ marginBottom: '24px' }}>
         <SafetyOutlined style={{ marginRight: '8px' }} />
-        用户权限管理
+        用户角色管理
       </Title>
 
       {/* 主要内容卡片 */}
@@ -413,8 +395,8 @@ const UserRoot = () => {
               <Button icon={<ReloadOutlined />} onClick={fetchUsers}>
                 刷新
               </Button>
-              <Button type="primary" icon={<BranchesOutlined />}>
-                权限模板
+              <Button type="primary" icon={<BranchesOutlined />} onClick={handleOpenRoleTemplate}>
+                角色模板
               </Button>
             </Space>
           </Col>
@@ -431,25 +413,25 @@ const UserRoot = () => {
         />
       </Card>
 
-      {/* 权限管理抽屉 */}
+      {/* 角色管理抽屉 */}
       <Drawer
         title={
           <Space>
             <SafetyOutlined />
-            <span>权限管理 - {currentUser?.username}</span>
+            <span>角色管理 - {currentUser?.username}</span>
           </Space>
         }
         placement="right"
         onClose={() => setIsPermissionDrawerVisible(false)}
         open={isPermissionDrawerVisible}
-        width={600}
+        width={500}
         extra={
           <Space>
             <Button onClick={() => setIsPermissionDrawerVisible(false)}>
               取消
             </Button>
-            <Button type="primary" onClick={handleSavePermissions}>
-              保存权限
+            <Button type="primary" onClick={handleSaveRole}>
+              保存角色
             </Button>
           </Space>
         }
@@ -464,7 +446,10 @@ const UserRoot = () => {
                   <div>
                     <Text strong>{currentUser.username}</Text>
                     <Tag color="blue" style={{ marginLeft: 8 }}>
-                      {USER_ROLE_LABELS[currentUser.role]}
+                      {typeof currentUser.role === 'object' && currentUser.role
+                        ? USER_ROLE_LABELS[currentUser.role.name] || currentUser.role.name
+                        : USER_ROLE_LABELS[currentUser.role] || currentUser.role || '未设置'
+                      }
                     </Tag>
                   </div>
                   <Text type="secondary">{currentUser.email}</Text>
@@ -472,94 +457,103 @@ const UserRoot = () => {
               </Space>
             </Card>
 
-            {/* 快速权限设置 */}
-            <Card size="small" title="快速权限设置" style={{ marginBottom: 16 }}>
+            {/* 快速角色设置 */}
+            <Card size="small" title="快速角色设置" style={{ marginBottom: 16 }}>
               <Space wrap>
-                <Button 
-                  size="small" 
+                <Button
+                  size="small"
                   icon={<SafetyOutlined />}
-                  onClick={() => handleQuickPermission('admin')}
+                  onClick={() => handleQuickRole('超级管理员')}
                 >
-                  管理员权限
+                  超级管理员
                 </Button>
-                <Button 
-                  size="small" 
+                <Button
+                  size="small"
+                  icon={<SafetyOutlined />}
+                  onClick={() => handleQuickRole('普通管理员')}
+                >
+                  普通管理员
+                </Button>
+                <Button
+                  size="small"
                   icon={<TeamOutlined />}
-                  onClick={() => handleQuickPermission('merchant')}
+                  onClick={() => handleQuickRole('商家管理员')}
                 >
-                  商户权限
+                  商家管理员
                 </Button>
-                <Button 
-                  size="small" 
+                <Button
+                  size="small"
+                  icon={<TeamOutlined />}
+                  onClick={() => handleQuickRole('普通商家')}
+                >
+                  普通商家
+                </Button>
+                <Button
+                  size="small"
                   icon={<UserOutlined />}
-                  onClick={() => handleQuickPermission('operator')}
+                  onClick={() => handleQuickRole('审计员')}
                 >
-                  操作员权限
+                  审计员
                 </Button>
-                <Button 
-                  size="small" 
+                <Button
+                  size="small"
                   icon={<UnlockOutlined />}
-                  onClick={() => handleQuickPermission('readonly')}
+                  onClick={() => handleQuickRole('普通员工')}
                 >
-                  只读权限
-                </Button>
-                <Button 
-                  size="small" 
-                  danger
-                  icon={<LockOutlined />}
-                  onClick={() => handleQuickPermission('none')}
-                >
-                  清空权限
+                  普通员工
                 </Button>
               </Space>
             </Card>
 
             <Divider />
 
-            {/* 权限树 */}
+            {/* 角色选择 */}
             <div>
               <Title level={5}>
-                <ApartmentOutlined style={{ marginRight: 8 }} />
-                详细权限设置
+                <TeamOutlined style={{ marginRight: 8 }} />
+                角色设置
               </Title>
               <Text type="secondary" style={{ marginBottom: 16, display: 'block' }}>
-                请选择用户可以访问的功能模块
+                请为用户选择一个角色
               </Text>
-              
-              <Tree
-                checkable
-                checkedKeys={selectedPermissions}
-                onCheck={handlePermissionCheck}
-                treeData={mockPermissionTree}
-                style={{ 
-                  background: '#fafafa', 
-                  padding: 16, 
-                  borderRadius: 6,
-                  border: '1px solid #d9d9d9'
-                }}
-              />
+
+              <Select
+                value={selectedPermissions[0] || ''}
+                onChange={handleRoleChange}
+                style={{ width: '100%', marginBottom: 16 }}
+                placeholder="请选择角色"
+                size="large"
+              >
+                {availableRoles.map(role => (
+                  <Select.Option key={role} value={role}>
+                    <Space>
+                      <TeamOutlined />
+                      {role}
+                    </Space>
+                  </Select.Option>
+                ))}
+              </Select>
             </div>
 
-            {/* 当前权限统计 */}
-            <Card size="small" style={{ marginTop: 16 }} title="权限统计">
-              <Row gutter={16}>
-                <Col span={12}>
-                  <Text type="secondary">已选权限:</Text>
-                  <div style={{ fontSize: '24px', color: '#1890ff' }}>
-                    {selectedPermissions.length}
-                  </div>
-                </Col>
-                <Col span={12}>
-                  <Text type="secondary">总权限数:</Text>
-                  <div style={{ fontSize: '24px', color: '#52c41a' }}>
-                    {getAllPermissionKeys().length}
-                  </div>
-                </Col>
-              </Row>
+            {/* 当前角色信息 */}
+            <Card size="small" style={{ marginTop: 16 }} title="角色信息">
+              <div style={{ textAlign: 'center' }}>
+                <Text type="secondary">当前选择的角色:</Text>
+                <div style={{ fontSize: '20px', color: '#1890ff', marginTop: 8 }}>
+                  {selectedPermissions[0] || '未选择'}
+                </div>
+              </div>
             </Card>
           </>
         )}
       </Drawer>
+
+      {/* 角色模板管理模态框 */}
+      <RoleTemplateModal
+        visible={isRoleTemplateModalVisible}
+        onCancel={() => setIsRoleTemplateModalVisible(false)}
+        onSuccess={handleRoleTemplateSuccess}
+      />
     </div>
   );
 };
