@@ -141,10 +141,9 @@ const MerchantAccount = () => {
     try {
       console.log('🔄 开始加载选项数据...');
 
-      // 并行加载商户、角色、负责人选项
-      const [merchantResponse, roleResponse, personResponse] = await Promise.all([
+      // 并行加载商户、负责人选项
+      const [merchantResponse, personResponse] = await Promise.all([
         merchantAPI.getMerchantList({ pageSize: 100 }),
-        fetch('/api/role/list').then(res => res.json()),
         fetch('/api/person/list').then(res => res.json())
       ]);
 
@@ -158,15 +157,14 @@ const MerchantAccount = () => {
         console.log('✅ 商户选项加载成功:', merchants.length, '个');
       }
 
-      // 设置角色选项（使用职位作为角色）
-      if (roleResponse.code === 200) {
-        const roles = roleResponse.data.map(item => ({
-          value: item.name, // 使用职位名称作为值
-          label: item.name
-        }));
-        setRoleOptions(roles);
-        console.log('✅ 角色选项加载成功:', roles.length, '个');
-      }
+      // 设置角色选项（使用预定义角色）
+      setRoleOptions([
+        { value: '超级管理员', label: '超级管理员' },
+        { value: '部门经理', label: '部门经理' },
+        { value: '操作员', label: '操作员' },
+        { value: '财务专员', label: '财务专员' }
+      ]);
+      console.log('✅ 角色选项设置成功');
 
       // 设置负责人选项
       if (personResponse.code === 200) {

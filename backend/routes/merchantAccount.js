@@ -66,7 +66,7 @@ router.get('/list', async (req, res) => {
     const [accounts, total] = await Promise.all([
       MerchantAccount.find(query)
         .populate('merchant', 'name phone address')
-        .populate('role', 'name')
+
         .populate('personInCharge', 'name phone email')
         .skip(skip)
         .limit(parseInt(pageSize))
@@ -131,7 +131,6 @@ router.get('/detail/:id', async (req, res) => {
 
     const account = await MerchantAccount.findById(id)
       .populate('merchant', 'name phone address')
-      .populate('role', 'name')
       .populate('personInCharge', 'name phone email')
       .lean();
 
@@ -310,7 +309,6 @@ router.post('/create', async (req, res) => {
     // 返回创建的账号（不包含密码）
     const populatedAccount = await MerchantAccount.findById(savedAccount._id)
       .populate('merchant', 'name phone address')
-      .populate('role', 'name')
       .populate('personInCharge', 'name phone email')
       .select('-password')
       .lean();
@@ -425,7 +423,6 @@ router.put('/update/:id', async (req, res) => {
       { new: true, runValidators: true }
     )
       .populate('merchant', 'name phone address')
-      .populate('role', 'name')
       .populate('personInCharge', 'name phone email')
       .select('-password')
       .lean();
@@ -519,7 +516,6 @@ router.patch('/status/:id', async (req, res) => {
       { new: true, runValidators: true }
     )
       .populate('merchant', 'name phone address')
-      .populate('role', 'name')
       .populate('personInCharge', 'name phone email')
       .select('-password')
       .lean();

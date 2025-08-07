@@ -9,7 +9,6 @@ const merchantAccountSchema = new mongoose.Schema(
     password: { type: String, required: true }, //密码
 
     // 多重关联关系
-    role: { type: mongoose.Schema.Types.ObjectId, ref: "role", required: true }, //角色 (修正ref)
     merchant: { type: mongoose.Schema.Types.ObjectId, ref: "merchant", required: true }, //关联商家
     personInCharge: { type: mongoose.Schema.Types.ObjectId, ref: "PersonInCharge", required: true }, //关联负责人
 
