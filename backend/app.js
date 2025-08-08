@@ -21,6 +21,7 @@ var merchantApplicationRouter = require("./routes/merchantApplication");
 var navigationRouter = require("./routes/navigation");
 var businessRouter = require("./routes/business");
 var userManagementRouter = require("./routes/userManagement");
+var roleManagementRouter = require("./routes/roleManagement");
 var permissionsRouter = require("./routes/permissions");
 var roleRouter = require("./routes/role");
 var personRouter = require("./routes/person");
@@ -60,15 +61,6 @@ app.use((req, res, next) => {
   }
   next();
 });
-// 添加测试路由（需要token验证）
-app.get("/test", jwtAuth, verifyTokenType, (req, res) => {
-  res.json({
-    code: 200,
-    message: "后端服务正常运行",
-    timestamp: new Date().toISOString(),
-    user: req.auth // 返回当前用户信息以验证token
-  });
-});
 
 // 不需要token验证的路由（公开路由）
 app.use("/", indexRouter);
@@ -93,6 +85,7 @@ app.use("/merchant-application", jwtAuth, verifyTokenType, merchantApplicationRo
 app.use("/api", jwtAuth, verifyTokenType, navigationRouter);
 app.use("/goods", jwtAuth, verifyTokenType, businessRouter);
 app.use("/user-management", jwtAuth, verifyTokenType, userManagementRouter);
+app.use("/api/role-management", jwtAuth, verifyTokenType, roleManagementRouter);
 app.use("/api/permissions", jwtAuth, verifyTokenType, permissionsRouter);
 
 // JWT错误处理中间件

@@ -4,28 +4,6 @@ const SettlementOrder = require('../moudle/merchant/settlementOrder');
 const Merchant = require('../moudle/merchant/merchant');
 const mongoose = require('mongoose');
 
-// 测试接口
-router.get('/test', async (req, res) => {
-  try {
-    console.log('🧪 测试SettlementOrder接口被调用');
-    const count = await SettlementOrder.countDocuments();
-    res.json({
-      code: 200,
-      message: 'SettlementOrder API 正常运行',
-      data: {
-        orderCount: count,
-        timestamp: new Date().toISOString()
-      }
-    });
-  } catch (error) {
-    console.error('❌ 测试接口错误:', error);
-    res.status(500).json({
-      code: 500,
-      message: '测试接口错误: ' + error.message,
-      data: null
-    });
-  }
-});
 
 // 获取结算订单列表（分页查询）
 router.get('/list', async (req, res) => {

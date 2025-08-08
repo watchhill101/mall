@@ -4,6 +4,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const User = require("../moudle/user/user");
+const Role = require("../moudle/role/role");
 const JwtUtil = require("../utils/jwt");
 const CaptchaUtil = require("../utils/captcha");
 const { jwtAuth, getCurrentUser } = require("../utils/ejwt");
@@ -11,7 +12,7 @@ const { jwtAuth, getCurrentUser } = require("../utils/ejwt");
 // 配置multer用于头像上传
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const uploadPath = path.join(__dirname, '../public/uploads/avatars');
+    const uploadPath = path.join(__dirname, "../public/uploads/avatars");
     // 确保目录存在
     if (!fs.existsSync(uploadPath)) {
       fs.mkdirSync(uploadPath, { recursive: true });
@@ -23,16 +24,16 @@ const storage = multer.diskStorage({
     const ext = path.extname(file.originalname);
     const filename = `${req.auth.userId}_${Date.now()}${ext}`;
     cb(null, filename);
-  }
+  },
 });
 
 // 文件过滤器
 const fileFilter = (req, file, cb) => {
   // 检查文件类型
-  if (file.mimetype.startsWith('image/')) {
+  if (file.mimetype.startsWith("image/")) {
     cb(null, true);
   } else {
-    cb(new Error('Only image files are allowed!'), false);
+    cb(new Error("Only image files are allowed!"), false);
   }
 };
 
@@ -41,7 +42,7 @@ const upload = multer({
   fileFilter: fileFilter,
   limits: {
     fileSize: 2 * 1024 * 1024, // 2MB
-  }
+  },
 });
 /**
  * 用户登录
@@ -122,6 +123,8 @@ router.post("/login", async (req, res) => {
 
     // 更新最后登录时间
     await User.findByIdAndUpdate(user._id, { lastLoginAt: new Date() });
+    // 查询角色
+    const role = await Role.findById(user.role);
 
     const response = {
       code: 200,
@@ -131,12 +134,11 @@ router.post("/login", async (req, res) => {
           _id: user._id,
           username: user.username || user.loginAccount,
           loginAccount: user.loginAccount,
-          nickname: user.nickname || '',
-          email: user.email || '',
-          phone: user.phone || '',
+          nickname: user.nickname || "",
+          email: user.email || "",
+          phone: user.phone || "",
           avatar: user.avatar || null,
-          role: user.role,
-          FirstLevelNavigationID: user.FirstLevelNavigationID,
+          role: role,
         },
         ...tokens,
       },
@@ -226,9 +228,9 @@ router.get("/userinfo", jwtAuth, getCurrentUser, (req, res) => {
 router.get("/userinfo/:userId", jwtAuth, async (req, res) => {
   try {
     const { userId } = req.params;
-    
+
     // 查找用户
-    const user = await User.findById(userId).select('-password');
+    const user = await User.findById(userId).select("-password");
     if (!user) {
       return res.status(404).json({
         code: 404,
@@ -245,7 +247,7 @@ router.get("/userinfo/:userId", jwtAuth, async (req, res) => {
         nickname: user.nickname,
         email: user.email,
         phone: user.phone,
-        avatar: user.avatar
+        avatar: user.avatar,
       },
     });
   } catch (error) {
@@ -263,11 +265,12 @@ router.get("/userinfo/:userId", jwtAuth, async (req, res) => {
  */
 router.put("/update-profile", jwtAuth, async (req, res) => {
   try {
-    const { nickname, email, phone } = req.body;
+    const { nickname, email, phone, role } = req.body;
     const userId = req.auth.userId;
 
     // 查找用户
     const user = await User.findById(userId);
+    const Role = await Role.findOne({ name: role });
     if (!user) {
       return res.status(404).json({
         code: 404,
@@ -293,13 +296,13 @@ router.put("/update-profile", jwtAuth, async (req, res) => {
     if (nickname !== undefined) updateData.nickname = nickname;
     if (email !== undefined) updateData.email = email;
     if (phone !== undefined) updateData.phone = phone;
+    if (Role !== undefined) updateData.role = Role._id;
     updateData.updatedAt = new Date();
 
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      updateData,
-      { new: true, select: '-password' }
-    );
+    const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
+      new: true,
+      select: "-password",
+    });
 
     res.json({
       code: 200,
@@ -309,7 +312,7 @@ router.put("/update-profile", jwtAuth, async (req, res) => {
         nickname: updatedUser.nickname,
         email: updatedUser.email,
         phone: updatedUser.phone,
-        avatar: updatedUser.avatar
+        avatar: updatedUser.avatar,
       },
     });
   } catch (error) {
@@ -325,64 +328,69 @@ router.put("/update-profile", jwtAuth, async (req, res) => {
 /**
  * 上传头像
  */
-router.post("/upload-avatar", jwtAuth, upload.single('avatar'), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({
-        code: 400,
-        message: "请选择要上传的图片",
-        data: null,
-      });
-    }
-
-    const userId = req.auth.userId;
-    const avatarPath = `uploads/avatars/${req.file.filename}`;
-
-    // 查找用户并删除旧头像
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({
-        code: 404,
-        message: "用户不存在",
-        data: null,
-      });
-    }
-
-    // 删除旧头像文件
-    if (user.avatar) {
-      const oldAvatarPath = path.join(__dirname, '../public', user.avatar);
-      if (fs.existsSync(oldAvatarPath)) {
-        fs.unlinkSync(oldAvatarPath);
+router.post(
+  "/upload-avatar",
+  jwtAuth,
+  upload.single("avatar"),
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({
+          code: 400,
+          message: "请选择要上传的图片",
+          data: null,
+        });
       }
+
+      const userId = req.auth.userId;
+      const avatarPath = `uploads/avatars/${req.file.filename}`;
+
+      // 查找用户并删除旧头像
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({
+          code: 404,
+          message: "用户不存在",
+          data: null,
+        });
+      }
+
+      // 删除旧头像文件
+      if (user.avatar) {
+        const oldAvatarPath = path.join(__dirname, "../public", user.avatar);
+        if (fs.existsSync(oldAvatarPath)) {
+          fs.unlinkSync(oldAvatarPath);
+        }
+      }
+
+      // 更新用户头像路径
+      const updatedUser = await User.findByIdAndUpdate(
+        userId,
+        {
+          avatar: avatarPath,
+          updatedAt: new Date(),
+        },
+        { new: true, select: "-password" }
+      );
+
+      res.json({
+        code: 200,
+        message: "头像上传成功",
+        data: {
+          avatar: avatarPath,
+          avatarUrl: `${req.protocol}://${req.get("host")}/${avatarPath}`,
+        },
+      });
+    } catch (error) {
+      console.error("❌ 头像上传错误:", error);
+      res.status(500).json({
+        code: 500,
+        message: "头像上传失败: " + error.message,
+        data: null,
+      });
     }
-
-    // 更新用户头像路径
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      { 
-        avatar: avatarPath,
-        updatedAt: new Date()
-      },
-      { new: true, select: '-password' }
-    );
-
-    res.json({
-      code: 200,
-      message: "头像上传成功",
-      data: {
-        avatar: avatarPath,
-        avatarUrl: `${req.protocol}://${req.get('host')}/${avatarPath}`
-      },
-    });
-  } catch (error) {
-    console.error("❌ 头像上传错误:", error);
-    res.status(500).json({
-      code: 500,
-      message: "头像上传失败: " + error.message,
-      data: null,
-    });
   }
-});
+);
 
 /**
  * 修改密码

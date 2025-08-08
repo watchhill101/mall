@@ -28,10 +28,10 @@ import {
   Alert,
   message,
 } from "antd";
-import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "@/store/reducers/userSlice";
 import { useNavigate, Link, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { getToken, getRefreshToken } from "@/utils/auth";
 // 导入css（未模块化）
 import "./Layout.scss";
@@ -50,6 +50,25 @@ import {
   convertToMenuItems,
   generateBreadcrumbNameMap,
 } from "@/hooks/useNavigationData";
+
+// 错误边界组件
+const ComponentErrorBoundary = ({ children, fallback }) => {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setHasError(false);
+  }, [children]);
+
+  if (hasError) {
+    return fallback || (
+      <div style={{ padding: "20px", textAlign: "center", color: "#999" }}>
+        组件加载失败，请刷新页面重试
+      </div>
+    );
+  }
+
+  return children;
+};
 
 const { Header, Sider, Content } = Layout;
 // 提取底层路由方法
@@ -175,36 +194,6 @@ const LayoutApp = () => {
   const changeTheme = (value) => {
     setThemeVari(value ? "light" : "dark");
   };
-  
-  // 语言状态管理
-  const [currentLanguage, setCurrentLanguage] = useState(() => {
-    // 从localStorage读取保存的语言设置，默认为中文
-    return localStorage.getItem('app-language') || 'zh';
-  });
-  
-  // 初始化时同步 i18n 语言设置
-  useEffect(() => {
-    const savedLanguage = localStorage.getItem('app-language') || 'zh';
-    if (i18n.language !== savedLanguage) {
-      i18n.changeLanguage(savedLanguage);
-    }
-    setCurrentLanguage(savedLanguage);
-  }, [i18n]);
-  
-  // 切换语言
-  const toggleLanguage = () => {
-    const newLanguage = currentLanguage === 'zh' ? 'en' : 'zh';
-    setCurrentLanguage(newLanguage);
-    localStorage.setItem('app-language', newLanguage);
-    i18n.changeLanguage(newLanguage); // 使用 i18n 切换语言
-    message.success(t(newLanguage === 'zh' ? 'common.switchedToZh' : 'common.switchedToEn'));
-  };
-  
-  // 获取当前语言显示文本
-  const getLanguageText = () => {
-    return currentLanguage === 'zh' ? '中文' : 'English';
-  };
-  
   /** 侧边栏菜单 */
   const { pathname } = useLocation();
   const permissionRoutes = useSelector(
@@ -240,7 +229,7 @@ const LayoutApp = () => {
     return pathname;
   }, [pathname]);
   const menuItems = useMemo(() => {
-    // 使用导航数据生成菜单项，传递 t 函数用于国际化
+    // 使用导航数据生成菜单项
     const navigationMenuItems = convertToMenuItems(
       navigationData,
       getItem,
@@ -285,12 +274,16 @@ const LayoutApp = () => {
         }
       }
 
+      // 执行路由跳转
       navigate(key);
+    } else {
+      console.warn(`无效的路由路径: ${key}`);
+      message.warning('该功能暂未开放');
     }
   };
   /** 面包屑 */
   const breadcrumbNameMap = useMemo(() => {
-    // 使用导航数据生成面包屑名称映射，传递 t 函数用于国际化
+    // 使用导航数据生成面包屑名称映射
     const navigationBreadcrumbMap = generateBreadcrumbNameMap(navigationData, t);
 
     // 合并导航面包屑和权限路由面包屑
@@ -298,45 +291,6 @@ const LayoutApp = () => {
 
     return { ...navigationBreadcrumbMap, ...permissionBreadcrumbMap };
   }, [navigationData, permissionRoutes, t]);
-  // 自定义面包屑链接组件，支持强制刷新
-  const BreadcrumbLink = useCallback(({ to, children }) => {
-    const refreshRoutes = ['/orders', '/goods', '/shops'];
-    const needsRefresh = refreshRoutes.includes(to);
-    
-    const handleClick = (e) => {
-      e.preventDefault();
-      
-      if (needsRefresh) {
-        console.log(`🔄 面包屑点击 ${to}，执行强制刷新`);
-        // 显示加载提示
-        message.loading('页面跳转中...', 0.5);
-        // 使用 window.location.href 进行跳转，这会触发页面刷新
-        window.location.href = to;
-      } else {
-        console.log(`🔗 面包屑点击 ${to}，正常路由跳转`);
-        // 普通路由使用 navigate
-        navigate(to);
-      }
-    };
-
-    return (
-      <a 
-        href={to}
-        onClick={handleClick}
-        style={{ 
-          color: '#1890ff', 
-          textDecoration: 'none',
-          // 为需要刷新的路由添加视觉提示
-          fontWeight: needsRefresh ? 'bold' : 'normal'
-        }}
-        title={needsRefresh ? '点击将刷新页面' : '点击跳转'}
-      >
-        {children}
-        {needsRefresh && <span style={{ fontSize: '10px', marginLeft: '2px' }}>🔄</span>}
-      </a>
-    );
-  }, [navigate, message]);
-
   const breadcrumbItems = useMemo(() => {
     const items = [];
 
@@ -344,7 +298,7 @@ const LayoutApp = () => {
     if (pathname !== "/" && pathname !== "/home") {
       items.push({
         key: "/home",
-        title: <BreadcrumbLink to="/home">{t('menu.home')}</BreadcrumbLink>,
+        title: <Link to="/home">{t('menu.home')}</Link>,
       });
     }
 
@@ -361,17 +315,17 @@ const LayoutApp = () => {
             title: title,
           });
         } else {
-          // 其余用自定义面包屑链接组件
+          // 其余用link标签可点击跳转
           items.push({
             key: url,
-            title: <BreadcrumbLink to={url}>{title}</BreadcrumbLink>,
+            title: <Link to={url}>{title}</Link>,
           });
         }
       }
     });
 
     return items;
-  }, [pathname, pathSnippets, breadcrumbNameMap, t, BreadcrumbLink]);
+  }, [pathname, pathSnippets, breadcrumbNameMap]);
   /** tabs栏 */
   // 选择选项卡以后，跳转对应路由
   const selectTab = useCallback(
@@ -380,266 +334,151 @@ const LayoutApp = () => {
     },
     [navigate]
   );
-  // 格式化路由数组
-  const Home = lazy(() => import("@/pages/Home_X"));
-  const Shops = lazy(() => import("@/pages/Shops"));
-  const Goods = lazy(() => import("@/pages/Goods"));
-  const Orders = lazy(() => import("@/pages/Orders"));
-  const Users = lazy(() => import("@/pages/Users"));
-  const Lbt = lazy(() => import("@/pages/Home_X/lbt"));
-  const Merchants = lazy(() => import("@/pages/Merchant/Merchant"));
-  const UserRoot = lazy(() => import("@/pages/UserRoot"));
-  const MerchantAccount = lazy(() =>
-    import("@/pages/Merchant/MerchantAccount")
-  );
-  const WithdrawAccount = lazy(() =>
-    import("@/pages/Merchant/WithdrawAccount")
-  );
-  const AccountDetail = lazy(() => import("@/pages/Merchant/AccountDetail"));
-  const MerchantWithdraw = lazy(() =>
-    import("@/pages/Merchant/MerchantWithdraw")
-  );
-  const SettlementOrder = lazy(() =>
-    import("@/pages/Merchant/SettlementOrder")
-  );
-  const SettlementBill = lazy(() => import("@/pages/Merchant/SettlementBill"));
-  const MerchantApplication = lazy(() =>
-    import("@/pages/Merchant/MerchantApplication")
-  );
+  // 动态组件注册表 - 集中管理所有路由组件
+  const componentRegistry = useMemo(() => {
+    // 懒加载组件
+    const Home = lazy(() => import("@/pages/Home_X"));
+    const Shops = lazy(() => import("@/pages/Shops"));
+    const Goods = lazy(() => import("@/pages/Goods"));
+    const Orders = lazy(() => import("@/pages/Orders"));
+    const Users = lazy(() => import("@/pages/Users"));
+    const Lbt = lazy(() => import("@/pages/Home_X/lbt"));
+    const Merchants = lazy(() => import("@/pages/Merchant/Merchant"));
+    const UserRoot = lazy(() => import("@/pages/UserRoot"));
+    const MerchantAccount = lazy(() => import("@/pages/Merchant/MerchantAccount"));
+    const WithdrawAccount = lazy(() => import("@/pages/Merchant/WithdrawAccount"));
+    const AccountDetail = lazy(() => import("@/pages/Merchant/AccountDetail"));
+    const MerchantWithdraw = lazy(() => import("@/pages/Merchant/MerchantWithdraw"));
+    const SettlementOrder = lazy(() => import("@/pages/Merchant/SettlementOrder"));
+    const SettlementBill = lazy(() => import("@/pages/Merchant/SettlementBill"));
+    const MerchantApplication = lazy(() => import("@/pages/Merchant/MerchantApplication"));
+    const ListOfCommodities = lazy(() => import("@/pages/Goods_S/ListOfCommodities"));
+    const ProductCategory = lazy(() => import("@/pages/Goods_S/Classification of Commodities/index"));
+    const RecycleBin = lazy(() => import("@/pages/Goods_S/Trash/Trash"));
+    const CurrentStock = lazy(() => import("@/pages/Goods_S/inventory/CurrentInventory/CurrentInventory"));
+    const StockIn = lazy(() => import("@/pages/Goods_S/inventory/enterTheWarehouse/enterTheWarehouse"));
+    const StockOut = lazy(() => import("@/pages/Goods_S/inventory/exWarehouse/exWarehouse"));
+    const Stocktake = lazy(() => import("@/pages/Goods_S/inventory/stocktaking/stocktaking"));
+    const StockDetails = lazy(() => import("@/pages/Goods_S/inventory/DetailsOfStockInAndstockOut/DetailsOfStockInAndstockOut"));
+    const OrdersList = lazy(() => import("@/pages/order_S/Orders"));
+    const AfterSales = lazy(() => import("@/pages/order_S/afterSales"));
+    const TallySheet = lazy(() => import("@/pages/order_S/tallySheet"));
+    const SortingList = lazy(() => import("@/pages/order_S/sortingOrders"));
 
-  // const DeviceManagement = lazy(() =>
-  //   import("@/pages/Merchant/DeviceManagement")  // 临时注释，组件不存在
-  // );
+    // 返回路由到组件的映射
+    return {
+      // 主页面
+      '/home': Home,
+      '/shops': Shops,
+      '/goods': Goods,
+      '/orders': Orders,
+      '/system': Users,
 
-  // 导入商品相关组件
-  const ListOfCommodities = lazy(() =>
-    import("@/pages/Goods_S/ListOfCommodities")
-  );
-  const AuditList = lazy(() =>
-    import("@/pages/Goods_S/AuditList")
-  );
-  const ExternalProduct = lazy(() =>
-    import("@/pages/Goods_S/ExternalProduct")
-  );
-  const ProductCategory = lazy(() =>
-    import("@/pages/Goods_S/Classification of Commodities/index")
-  );
-  const RecycleBin = lazy(() => import("@/pages/Goods_S/Trash/Trash"));
-  const CurrentStock = lazy(() =>
-    import("@/pages/Goods_S/inventory/CurrentInventory/CurrentInventory")
-  );
-  const StockIn = lazy(() =>
-    import("@/pages/Goods_S/inventory/enterTheWarehouse/enterTheWarehouse")
-  );
-  const StockOut = lazy(() =>
-    import("@/pages/Goods_S/inventory/exWarehouse/exWarehouse")
-  );
-  const Stocktake = lazy(() =>
-    import("@/pages/Goods_S/inventory/stocktaking/stocktaking")
-  );
-  const StockDetails = lazy(() =>
-    import(
-      "@/pages/Goods_S/inventory/DetailsOfStockInAndstockOut/DetailsOfStockInAndstockOut"
-    )
-  );
+      // 商家相关路由
+      '/shops/merchants': Merchants,
+      '/shops/merchant-account': MerchantAccount,
+      '/shops/withdraw-account': WithdrawAccount,
+      '/shops/account-detail': AccountDetail,
+      '/shops/merchant-withdraw': MerchantWithdraw,
+      '/shops/settlement-order': SettlementOrder,
+      '/shops/settlement-bill': SettlementBill,
+      '/shops/merchant-application': MerchantApplication,
+      '/shops/device-management': () => (
+        <div style={{ padding: "20px", textAlign: "center" }}>
+          设备管理功能开发中...
+        </div>
+      ),
 
-  // 导入订单相关组件
-  const OrdersList = lazy(() => import("@/pages/order_S/ordersList"));
-  const AfterSales = lazy(() => import("@/pages/order_S/afterSales"));
-  const TallySheet = lazy(() => import("@/pages/order_S/tallySheet"));
-  const SortingList = lazy(() => import("@/pages/order_S/sortingOrders"));
-  const PaymentRecord = lazy(() => import("@/pages/order_S/paymentRecord"));
-  const AllocationOrder = lazy(() => import("@/pages/order_S/allocationOrder"));
-  const WorkOrder = lazy(() => import("@/pages/order_S/workOrder"));
-  const LogisticsOrder = lazy(() => import("@/pages/order_S/logisticsOrder"));
+      // 商品相关路由
+      '/goods/product-list': ListOfCommodities,
+      '/goods/audit-list': ListOfCommodities,
+      '/goods/external-product': ListOfCommodities,
+      '/goods/product-category': ProductCategory,
+      '/goods/recycle-bin': RecycleBin,
+      '/goods/inventory/current-stock': CurrentStock,
+      '/goods/inventory/stock-in': StockIn,
+      '/goods/inventory/stock-out': StockOut,
+      '/goods/inventory/stocktake': Stocktake,
+      '/goods/inventory/stock-details': StockDetails,
+
+      // 订单相关路由
+      '/orders/orders-list': OrdersList,
+      '/orders/afterSales': AfterSales,
+      '/orders/tallySheet': TallySheet,
+      '/orders/SortingList': SortingList,
+
+      // 系统设置相关路由
+      '/system/users': Users,
+      '/system/carousel': Lbt,
+      '/system/user-permissions': UserRoot,
+    };
+  }, []);
 
 
   const formatRoutes = useMemo(() => {
-    // 基础路由
-    const baseRoutes = [
-      { title: "首页", menuPath: "/home", element: <Home /> },
-      { title: "商家", menuPath: "/shops", element: <Shops /> },
-      { title: "商品", menuPath: "/goods", element: <Goods /> },
-      { title: "订单", menuPath: "/orders", element: <Orders /> },
-      { title: "系统设置", menuPath: "/system", element: <Users /> },
-    ];
+    const routes = [];
 
-    // 从导航数据动态生成子路由
-    const navigationRoutes = [];
+    // 从导航数据动态生成路由
     navigationData.forEach((nav) => {
+      // 添加一级导航路由
+      const MainComponent = componentRegistry[nav.url];
+      if (MainComponent) {
+        routes.push({
+          title: nav.title,
+          menuPath: nav.url,
+          element: React.createElement(MainComponent),
+        });
+      }
+
+      // 添加二级导航路由
       if (nav.children && nav.children.length > 0) {
         nav.children.forEach((child) => {
-          let element = null;
-
-          // 根据URL路径匹配对应的组件
-          switch (child.url) {
-            // 商家相关路由
-            case "/shops/merchants":
-              element = <Merchants />;
-              break;
-            case "/shops/merchant-account":
-              element = <MerchantAccount />;
-              break;
-            case "/shops/withdraw-account":
-              element = <WithdrawAccount />;
-              break;
-            case "/shops/account-detail":
-              element = <AccountDetail />;
-              break;
-            case "/shops/merchant-withdraw":
-              element = <MerchantWithdraw />;
-              break;
-            case "/shops/settlement-order":
-              element = <SettlementOrder />;
-              break;
-            case "/shops/settlement-bill":
-              element = <SettlementBill />;
-              break;
-            case "/shops/merchant-application":
-              element = <MerchantApplication />;
-              break;
-
-            case "/shops/device-management":
-              // element = <DeviceManagement />;  // 临时注释，组件不存在
-              element = (
-                <div style={{ padding: "20px", textAlign: "center" }}>
-                  设备管理功能开发中...
-                </div>
-              );
-              break;
-
-            // 商品相关路由
-            case "/goods/product-list":
-              element = <ListOfCommodities />;
-              break;
-            case "/goods/audit-list":
-              element = <AuditList />;
-              break;
-            case "/goods/external-product":
-              element = <ExternalProduct />;
-              break;
-            case "/goods/product-category":
-              element = <ProductCategory />;
-              break;
-            case "/goods/recycle-bin":
-              element = <RecycleBin />;
-              break;
-            case "/goods/inventory/current-stock":
-              element = <CurrentStock />;
-              break;
-            case "/goods/inventory/stock-in":
-              element = <StockIn />;
-              break;
-            case "/goods/inventory/stock-out":
-              element = <StockOut />;
-              break;
-            case "/goods/inventory/stocktake":
-              element = <Stocktake />;
-              break;
-            case "/goods/inventory/stock-details":
-              element = <StockDetails />;
-              break;
-
-            // 订单相关路由
-            case "/orders/orders-list":
-              element = <OrdersList />;
-              break;
-            case "/orders/afterSales":
-              element = <AfterSales />;
-              break;
-            case "/orders/tallySheet":
-              element = <TallySheet />;
-              break;
-            case "/orders/SortingList":
-              element = <SortingList />;
-              break;
-            case "/orders/payment-record":
-              element = <PaymentRecord />;
-              break;
-            case "/orders/allocation-order":
-              element = <AllocationOrder />;
-              break;
-            case "/orders/work-order":
-              element = <WorkOrder />;
-              break;
-            case "/orders/logistics-order":
-              element = <LogisticsOrder />;
-              break;
-
-            // 系统设置相关路由
-            case "/system/users":
-              element = <Users />;
-              break;
-            case "/system/carousel":
-              element = <Lbt />;
-              break;
-            case "/system/user-permissions":
-              element = <UserRoot />; // 暂时使用Users组件，后续可以创建专门的权限管理组件
-              break;
-
-            default:
-              console.warn(`未找到路由 ${child.url} 对应的组件`);
-              break;
-          }
-
-          if (element) {
-            navigationRoutes.push({
+          const ChildComponent = componentRegistry[child.url];
+          if (ChildComponent) {
+            routes.push({
               title: child.name,
               menuPath: child.url,
-              element: element,
+              element: React.createElement(ChildComponent),
+            });
+          } else {
+            console.warn(`未找到路由 ${child.url} 对应的组件`);
+            // 添加占位组件
+            routes.push({
+              title: child.name,
+              menuPath: child.url,
+              element: (
+                <div style={{ padding: "20px", textAlign: "center" }}>
+                  {child.name} 功能开发中...
+                </div>
+              ),
             });
           }
         });
       }
     });
 
-    return baseRoutes
-      .concat(navigationRoutes)
-      .concat(getMenus(permissionRoutes));
-  }, [navigationData, permissionRoutes]);
+    // 合并权限路由
+    return routes.concat(getMenus(permissionRoutes));
+  }, [navigationData, permissionRoutes, componentRegistry]);
 
-  /** 下拉菜单 */
-  // 下拉菜单项数组
-  const dropdownMenuItems = [
-    {
-      key: "1",
-      label: (
-        <div onClick={() => toggleCenterStatus(true)}>
-          <UserOutlined /> {t('common.personalCenter')}
-        </div>
-      ),
-    },
-    {
-      key: "2",
-      label: (
-        <div onClick={toggleLanguage}>
-          <GlobalOutlined /> {getLanguageText()}
-        </div>
-      ),
-    },
-    {
-      key: "3",
-      label: (
-        <Popconfirm
-          onConfirm={() => handleLogout()}
-          title={t('common.logoutConfirm')}
-          okText={t('common.logoutOk')}
-          cancelText={t('common.logoutCancel')}
-        >
-          <LogoutOutlined /> {t('common.logout')}
-        </Popconfirm>
-      ),
-    },
-  ];
   /** 个人中心 */
   const userCenterRef = useRef();
   const toggleCenterStatus = (status) => {
     userCenterRef.current.toggleShowStatus(status);
   };
+
   /** 重置密码 */
   const resetPwdRef = useRef();
   const toggleResetStatus = (status) => {
     resetPwdRef.current.toggleShowStatus(status);
+  };
+
+  // 语言切换
+  const handleLanguageChange = () => {
+    const currentLang = i18n.language;
+    const newLang = currentLang === 'zh' ? 'en' : 'zh';
+    i18n.changeLanguage(newLang);
+    message.success(t('common.switchedTo' + (newLang === 'zh' ? 'Zh' : 'En')));
   };
 
   // 退出登录
@@ -667,133 +506,169 @@ const LayoutApp = () => {
     }
   };
 
-  // 检查用户是否已登录，如果没有token则不渲染Layout
-  const hasValidToken = token && getToken();
-
-  // 如果没有有效token，返回null或加载状态
-  if (!hasValidToken) {
-    console.log("🔒 Layout: 无有效token，不渲染Layout组件");
-    return null;
-  }
-  // debugger
-
-  console.log(menuItems, "获取菜单");
-  return (
-    <Layout className="layout">
-      <Sider trigger={null} collapsible collapsed={collapsed} theme={themeVari}>
-        <div
-          className="layout-logo-vertical"
-          style={{ color: themeVari === "dark" ? "#fff" : "#000" }}
-        >
-          <span className="layout-logo">
-            <DashboardFilled />
-          </span>
-          {!collapsed && <span>{t('common.backendManagementSystem')}</span>}
+  /** 下拉菜单 */
+  // 下拉菜单项数组
+  const dropdownMenuItems = [
+    {
+      key: "1",
+      label: (
+        <div onClick={() => toggleCenterStatus(true)}>
+          <UserOutlined /> {t('common.personalCenter')}
         </div>
-        <Switch
-          className="sider-switch"
-          checkedChildren="☀"
-          unCheckedChildren="🌙"
-          onChange={changeTheme}
-          style={{
-            transform: collapsed ? "translateX(15px)" : "translateX(75px)",
-          }}
-        />
-        <Menu
-          theme={themeVari}
-          mode="inline"
-          selectedKeys={[currentSelectedKey]}
-          openKeys={subMenuKeys}
-          onOpenChange={handleMenuOpen}
-          items={menuItems}
-          onClick={handleMenuClick}
-        />
-      </Sider>
-      <Layout>
-        <Header
-          style={{
-            padding: 0,
-            background: colorBgContainer,
-            display: "flex",
-          }}
+      ),
+    },
+    {
+      key: "2",
+      label: (
+        <div onClick={handleLanguageChange}>
+          <GlobalOutlined /> {t('common.language')}
+        </div>
+      ),
+    },
+    {
+      key: "3",
+      label: (
+        <Popconfirm
+          onConfirm={() => handleLogout()}
+          title={t('common.logoutConfirm')}
+          okText={t('common.logoutOk')}
+          cancelText={t('common.logoutCancel')}
         >
-          <Button
-            type="text"
-            icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-            onClick={() => setCollapsed(!collapsed)}
-            style={{
-              fontSize: "16px",
-              width: 64,
-              height: 64,
-            }}
-          />
-          <div className="header-breadcrumb">
-            <Breadcrumb items={breadcrumbItems} />
-          </div>
-          <div className="header-right">
-            <Dropdown
-              menu={{ items: dropdownMenuItems }}
-              placement="bottomRight"
-            >
-              <Space>
-                <img
-                  src={
-                    avatarUrl ||
-                    require("@/assets/images/avatar/default_avatar.jpg")
-                  }
-                  className="user-icon"
-                  alt="avatar"
-                />
-                <DownOutlined />
-              </Space>
-            </Dropdown>
-          </div>
-        </Header>
-        <Content
-          style={{
-            // padding: 24,
-            minHeight: 280,
-            // background: colorBgContainer
-          }}
-        >
-          {/* 导航数据状态提示 */}
-          {navError && !isFromBackend && (
-            <Alert
-              message="导航数据提示"
-              description="无法连接到后端服务，正在使用本地导航配置"
-              type="warning"
-              showIcon
-              closable
-              style={{ margin: "8px 16px" }}
-            />
-          )}
-          {isFromBackend && (
-            <Alert
-              message="✅ 已连接到后端导航服务"
-              type="success"
-              showIcon
-              closable
-              style={{ margin: "8px 16px", display: "none" }} // 默认隐藏成功提示
-            />
-          )}
+          <LogoutOutlined /> {t('common.logout')}
+        </Popconfirm>
+      ),
+    },
+  ];
 
+// 检查用户是否已登录，如果没有token则不渲染Layout
+const hasValidToken = token && getToken();
+
+// 如果没有有效token，返回null或加载状态
+if (!hasValidToken) {
+  console.log("🔒 Layout: 无有效token，不渲染Layout组件");
+  return null;
+}
+// debugger
+
+console.log(menuItems, "获取菜单");
+return (
+  <Layout className="layout">
+    <Sider trigger={null} collapsible collapsed={collapsed} theme={themeVari}>
+      <div
+        className="layout-logo-vertical"
+        style={{ color: themeVari === "dark" ? "#fff" : "#000" }}
+      >
+        <span className="layout-logo">
+          <DashboardFilled />
+        </span>
+        {!collapsed && <span>{t('common.backendManagementSystem')}</span>}
+      </div>
+      <Switch
+        className="sider-switch"
+        checkedChildren="☀"
+        unCheckedChildren="🌙"
+        onChange={changeTheme}
+        style={{
+          transform: collapsed ? "translateX(15px)" : "translateX(75px)",
+        }}
+      />
+      <Menu
+        theme={themeVari}
+        mode="inline"
+        selectedKeys={[currentSelectedKey]}
+        openKeys={subMenuKeys}
+        onOpenChange={handleMenuOpen}
+        items={menuItems}
+        onClick={handleMenuClick}
+      />
+    </Sider>
+    <Layout>
+      <Header
+        style={{
+          padding: 0,
+          background: colorBgContainer,
+          display: "flex",
+        }}
+      >
+        <Button
+          type="text"
+          icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+          onClick={() => setCollapsed(!collapsed)}
+          style={{
+            fontSize: "16px",
+            width: 64,
+            height: 64,
+          }}
+        />
+        <div className="header-breadcrumb">
+          <Breadcrumb items={breadcrumbItems} />
+        </div>
+        <div className="header-right">
+          <Dropdown
+            menu={{ items: dropdownMenuItems }}
+            placement="bottomRight"
+          >
+            <Space>
+              <img
+                src={
+                  avatarUrl ||
+                  require("@/assets/images/avatar/default_avatar.jpg")
+                }
+                className="user-icon"
+                alt="avatar"
+              />
+              <DownOutlined />
+            </Space>
+          </Dropdown>
+        </div>
+      </Header>
+      <Content
+        style={{
+          // padding: 24,
+          minHeight: 280,
+          // background: colorBgContainer
+        }}
+      >
+        {/* 导航数据状态提示 */}
+        {navError && !isFromBackend && (
+          <Alert
+            message="导航数据提示"
+            description="无法连接到后端服务，正在使用本地导航配置"
+            type="warning"
+            showIcon
+            closable
+            style={{ margin: "8px 16px" }}
+          />
+        )}
+        {isFromBackend && (
+          <Alert
+            message="✅ 已连接到后端导航服务"
+            type="success"
+            showIcon
+            closable
+            style={{ margin: "8px 16px", display: "none" }} // 默认隐藏成功提示
+          />
+        )}
+
+        <ComponentErrorBoundary>
           <TabsView
             pathname={pathname}
             formatRoutes={formatRoutes}
             selectTab={selectTab}
           />
-        </Content>
-      </Layout>
-      <CustomModal title={t('common.personalCenter')} ref={userCenterRef}>
-        <UserCenterForm toggleCenterStatus={toggleCenterStatus} />
-      </CustomModal>
-      <CustomModal title={t('system.resetPassword')} ref={resetPwdRef}>
-        <ResetPwdForm toggleResetStatus={toggleResetStatus} />
-      </CustomModal>
-      
-      {/* AI助手 - 除登录页外所有页面都显示 */}
-      {pathname !== '/login' && <AiAssistantWithLive2D />}
+        </ComponentErrorBoundary>
+      </Content>
     </Layout>
-  );
+    <CustomModal title={t('common.personalCenter')} ref={userCenterRef}>
+      <UserCenterForm toggleCenterStatus={toggleCenterStatus} />
+    </CustomModal>
+    <CustomModal title={t('resetPassword.oldPassword')} ref={resetPwdRef}>
+      <ResetPwdForm toggleResetStatus={toggleResetStatus} />
+    </CustomModal>
+
+    {/* AI助手 - 除登录页外所有页面都显示 */}
+    {pathname !== '/login' && <AiAssistantWithLive2D />}
+  </Layout>
+);
 };
 export default LayoutApp;
