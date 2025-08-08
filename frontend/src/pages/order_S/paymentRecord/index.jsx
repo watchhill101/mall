@@ -510,9 +510,9 @@ const PaymentRecord = () => {
 
   return (
     <OrderLayout>
-      <div style={{ padding: '24px' }}>
-        {/* 搜索表单 */}
-        <Card className="search-card" style={{ marginBottom: '16px' }}>
+    <div style={{ padding: '24px' }}>
+      {/* 搜索表单 */}
+      <Card className="search-card" style={{ marginBottom: '16px' }}>
           <Form form={form} onFinish={handleSearch} layout="vertical">
             <Row gutter={16}>
               <Col span={6}>
@@ -720,7 +720,7 @@ const PaymentRecord = () => {
           )}
         </Modal>
       </div>
-    </OrderLayout>
+      </OrderLayout>
   );
 };
 
